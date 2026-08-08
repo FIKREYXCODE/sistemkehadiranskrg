@@ -7,11 +7,12 @@
   <title>Portal Kelas SKPMKAS</title>
   <meta name="description" content="Portal kelas dan rekod kehadiran murid dari prasekolah hingga Tahun 6.">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="features.css?v=1">
 </head>
 <body>
   <header class="topbar">
     <a class="brand" href="#utama"><span class="brand-mark">S</span><span><strong>Portal Kelas</strong><small>Prasekolah · Tahun 1–6</small></span></a>
-    <nav><a href="#kelas">Kelas</a><a href="#kehadiran">Kehadiran</a><a class="excel" href="https://1drv.ms/x/c/b4a7c4f43b82aabe/IQCxDu4B_qU8Q7KA7N-sgzBoARO5axfvPYURfHcuJYP0lMw" target="_blank" rel="noreferrer">Rekod Excel ↗</a></nav>
+    <nav><a href="#kehadiran">Kehadiran</a><a href="#guru-kelas">Guru Kelas</a><a href="#kalendar">Kalendar</a><a class="excel" href="https://1drv.ms/x/c/b4a7c4f43b82aabe/IQCxDu4B_qU8Q7KA7N-sgzBoARO5axfvPYURfHcuJYP0lMw" target="_blank" rel="noreferrer">Rekod Excel ↗</a></nav>
   </header>
 
   <main>
@@ -33,6 +34,12 @@
       <article><span>🚌</span><div><b>Bas sekolah</b><small>Perjalanan yang teratur</small></div></article>
     </section>
 
+    <section class="feature-shortcuts" aria-label="Menu utama sistem">
+      <a href="#kehadiran"><span class="shortcut-icon">✓</span><div><small>MODUL 01</small><strong>Senarai Kehadiran</strong><p>Isi dan semak rekod murid mengikut tarikh.</p></div><b>→</b></a>
+      <a href="#guru-kelas"><span class="shortcut-icon">👩‍🏫</span><div><small>MODUL 02</small><strong>Guru Kelas</strong><p>Tetapkan guru bagi semua kelas sekolah.</p></div><b>→</b></a>
+      <a href="#kalendar"><span class="shortcut-icon">📅</span><div><small>MODUL 03</small><strong>Tetapan Kalendar</strong><p>Urus sesi, hari sekolah dan cuti.</p></div><b>→</b></a>
+    </section>
+
     <section class="section classes" id="kelas">
       <div class="section-title"><div><p class="eyebrow blue">DIREKTORI KELAS</p><h2>Semua kelas</h2></div><p>Pilih kelas untuk terus mengisi kehadiran.</p></div>
       <div class="class-grid" id="classGrid"></div>
@@ -40,14 +47,14 @@
 
     <section class="attendance" id="kehadiran">
       <div class="attendance-head">
-        <div><p class="eyebrow">● KEHADIRAN HARIAN</p><h2>Rekod murid</h2><p>Pilih kelas dan tarikh. Setiap perubahan disimpan secara automatik untuk tarikh itu pada peranti ini.</p></div>
+        <div><p class="eyebrow">● KEHADIRAN HARIAN</p><h2>Senarai kehadiran</h2><p>Pilih kelas dan tarikh. Senarai murid serta status kehadiran akan dipaparkan di bawah dan disimpan automatik pada peranti ini.</p></div>
         <div class="save-badge" id="saveBadge"><span></span><b>Semua perubahan disimpan</b><small id="saveTime">Belum ada perubahan</small></div>
       </div>
 
       <div class="control-card">
         <label><span>Kelas</span><select id="classSelect"></select></label>
         <label><span>Tarikh</span><input type="date" id="dateInput"></label>
-        <label><span>Nama guru</span><input type="text" id="teacherInput" placeholder="Masukkan nama guru"></label>
+        <label><span>Guru kelas</span><input type="text" id="teacherInput" placeholder="Tetapkan di bahagian Guru Kelas"></label>
       </div>
 
       <div class="summary" id="summary">
@@ -59,15 +66,36 @@
       </div>
 
       <div class="register-card">
-        <div class="register-toolbar"><div><h3>Senarai murid</h3><p id="recordLabel"></p></div><div><button class="button secondary" id="markAllBtn">✓ Semua hadir</button><button class="button secondary" id="exportBtn">↓ Muat turun CSV</button><button class="button primary small" id="addStudentBtn">＋ Tambah murid</button></div></div>
+        <div class="register-toolbar"><div><h3>Senarai Kehadiran Murid</h3><p id="recordLabel"></p></div><div><button class="button secondary" id="addTenBtn">＋ 10 baris</button><button class="button secondary" id="markAllBtn">✓ Semua hadir</button><button class="button secondary" id="exportBtn">↓ CSV</button><button class="button primary small" id="addStudentBtn">＋ Tambah murid</button></div></div>
         <div class="table-wrap"><table><thead><tr><th>Bil.</th><th>Nama murid</th><th>Status kehadiran</th><th>Catatan</th><th></th></tr></thead><tbody id="studentRows"></tbody></table></div>
         <div class="empty-state" id="emptyState"><span>🧒</span><h3>Belum ada nama murid</h3><p>Tekan “Tambah murid” untuk memulakan senarai kelas.</p><button class="button primary" id="emptyAddBtn">＋ Tambah murid pertama</button></div>
       </div>
+      <div class="saved-records"><div class="subsection-head"><div><p class="eyebrow">REKOD TERSIMPAN</p><h3>Sejarah kehadiran</h3></div><p>Tekan rekod untuk membukanya semula.</p></div><div class="history-list" id="historyList"></div></div>
+    </section>
+
+    <section class="teacher-section" id="guru-kelas">
+      <div class="section-title"><div><p class="eyebrow blue">PENGURUSAN KELAS</p><h2>Guru kelas</h2></div><p>Masukkan nama guru untuk setiap kelas. Nama ini akan digunakan secara automatik dalam rekod kehadiran.</p></div>
+      <div class="teacher-grid" id="teacherGrid"></div>
+      <div class="inline-save"><span></span><div><strong>Disimpan secara automatik</strong><small>Tetapan guru kekal pada peranti ini.</small></div></div>
+    </section>
+
+    <section class="calendar-section" id="kalendar">
+      <div class="calendar-copy"><p class="eyebrow">TETAPAN PERSEKOLAHAN</p><h2>Kalendar sekolah</h2><p>Tetapkan sesi persekolahan, hari sekolah dan tarikh cuti. Tekan mana-mana tarikh pada kalendar untuk membuka rekod kehadiran hari tersebut.</p>
+        <div class="calendar-settings">
+          <label><span>Tahun sesi</span><select id="sessionYear"></select></label>
+          <label><span>Mula sesi</span><input type="date" id="sessionStart"></label>
+          <label><span>Tamat sesi</span><input type="date" id="sessionEnd"></label>
+          <fieldset><legend>Hari persekolahan</legend><div class="day-toggles" id="dayToggles"></div></fieldset>
+          <div class="holiday-form"><label><span>Tarikh cuti</span><input type="date" id="holidayDate"></label><label><span>Nama cuti</span><input type="text" id="holidayName" placeholder="Contoh: Cuti Penggal"></label><button class="button primary" id="addHolidayBtn">＋ Tambah cuti</button></div>
+          <div class="holiday-list" id="holidayList"></div>
+        </div>
+      </div>
+      <div class="calendar-card"><div class="calendar-toolbar"><button id="prevMonth" aria-label="Bulan sebelumnya">←</button><div><strong id="monthTitle"></strong><small>Klik tarikh untuk isi kehadiran</small></div><button id="nextMonth" aria-label="Bulan seterusnya">→</button></div><div class="calendar-week"><span>Ahd</span><span>Isn</span><span>Sel</span><span>Rab</span><span>Kha</span><span>Jum</span><span>Sab</span></div><div class="calendar-grid" id="calendarGrid"></div><div class="calendar-legend"><span><i class="school-day"></i>Hari sekolah</span><span><i class="holiday-day"></i>Cuti</span><span><i class="today-day"></i>Hari ini</span></div></div>
     </section>
   </main>
 
-  <footer><div class="brand"><span class="brand-mark">S</span><span><strong>Portal Kelas SKPMKAS</strong><small>Belajar · Berkembang · Bersama</small></span></div><p>Prasekolah hingga Tahun 6</p></footer>
+  <footer><div class="brand"><span class="brand-mark">S</span><span><strong>Portal Kelas SKPMKAS</strong><small>Belajar · Berkembang · Bersama</small></span></div><div class="developer-credit"><small>DIBANGUNKAN OLEH</small><strong>Mohammad Fikrey Bin Abdul Gapar</strong></div><p>Prasekolah hingga Tahun 6</p></footer>
   <div class="toast" id="toast" role="status"></div>
-  <script src="app.js?v=2"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>
