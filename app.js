@@ -4,7 +4,7 @@ const classes=[
  {name:'Pra Permata Hati',level:'Prasekolah',icon:'◆',color:'#4938dc'},
  ...Array.from({length:6},(_,i)=>({name:`Tahun ${i+1}`,level:'Sekolah Rendah',icon:String(i+1).padStart(2,'0'),color:['#5aaeff','#0050c8','#17c8ff','#0b5cff','#4938dc','#5aaeff'][i]}))
 ];
-const $=id=>document.getElementById(id);const storeKey=(c,d)=>`skpmkas-attendance-v1:${c}:${d}`;
+const $=id=>document.getElementById(id);const storeKey=(c,d)=>`skpmkas-attendance-v2:${c}:${d}`;
 const state={className:classes[0].name,date:new Date().toLocaleDateString('en-CA'),teacher:'',students:[],timer:null};
 function esc(v=''){return String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
 function renderClasses(){ $('classGrid').innerHTML=classes.map(c=>`<article class="class-card" style="--accent:${c.color}" data-class="${esc(c.name)}"><div class="class-icon">${c.icon}</div><small>${c.level.toUpperCase()}</small><h3>${c.name}</h3><p>Rekod kelas dan kehadiran harian murid.</p><b>Isi kehadiran →</b></article>`).join('');document.querySelectorAll('.class-card').forEach(card=>card.onclick=()=>{state.className=card.dataset.class;$('classSelect').value=state.className;load();location.hash='kehadiran'})}
