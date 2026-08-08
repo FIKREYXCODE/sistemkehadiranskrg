@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#071b52">
+  <title>Portal Kelas SKPMKAS</title>
+  <meta name="description" content="Portal kelas dan rekod kehadiran murid dari prasekolah hingga Tahun 6.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#utama"><span class="brand-mark">S</span><span><strong>Portal Kelas</strong><small>Prasekolah · Tahun 1–6</small></span></a>
+    <nav><a href="#kelas">Kelas</a><a href="#kehadiran">Kehadiran</a><a class="excel" href="https://1drv.ms/x/c/b4a7c4f43b82aabe/IQCxDu4B_qU8Q7KA7N-sgzBoARO5axfvPYURfHcuJYP0lMw" target="_blank" rel="noreferrer">Rekod Excel ↗</a></nav>
+  </header>
+
+  <main>
+    <section class="hero" id="utama">
+      <div class="hero-copy">
+        <p class="eyebrow">✦ PORTAL DIGITAL SEKOLAH</p>
+        <h1>Satu sekolah.<br><em>Satu portal.</em></h1>
+        <p>Urus kelas dan kehadiran murid dengan lebih pantas—daripada tiga kelas prasekolah hingga Tahun 6.</p>
+        <div class="hero-actions"><a class="button primary" href="#kehadiran">Isi kehadiran ↓</a><a class="button ghost" href="#kelas">Lihat kelas</a></div>
+        <div class="stats"><span><strong>9</strong>Kumpulan kelas</span><span><strong>3</strong>Prasekolah</span><span><strong>Auto</strong>Simpan rekod</span></div>
+      </div>
+      <div class="hero-art"><img src="hero-school-blue.png" alt="Murid, guru, sekolah dan bas sekolah"><span class="chip teacher">👩‍🏫 Guru & murid</span><span class="chip bus">🚌 Sekolah kita</span></div>
+    </section>
+
+    <section class="community" aria-label="Komuniti sekolah">
+      <article><span>🧒</span><div><b>Murid</b><small>Belajar dengan yakin</small></div></article>
+      <article><span>👩‍🏫</span><div><b>Guru</b><small>Membimbing setiap langkah</small></div></article>
+      <article><span>🏫</span><div><b>Sekolah</b><small>Ruang selamat dan ceria</small></div></article>
+      <article><span>🚌</span><div><b>Bas sekolah</b><small>Perjalanan yang teratur</small></div></article>
+    </section>
+
+    <section class="section classes" id="kelas">
+      <div class="section-title"><div><p class="eyebrow blue">DIREKTORI KELAS</p><h2>Semua kelas</h2></div><p>Pilih kelas untuk terus mengisi kehadiran.</p></div>
+      <div class="class-grid" id="classGrid"></div>
+    </section>
+
+    <section class="attendance" id="kehadiran">
+      <div class="attendance-head">
+        <div><p class="eyebrow">● KEHADIRAN HARIAN</p><h2>Rekod murid</h2><p>Pilih kelas dan tarikh. Setiap perubahan disimpan secara automatik untuk tarikh itu pada peranti ini.</p></div>
+        <div class="save-badge" id="saveBadge"><span></span><b>Semua perubahan disimpan</b><small id="saveTime">Belum ada perubahan</small></div>
+      </div>
+
+      <div class="control-card">
+        <label><span>Kelas</span><select id="classSelect"></select></label>
+        <label><span>Tarikh</span><input type="date" id="dateInput"></label>
+        <label><span>Nama guru</span><input type="text" id="teacherInput" placeholder="Masukkan nama guru"></label>
+      </div>
+
+      <div class="summary" id="summary">
+        <article><span class="dot green"></span><div><strong id="countHadir">0</strong><small>Hadir</small></div></article>
+        <article><span class="dot amber"></span><div><strong id="countLewat">0</strong><small>Lewat</small></div></article>
+        <article><span class="dot red"></span><div><strong id="countTidak">0</strong><small>Tidak hadir</small></div></article>
+        <article><span class="dot purple"></span><div><strong id="countCuti">0</strong><small>Cuti / sakit</small></div></article>
+        <article><span class="dot pale"></span><div><strong id="countBelum">0</strong><small>Belum ditanda</small></div></article>
+      </div>
+
+      <div class="register-card">
+        <div class="register-toolbar"><div><h3>Senarai murid</h3><p id="recordLabel"></p></div><div><button class="button secondary" id="markAllBtn">✓ Semua hadir</button><button class="button secondary" id="exportBtn">↓ Muat turun CSV</button><button class="button primary small" id="addStudentBtn">＋ Tambah murid</button></div></div>
+        <div class="table-wrap"><table><thead><tr><th>Bil.</th><th>Nama murid</th><th>Status kehadiran</th><th>Catatan</th><th></th></tr></thead><tbody id="studentRows"></tbody></table></div>
+        <div class="empty-state" id="emptyState"><span>🧒</span><h3>Belum ada nama murid</h3><p>Tekan “Tambah murid” untuk memulakan senarai kelas.</p><button class="button primary" id="emptyAddBtn">＋ Tambah murid pertama</button></div>
+      </div>
+    </section>
+  </main>
+
+  <footer><div class="brand"><span class="brand-mark">S</span><span><strong>Portal Kelas SKPMKAS</strong><small>Belajar · Berkembang · Bersama</small></span></div><p>Prasekolah hingga Tahun 6</p></footer>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>
