@@ -1,0 +1,21 @@
+name: Push shared attendance backend
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  push-backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore backend source
+        run: |
+          base64 -d backend.bundle.b64 > /tmp/skrg-sites-backend.bundle
+          git clone /tmp/skrg-sites-backend.bundle /tmp/skrg-sites-backend
+      - name: Push backend source
+        env:
+          SITES_REMOTE_URL: ${{ secrets.SITES_REMOTE_URL }}
+          SITES_PUSH_TOKEN: ${{ secrets.SITES_PUSH_TOKEN }}
+        run: |
+          git -C /tmp/skrg-sites-backend remote add sites "$SITES_REMOTE_URL"
+          git -C /tmp/skrg-sites-backend -c http.extraHeader="Authorization: Bearer $SITES_PUSH_TOKEN" push -f sites main
