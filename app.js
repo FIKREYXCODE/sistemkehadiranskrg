@@ -2,7 +2,7 @@ const API_URL = "https://portal-kelas-sekolah-biru.afiqzkablemo.chatgpt.site/api
 const $ = (selector) => document.querySelector(selector);
 const state = {
   date: "", classes: [], staffAbsences: [], meta: {}, loading: false, saveTimer: null,
-  savePromise: null, pendingAttendance: new Map(), staffDirty: false, metaDirty: false, audit: new Map(), adminPin: "",
+  savePromise: null, pendingAttendance: new Map(), staffDirty: false, metaDirty: false, audit: new Map(), adminPin: "", session: "all",
 };
 const DRAFT_PREFIX = "skrg-pending-v1:";
 const EDITOR_KEY = "skrg-editor-name-v1";
@@ -103,6 +103,22 @@ function classFigures(row) {
   return { enrolMale, enrolFemale, absentMale, absentFemale, enrolTotal, absentTotal, presentMale: enrolMale - absentMale, presentFemale: enrolFemale - absentFemale, presentTotal: enrolTotal - absentTotal };
 }
 
+const SESSION_LABELS = {
+  all: "KESELURUHAN SEKOLAH",
+  morning: "SIDANG PAGI",
+  afternoon: "SIDANG PETANG",
+};
+
+function classSession(row) {
+  if (["pra-mutiara-hati", "pra-permata-hati"].includes(row.id) || /^tahun-[456]-/.test(row.id)) return "morning";
+  if (row.id === "pra-mutiara-kasih" || /^tahun-[123]-/.test(row.id)) return "afternoon";
+  return "all";
+}
+
+function visibleClasses() {
+  return state.session === "all" ? state.classes : state.classes.filter((row) => classSession(row) === state.session);
+}
+
 function setStatus(message, type = "") {
   const element = $("#saveStatus");
   element.textContent = message;
@@ -117,7 +133,9 @@ function updateDateHeading() {
 }
 
 function renderAttendance() {
-  $("#attendanceBody").innerHTML = state.classes.map((row, index) => {
+  const rows = visibleClasses();
+  $("#sessionReportLabel").textContent = SESSION_LABELS[state.session] || SESSION_LABELS.all;
+  $("#attendanceBody").innerHTML = rows.map((row, index) => {
     const f = classFigures(row);
     return `<tr data-class-id="${safe(row.id)}">
       <td>${index + 1}</td><td>${safe(row.teacherName || "—")}</td><td><strong>${safe(row.name)}</strong></td>
@@ -133,12 +151,13 @@ function renderAttendance() {
 }
 
 function renderTotals() {
-  const totals = state.classes.reduce((sum, row) => {
+  const totals = visibleClasses().reduce((sum, row) => {
     const f = classFigures(row);
     Object.keys(f).forEach((key) => { sum[key] = (sum[key] || 0) + f[key]; });
     return sum;
   }, {});
-  $("#attendanceTotals").innerHTML = `<tr><td colspan="3">JUMLAH KESELURUHAN</td><td>${totals.enrolMale || 0}</td><td>${totals.enrolFemale || 0}</td><td>${totals.enrolTotal || 0}</td><td>${totals.presentMale || 0}</td><td>${totals.presentFemale || 0}</td><td>${totals.presentTotal || 0}</td><td>${percent(totals.presentTotal || 0, totals.enrolTotal || 0)}</td><td>${totals.absentMale || 0}</td><td>${totals.absentFemale || 0}</td><td>${totals.absentTotal || 0}</td><td>${percent(totals.absentTotal || 0, totals.enrolTotal || 0)}</td><td></td></tr>`;
+  const totalLabel = state.session === "all" ? "JUMLAH KESELURUHAN" : `JUMLAH ${SESSION_LABELS[state.session]}`;
+  $("#attendanceTotals").innerHTML = `<tr><td colspan="3">${totalLabel}</td><td>${totals.enrolMale || 0}</td><td>${totals.enrolFemale || 0}</td><td>${totals.enrolTotal || 0}</td><td>${totals.presentMale || 0}</td><td>${totals.presentFemale || 0}</td><td>${totals.presentTotal || 0}</td><td>${percent(totals.presentTotal || 0, totals.enrolTotal || 0)}</td><td>${totals.absentMale || 0}</td><td>${totals.absentFemale || 0}</td><td>${totals.absentTotal || 0}</td><td>${percent(totals.absentTotal || 0, totals.enrolTotal || 0)}</td><td></td></tr>`;
   $("#summaryEnrol").textContent = totals.enrolTotal || 0;
   $("#summaryPresent").textContent = totals.presentTotal || 0;
   $("#summaryAbsent").textContent = totals.absentTotal || 0;
@@ -362,6 +381,11 @@ $("#reportDate").addEventListener("change", async (event) => {
   state.date = event.target.value;
   state.pendingAttendance.clear(); state.staffDirty = false; state.metaDirty = false;
   loadReport();
+});
+$("#sessionFilter").addEventListener("change", (event) => {
+  state.session = event.target.value;
+  renderAttendance();
+  updateEditingAccess();
 });
 $("#printButton").addEventListener("click", () => window.print());
 $("#adminButton").addEventListener("click", async () => {
