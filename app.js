@@ -61,9 +61,20 @@ function auditDetails(section, recordId, fieldName) {
   return { className: " has-audit", title: `Diisi oleh: ${item.updatedBy} • ${time}` };
 }
 
-function auditAttributes(section, recordId, fieldName) {
-  const details = auditDetails(section, recordId, fieldName);
-  return `${details.className} title="${safe(details.title)}"`;
+function applyAttendanceAudit(updates, updatedBy, updatedAt) {
+  for (const patch of updates) {
+    for (const fieldName of ["absentMale", "absentFemale", "note"]) {
+      if (!Object.prototype.hasOwnProperty.call(patch, fieldName)) continue;
+      const key = auditKey("attendance", patch.id, fieldName);
+      if (fieldName === "note" && !String(patch[fieldName] ?? "").trim()) state.audit.delete(key);
+      else state.audit.set(key, { section: "attendance", recordId: patch.id, fieldName, updatedBy, updatedAt });
+      const input = document.querySelector(`tr[data-class-id="${patch.id}"] input[data-field="${fieldName}"]`);
+      if (!input) continue;
+      const details = auditDetails("attendance", patch.id, fieldName);
+      input.title = details.title;
+      input.classList.toggle("has-audit", Boolean(details.title));
+    }
+  }
 }
 
 function updateEditingAccess() {
@@ -219,6 +230,7 @@ async function flushSave() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Simpanan gagal");
       const time = new Date(data.savedAt || Date.now()).toLocaleTimeString("ms-MY", { hour: "2-digit", minute: "2-digit" });
+      applyAttendanceAudit(snapshot.attendanceUpdates, snapshot.updatedBy, data.savedAt || Date.now());
       if (!hasPendingChanges()) setStatus(`Tersimpan ${time}`, "saved");
       saveDraft();
       if (!hasPendingChanges() && !["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName || "")) loadReport(true);
