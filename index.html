@@ -3,22 +3,88 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#0755c9">
-  <meta http-equiv="refresh" content="0; url=https://portal-kelas-sekolah-biru.afiqzkablemo.chatgpt.site/">
-  <title>Sistem Kehadiran SK Ranggu</title>
-  <meta name="description" content="Laporan kedatangan harian SK Ranggu dengan simpanan bersama untuk semua guru.">
-  <link rel="canonical" href="https://portal-kelas-sekolah-biru.afiqzkablemo.chatgpt.site/">
-  <style>
-    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:linear-gradient(145deg,#061947,#0a67d8);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#fff;text-align:center;padding:24px}.card{max-width:520px;padding:40px;border:1px solid rgba(255,255,255,.25);border-radius:24px;background:rgba(255,255,255,.12);box-shadow:0 24px 60px rgba(0,0,0,.25);backdrop-filter:blur(16px)}.mark{width:72px;height:72px;margin:0 auto 20px;display:grid;place-items:center;border-radius:20px;background:#fff;color:#0755c9;font-size:28px;font-weight:900}h1{margin:0 0 10px;font-size:clamp(26px,6vw,40px)}p{margin:0 0 24px;line-height:1.6;color:#dcecff}a{display:inline-block;padding:14px 24px;border-radius:999px;background:#fff;color:#0755c9;font-weight:800;text-decoration:none}
-  </style>
-  <script>location.replace("https://portal-kelas-sekolah-biru.afiqzkablemo.chatgpt.site/");</script>
+  <meta name="theme-color" content="#0755b5">
+  <title>Laporan Kedatangan Harian | SK Ranggu</title>
+  <link rel="stylesheet" href="styles.css?v=5">
 </head>
 <body>
-  <main class="card">
-    <div class="mark">SR</div>
-    <h1>Sistem Kehadiran SK Ranggu</h1>
-    <p>Membuka sistem kehadiran dengan simpanan bersama untuk semua guru…</p>
-    <a href="https://portal-kelas-sekolah-biru.afiqzkablemo.chatgpt.site/">Buka sistem sekarang</a>
+  <header class="topbar no-print">
+    <a class="brand" href="#top" aria-label="Laman utama">
+      <span class="brand-mark">SK</span>
+      <span><strong>Sistem Kehadiran SK Ranggu</strong><small>Rekod harian sekolah</small></span>
+    </a>
+    <div class="top-actions">
+      <span id="saveStatus" class="save-status" aria-live="polite">Memuatkan data…</span>
+      <button id="printButton" class="print-button" type="button">🖨 Cetak laporan</button>
+    </div>
+  </header>
+
+  <main id="top" class="page-shell">
+    <section class="date-panel no-print" aria-labelledby="dateTitle">
+      <div>
+        <p class="eyebrow">Laporan kedatangan harian</p>
+        <h1 id="dateTitle">Pilih tarikh untuk isi kehadiran</h1>
+        <p>Semua guru boleh mengisi. Setiap perubahan disimpan secara automatik untuk tarikh yang dipilih.</p>
+      </div>
+      <label class="date-picker">Tarikh laporan
+        <input id="reportDate" type="date" required>
+      </label>
+    </section>
+
+    <article class="report-card">
+      <header class="report-head">
+        <div class="school-emblem" aria-hidden="true">SR</div>
+        <div>
+          <p class="report-kicker">LAPORAN KEDATANGAN HARIAN</p>
+          <h2>SEKOLAH KEBANGSAAN RANGGU</h2>
+          <p>PETI SURAT 60793, 91017 TAWAU, SABAH • SESI 2026</p>
+        </div>
+        <div class="report-date-block"><span>Tarikh</span><strong id="dateLong">—</strong><small id="dayLong">—</small></div>
+      </header>
+
+      <section class="summary-grid" aria-label="Ringkasan kehadiran">
+        <div><span>Jumlah murid</span><strong id="summaryEnrol">0</strong></div>
+        <div><span>Hadir</span><strong id="summaryPresent">0</strong></div>
+        <div class="danger"><span>Tidak hadir</span><strong id="summaryAbsent">0</strong></div>
+        <div class="success"><span>Peratus hadir</span><strong id="summaryPercent">0%</strong></div>
+      </section>
+
+      <section class="table-section">
+        <div class="section-heading"><div><span>01</span><h3>Kehadiran mengikut kelas</h3></div><p>Isi bilangan murid lelaki dan perempuan yang tidak hadir.</p></div>
+        <div class="table-scroll">
+          <table class="attendance-table">
+            <thead>
+              <tr><th rowspan="2">Bil</th><th rowspan="2" class="name-col">Guru kelas</th><th rowspan="2">Kelas</th><th colspan="3">Dalam daftar</th><th colspan="3">Hadir</th><th rowspan="2">% Hadir</th><th colspan="3" class="absent-head">Tidak hadir</th><th rowspan="2">% TH</th><th rowspan="2" class="note-col">Catatan</th></tr>
+              <tr><th>L</th><th>P</th><th>J</th><th>L</th><th>P</th><th>J</th><th class="absent-head">L</th><th class="absent-head">P</th><th class="absent-head">J</th></tr>
+            </thead>
+            <tbody id="attendanceBody"></tbody>
+            <tfoot id="attendanceTotals"></tfoot>
+          </table>
+        </div>
+      </section>
+
+      <section class="table-section staff-section">
+        <div class="section-heading"><div><span>02</span><h3>Keberadaan guru dan AKP</h3></div><p>Catat pegawai yang tidak berada di sekolah pada tarikh ini.</p></div>
+        <div class="table-scroll">
+          <table class="staff-table">
+            <thead><tr><th>Bil</th><th>Nama guru / AKP</th><th>Subjek / jawatan</th><th>Sebab tidak hadir / tiada di sekolah</th></tr></thead>
+            <tbody id="staffBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="report-notes">
+        <label>Catatan laporan<textarea id="reportNote" rows="3" placeholder="Catatan tambahan untuk laporan harian"></textarea></label>
+        <div class="signature-grid">
+          <label>Disediakan oleh<input id="preparedBy" type="text" placeholder="Nama guru bertugas"></label>
+          <label>Disahkan oleh<input id="approvedBy" type="text" placeholder="Nama pegawai pengesah"></label>
+          <label>Jawatan<input id="approvedTitle" type="text" placeholder="Contoh: Guru Besar"></label>
+        </div>
+      </section>
+    </article>
   </main>
+
+  <footer class="site-footer"><strong>Sistem Kehadiran SK Ranggu</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
+  <script src="app.js?v=5" defer></script>
 </body>
 </html>
