@@ -2,9 +2,10 @@ const API_URL = "https://portal-kelas-sekolah-biru.afiqzkablemo.chatgpt.site/api
 const $ = (selector) => document.querySelector(selector);
 const state = {
   date: "", classes: [], staffAbsences: [], meta: {}, loading: false, saveTimer: null,
-  savePromise: null, pendingAttendance: new Map(), staffDirty: false, metaDirty: false,
+  savePromise: null, pendingAttendance: new Map(), staffDirty: false, metaDirty: false, audit: new Map(),
 };
 const DRAFT_PREFIX = "skrg-pending-v1:";
+const EDITOR_KEY = "skrg-editor-name-v1";
 
 function draftKey(date = state.date) { return `${DRAFT_PREFIX}${date}`; }
 
@@ -49,6 +50,29 @@ function safe(value) {
   return String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
 }
 
+function editorName() { return $("#editorName").value.trim(); }
+
+function auditKey(section, recordId, fieldName) { return `${section}:${recordId}:${fieldName}`; }
+
+function auditDetails(section, recordId, fieldName) {
+  const item = state.audit.get(auditKey(section, recordId, fieldName));
+  if (!item) return { className: "", title: "" };
+  const time = new Intl.DateTimeFormat("ms-MY", { dateStyle: "medium", timeStyle: "short" }).format(new Date(Number(item.updatedAt)));
+  return { className: " has-audit", title: `Diisi oleh: ${item.updatedBy} • ${time}` };
+}
+
+function auditAttributes(section, recordId, fieldName) {
+  const details = auditDetails(section, recordId, fieldName);
+  return `${details.className} title="${safe(details.title)}"`;
+}
+
+function updateEditingAccess() {
+  const allowed = Boolean(editorName());
+  document.querySelectorAll("#attendanceBody input,#staffBody input,#reportNote,#preparedBy,#approvedBy,#approvedTitle").forEach((element) => { element.readOnly = !allowed; });
+  $("#editorName").classList.toggle("invalid", !allowed);
+  if (!allowed && !state.loading) setStatus("Isi nama pengisi untuk mula");
+}
+
 function count(value, maximum = 999) {
   const parsed = Math.floor(Number(value));
   return Number.isFinite(parsed) ? Math.max(0, Math.min(maximum, parsed)) : 0;
@@ -88,10 +112,10 @@ function renderAttendance() {
       <td>${index + 1}</td><td>${safe(row.teacherName || "—")}</td><td><strong>${safe(row.name)}</strong></td>
       <td>${f.enrolMale}</td><td>${f.enrolFemale}</td><td><strong>${f.enrolTotal}</strong></td>
       <td>${f.presentMale}</td><td>${f.presentFemale}</td><td><strong>${f.presentTotal}</strong></td><td><strong>${percent(f.presentTotal, f.enrolTotal)}</strong></td>
-      <td><input class="cell-input num-input" type="number" inputmode="numeric" min="0" max="${f.enrolMale}" value="${f.absentMale}" data-field="absentMale" aria-label="Lelaki tidak hadir ${safe(row.name)}"></td>
-      <td><input class="cell-input num-input" type="number" inputmode="numeric" min="0" max="${f.enrolFemale}" value="${f.absentFemale}" data-field="absentFemale" aria-label="Perempuan tidak hadir ${safe(row.name)}"></td>
+      <td><input class="cell-input num-input${auditDetails("attendance", row.id, "absentMale").className}" type="number" inputmode="numeric" min="0" max="${f.enrolMale}" value="${f.absentMale}" data-field="absentMale" aria-label="Lelaki tidak hadir ${safe(row.name)}" title="${safe(auditDetails("attendance", row.id, "absentMale").title)}"></td>
+      <td><input class="cell-input num-input${auditDetails("attendance", row.id, "absentFemale").className}" type="number" inputmode="numeric" min="0" max="${f.enrolFemale}" value="${f.absentFemale}" data-field="absentFemale" aria-label="Perempuan tidak hadir ${safe(row.name)}" title="${safe(auditDetails("attendance", row.id, "absentFemale").title)}"></td>
       <td><strong>${f.absentTotal}</strong></td><td>${percent(f.absentTotal, f.enrolTotal)}</td>
-      <td><input class="cell-input note-input" type="text" value="${safe(row.note)}" data-field="note" aria-label="Catatan ${safe(row.name)}"></td>
+      <td><input class="cell-input note-input${auditDetails("attendance", row.id, "note").className}" type="text" value="${safe(row.note)}" data-field="note" aria-label="Catatan ${safe(row.name)}" title="${safe(auditDetails("attendance", row.id, "note").title)}"></td>
     </tr>`;
   }).join("");
   renderTotals();
@@ -113,7 +137,8 @@ function renderTotals() {
 function renderStaff() {
   while (state.staffAbsences.length < 11) state.staffAbsences.push({ staffName: "", subject: "", reason: "" });
   state.staffAbsences = state.staffAbsences.slice(0, 11);
-  $("#staffBody").innerHTML = state.staffAbsences.map((row, index) => `<tr data-staff-index="${index}"><td>${index + 1}</td><td><input class="cell-input" data-field="staffName" value="${safe(row.staffName)}" aria-label="Nama guru atau AKP ${index + 1}"></td><td><input class="cell-input" data-field="subject" value="${safe(row.subject)}" aria-label="Subjek atau jawatan ${index + 1}"></td><td><input class="cell-input" data-field="reason" value="${safe(row.reason)}" aria-label="Sebab ${index + 1}"></td></tr>`).join("");
+  $("#staffBody").innerHTML = state.staffAbsences.map((row, index) => `<tr data-staff-index="${index}"><td>${index + 1}</td><td><input class="cell-input${auditDetails("staff", String(index + 1), "staffName").className}" data-field="staffName" value="${safe(row.staffName)}" aria-label="Nama guru atau AKP ${index + 1}" title="${safe(auditDetails("staff", String(index + 1), "staffName").title)}"></td><td><input class="cell-input${auditDetails("staff", String(index + 1), "subject").className}" data-field="subject" value="${safe(row.subject)}" aria-label="Subjek atau jawatan ${index + 1}" title="${safe(auditDetails("staff", String(index + 1), "subject").title)}"></td><td><input class="cell-input${auditDetails("staff", String(index + 1), "reason").className}" data-field="reason" value="${safe(row.reason)}" aria-label="Sebab ${index + 1}" title="${safe(auditDetails("staff", String(index + 1), "reason").title)}"></td></tr>`).join("");
+  updateEditingAccess();
 }
 
 function renderMeta() {
@@ -121,6 +146,13 @@ function renderMeta() {
   $("#preparedBy").value = state.meta.preparedBy || "";
   $("#approvedBy").value = state.meta.approvedBy || "";
   $("#approvedTitle").value = state.meta.approvedTitle || "";
+  for (const [selector, field] of [["#reportNote", "note"], ["#preparedBy", "preparedBy"], ["#approvedBy", "approvedBy"], ["#approvedTitle", "approvedTitle"]]) {
+    const element = $(selector);
+    const details = auditDetails("meta", "report", field);
+    element.title = details.title;
+    element.classList.toggle("has-audit", Boolean(details.title));
+  }
+  updateEditingAccess();
 }
 
 function hasPendingChanges() {
@@ -138,6 +170,7 @@ async function loadReport(silent = false) {
     state.classes = Array.isArray(data.classes) ? data.classes : [];
     state.staffAbsences = Array.isArray(data.staffAbsences) ? data.staffAbsences : [];
     state.meta = data.meta || {};
+    state.audit = new Map((Array.isArray(data.audit) ? data.audit : []).map((item) => [auditKey(item.section, item.recordId, item.fieldName), item]));
     const restoredDraft = !silent && restoreDraft();
     renderAttendance(); renderStaff(); renderMeta();
     if (!silent) {
@@ -155,6 +188,7 @@ async function loadReport(silent = false) {
 
 function scheduleSave() {
   if (state.loading) return;
+  if (!editorName()) { updateEditingAccess(); return; }
   clearTimeout(state.saveTimer);
   setStatus("Menyimpan perubahan…");
   state.saveTimer = setTimeout(() => flushSave(), 650);
@@ -173,9 +207,10 @@ async function flushSave() {
     attendanceUpdates: Array.from(state.pendingAttendance.values()).map((item) => ({ ...item })),
     staffAbsences: state.staffDirty ? state.staffAbsences.map((item) => ({ ...item })) : null,
     meta: state.metaDirty ? { ...state.meta } : null,
+    updatedBy: editorName(),
   };
   state.pendingAttendance.clear(); state.staffDirty = false; state.metaDirty = false;
-  const payload = { date: snapshot.date, attendanceUpdates: snapshot.attendanceUpdates };
+  const payload = { date: snapshot.date, attendanceUpdates: snapshot.attendanceUpdates, updatedBy: snapshot.updatedBy };
   if (snapshot.staffAbsences) payload.staffAbsences = snapshot.staffAbsences;
   if (snapshot.meta) payload.meta = snapshot.meta;
   state.savePromise = (async () => {
@@ -186,6 +221,7 @@ async function flushSave() {
       const time = new Date(data.savedAt || Date.now()).toLocaleTimeString("ms-MY", { hour: "2-digit", minute: "2-digit" });
       if (!hasPendingChanges()) setStatus(`Tersimpan ${time}`, "saved");
       saveDraft();
+      if (!hasPendingChanges() && !["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName || "")) loadReport(true);
     } catch (error) {
       console.error(error);
       for (const oldPatch of snapshot.attendanceUpdates) {
@@ -246,8 +282,22 @@ $("#reportDate").addEventListener("change", async (event) => {
 });
 $("#printButton").addEventListener("click", () => window.print());
 
+$("#editorName").addEventListener("input", (event) => {
+  const name = event.target.value.trim();
+  try {
+    if (name) localStorage.setItem(EDITOR_KEY, name);
+    else localStorage.removeItem(EDITOR_KEY);
+  } catch { /* Nama masih boleh digunakan untuk sesi semasa. */ }
+  updateEditingAccess();
+  if (name) {
+    if (hasPendingChanges()) scheduleSave();
+    else setStatus("Nama pengisi sedia", "saved");
+  }
+});
+
 state.date = localDateValue();
 $("#reportDate").value = state.date;
+try { $("#editorName").value = localStorage.getItem(EDITOR_KEY) || ""; } catch { /* abaikan */ }
 loadReport();
 
 setInterval(() => {
