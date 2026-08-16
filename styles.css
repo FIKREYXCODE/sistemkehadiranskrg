@@ -123,11 +123,12 @@ body{background:#fff;color:#000}
 .report-notes textarea{height:12mm;resize:none}
 }
 
-.entry-controls{position:relative;z-index:2;display:grid;grid-template-columns:minmax(250px,330px) 245px;gap:14px;align-items:start}
-.entry-controls .date-picker,.user-picker{min-width:0;font-weight:800}
-.entry-controls .date-picker input,.user-picker input{display:block;width:100%;margin-top:8px;padding:14px 15px;border:2px solid #ffffff50;border-radius:12px;background:#fff;color:var(--ink);font:inherit}
-.user-picker small{display:block;margin-top:6px;font-size:.69rem;font-weight:600;opacity:.8}
+.entry-controls{position:relative;z-index:2;display:grid;grid-template-columns:minmax(240px,310px) 215px 220px;gap:14px;align-items:start}
+.entry-controls .date-picker,.user-picker,.session-picker{min-width:0;font-weight:800}
+.entry-controls .date-picker input,.user-picker input,.session-picker select{display:block;width:100%;margin-top:8px;padding:14px 15px;border:2px solid #ffffff50;border-radius:12px;background:#fff;color:var(--ink);font:inherit}
+.user-picker small,.session-picker small{display:block;margin-top:6px;font-size:.69rem;font-weight:600;opacity:.8}
 .user-picker input.invalid{border-color:#ffd05b;box-shadow:0 0 0 3px #ffd05b35}
+.session-report-label{display:inline-block;margin-top:9px;padding:5px 9px;border-radius:7px;background:var(--pale);color:var(--blue);font-size:.72rem;letter-spacing:.08em}
 .has-audit{border-bottom:3px solid var(--sky)!important;cursor:help}
 .cell-input[readonly],.report-notes input[readonly],.report-notes textarea[readonly]{opacity:.62;cursor:not-allowed;background:#edf3f9}
 .modal-open{overflow:hidden}
