@@ -4,6 +4,40 @@ const state = {
   date: "", classes: [], staffAbsences: [], meta: {}, loading: false, saveTimer: null,
   savePromise: null, pendingAttendance: new Map(), staffDirty: false, metaDirty: false,
 };
+const DRAFT_PREFIX = "skrg-pending-v1:";
+
+function draftKey(date = state.date) { return `${DRAFT_PREFIX}${date}`; }
+
+function saveDraft() {
+  try {
+    const draft = {
+      attendanceUpdates: Array.from(state.pendingAttendance.values()),
+      staffAbsences: state.staffDirty ? state.staffAbsences : null,
+      meta: state.metaDirty ? state.meta : null,
+    };
+    if (hasPendingChanges()) localStorage.setItem(draftKey(), JSON.stringify(draft));
+    else localStorage.removeItem(draftKey());
+  } catch { /* Pelayar mungkin menyekat storan draf; simpanan bersama masih diteruskan. */ }
+}
+
+function restoreDraft() {
+  try {
+    const draft = JSON.parse(localStorage.getItem(draftKey()) || "null");
+    if (!draft) return false;
+    for (const patch of Array.isArray(draft.attendanceUpdates) ? draft.attendanceUpdates : []) {
+      const item = state.classes.find((entry) => entry.id === patch.id);
+      if (!item) continue;
+      const pending = { id: patch.id };
+      for (const field of ["absentMale", "absentFemale", "note"]) if (Object.prototype.hasOwnProperty.call(patch, field)) {
+        item[field] = patch[field]; pending[field] = patch[field];
+      }
+      state.pendingAttendance.set(patch.id, pending);
+    }
+    if (Array.isArray(draft.staffAbsences)) { state.staffAbsences = draft.staffAbsences; state.staffDirty = true; }
+    if (draft.meta && typeof draft.meta === "object") { state.meta = draft.meta; state.metaDirty = true; }
+    return hasPendingChanges();
+  } catch { return false; }
+}
 
 function localDateValue() {
   const date = new Date();
@@ -104,8 +138,12 @@ async function loadReport(silent = false) {
     state.classes = Array.isArray(data.classes) ? data.classes : [];
     state.staffAbsences = Array.isArray(data.staffAbsences) ? data.staffAbsences : [];
     state.meta = data.meta || {};
+    const restoredDraft = !silent && restoreDraft();
     renderAttendance(); renderStaff(); renderMeta();
-    if (!silent) setStatus("Data bersama sedia", "saved");
+    if (!silent) {
+      setStatus(restoredDraft ? "Menyambung simpanan tertangguh…" : "Data bersama sedia", restoredDraft ? "" : "saved");
+      if (restoredDraft) scheduleSave();
+    }
   } catch (error) {
     console.error(error);
     if (!silent) {
@@ -147,6 +185,7 @@ async function flushSave() {
       if (!response.ok) throw new Error(data.error || "Simpanan gagal");
       const time = new Date(data.savedAt || Date.now()).toLocaleTimeString("ms-MY", { hour: "2-digit", minute: "2-digit" });
       if (!hasPendingChanges()) setStatus(`Tersimpan ${time}`, "saved");
+      saveDraft();
     } catch (error) {
       console.error(error);
       for (const oldPatch of snapshot.attendanceUpdates) {
@@ -155,6 +194,7 @@ async function flushSave() {
       }
       if (snapshot.staffAbsences && !state.staffDirty) state.staffDirty = true;
       if (snapshot.meta && !state.metaDirty) state.metaDirty = true;
+      saveDraft();
       setStatus("Belum tersimpan — cuba lagi", "error");
     }
   })();
@@ -179,6 +219,7 @@ $("#attendanceBody").addEventListener("input", (event) => {
   const pending = state.pendingAttendance.get(item.id) || { id: item.id };
   pending[field] = item[field];
   state.pendingAttendance.set(item.id, pending);
+  saveDraft();
   renderTotals(); scheduleSave();
 });
 
@@ -188,11 +229,12 @@ $("#staffBody").addEventListener("input", (event) => {
   const index = Number(input.closest("tr").dataset.staffIndex);
   state.staffAbsences[index][input.dataset.field] = input.value;
   state.staffDirty = true;
+  saveDraft();
   scheduleSave();
 });
 
 [["#reportNote", "note"], ["#preparedBy", "preparedBy"], ["#approvedBy", "approvedBy"], ["#approvedTitle", "approvedTitle"]].forEach(([selector, field]) => {
-  $(selector).addEventListener("input", (event) => { state.meta[field] = event.target.value; state.metaDirty = true; scheduleSave(); });
+  $(selector).addEventListener("input", (event) => { state.meta[field] = event.target.value; state.metaDirty = true; saveDraft(); scheduleSave(); });
 });
 
 $("#reportDate").addEventListener("change", async (event) => {
@@ -212,3 +254,9 @@ setInterval(() => {
   const editing = ["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName || "");
   if (document.visibilityState === "visible" && !editing && !state.loading && !state.savePromise && !hasPendingChanges()) loadReport(true);
 }, 15000);
+
+window.addEventListener("online", () => { if (hasPendingChanges()) scheduleSave(); });
+window.addEventListener("beforeunload", (event) => {
+  if (!hasPendingChanges() && !state.savePromise) return;
+  event.preventDefault(); event.returnValue = "";
+});
