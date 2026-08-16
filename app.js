@@ -1,6 +1,9 @@
 const API_URL = "https://portal-kelas-sekolah-biru.afiqzkablemo.chatgpt.site/api/school";
 const $ = (selector) => document.querySelector(selector);
-const state = { date: "", classes: [], staffAbsences: [], meta: {}, loading: false, saveTimer: null, saveVersion: 0 };
+const state = {
+  date: "", classes: [], staffAbsences: [], meta: {}, loading: false, saveTimer: null,
+  savePromise: null, pendingAttendance: new Map(), staffDirty: false, metaDirty: false,
+};
 
 function localDateValue() {
   const date = new Date();
@@ -86,10 +89,13 @@ function renderMeta() {
   $("#approvedTitle").value = state.meta.approvedTitle || "";
 }
 
-async function loadReport() {
+function hasPendingChanges() {
+  return state.pendingAttendance.size > 0 || state.staffDirty || state.metaDirty;
+}
+
+async function loadReport(silent = false) {
   state.loading = true;
-  state.saveVersion += 1;
-  setStatus("Memuatkan data…");
+  if (!silent) setStatus("Memuatkan data…");
   updateDateHeading();
   try {
     const response = await fetch(`${API_URL}?date=${encodeURIComponent(state.date)}`, { cache: "no-store" });
@@ -99,35 +105,62 @@ async function loadReport() {
     state.staffAbsences = Array.isArray(data.staffAbsences) ? data.staffAbsences : [];
     state.meta = data.meta || {};
     renderAttendance(); renderStaff(); renderMeta();
-    setStatus("Data bersama sedia", "saved");
+    if (!silent) setStatus("Data bersama sedia", "saved");
   } catch (error) {
     console.error(error);
-    setStatus("Sambungan data terganggu", "error");
-    alert("Data kehadiran belum dapat dibuka. Sila semak internet dan muat semula halaman.");
+    if (!silent) {
+      setStatus("Sambungan data terganggu", "error");
+      alert("Data kehadiran belum dapat dibuka. Sila semak internet dan muat semula halaman.");
+    }
   } finally { state.loading = false; }
 }
 
 function scheduleSave() {
   if (state.loading) return;
-  const version = ++state.saveVersion;
   clearTimeout(state.saveTimer);
   setStatus("Menyimpan perubahan…");
-  state.saveTimer = setTimeout(() => saveReport(version), 650);
+  state.saveTimer = setTimeout(() => flushSave(), 650);
 }
 
-async function saveReport(version) {
-  try {
-    const response = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ date: state.date, classes: state.classes, staffAbsences: state.staffAbsences, meta: state.meta }) });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Simpanan gagal");
-    if (version === state.saveVersion) {
-      const time = new Date(data.savedAt || Date.now()).toLocaleTimeString("ms-MY", { hour: "2-digit", minute: "2-digit" });
-      setStatus(`Tersimpan ${time}`, "saved");
-    }
-  } catch (error) {
-    console.error(error);
-    if (version === state.saveVersion) setStatus("Belum tersimpan — cuba lagi", "error");
+async function flushSave() {
+  clearTimeout(state.saveTimer);
+  if (state.savePromise) {
+    await state.savePromise;
+    if (hasPendingChanges()) return flushSave();
+    return;
   }
+  if (!hasPendingChanges()) return;
+  const snapshot = {
+    date: state.date,
+    attendanceUpdates: Array.from(state.pendingAttendance.values()).map((item) => ({ ...item })),
+    staffAbsences: state.staffDirty ? state.staffAbsences.map((item) => ({ ...item })) : null,
+    meta: state.metaDirty ? { ...state.meta } : null,
+  };
+  state.pendingAttendance.clear(); state.staffDirty = false; state.metaDirty = false;
+  const payload = { date: snapshot.date, attendanceUpdates: snapshot.attendanceUpdates };
+  if (snapshot.staffAbsences) payload.staffAbsences = snapshot.staffAbsences;
+  if (snapshot.meta) payload.meta = snapshot.meta;
+  state.savePromise = (async () => {
+    try {
+      const response = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Simpanan gagal");
+      const time = new Date(data.savedAt || Date.now()).toLocaleTimeString("ms-MY", { hour: "2-digit", minute: "2-digit" });
+      if (!hasPendingChanges()) setStatus(`Tersimpan ${time}`, "saved");
+    } catch (error) {
+      console.error(error);
+      for (const oldPatch of snapshot.attendanceUpdates) {
+        const newerPatch = state.pendingAttendance.get(oldPatch.id) || { id: oldPatch.id };
+        state.pendingAttendance.set(oldPatch.id, { ...oldPatch, ...newerPatch });
+      }
+      if (snapshot.staffAbsences && !state.staffDirty) state.staffDirty = true;
+      if (snapshot.meta && !state.metaDirty) state.metaDirty = true;
+      setStatus("Belum tersimpan — cuba lagi", "error");
+    }
+  })();
+  await state.savePromise;
+  state.savePromise = null;
+  if (hasPendingChanges()) scheduleSave();
 }
 
 $("#attendanceBody").addEventListener("input", (event) => {
@@ -143,6 +176,9 @@ $("#attendanceBody").addEventListener("input", (event) => {
     item[field] = Math.min(count(input.value), maximum);
     input.value = item[field];
   }
+  const pending = state.pendingAttendance.get(item.id) || { id: item.id };
+  pending[field] = item[field];
+  state.pendingAttendance.set(item.id, pending);
   renderTotals(); scheduleSave();
 });
 
@@ -151,17 +187,19 @@ $("#staffBody").addEventListener("input", (event) => {
   if (!input) return;
   const index = Number(input.closest("tr").dataset.staffIndex);
   state.staffAbsences[index][input.dataset.field] = input.value;
+  state.staffDirty = true;
   scheduleSave();
 });
 
 [["#reportNote", "note"], ["#preparedBy", "preparedBy"], ["#approvedBy", "approvedBy"], ["#approvedTitle", "approvedTitle"]].forEach(([selector, field]) => {
-  $(selector).addEventListener("input", (event) => { state.meta[field] = event.target.value; scheduleSave(); });
+  $(selector).addEventListener("input", (event) => { state.meta[field] = event.target.value; state.metaDirty = true; scheduleSave(); });
 });
 
-$("#reportDate").addEventListener("change", (event) => {
+$("#reportDate").addEventListener("change", async (event) => {
   if (!event.target.value) return;
-  clearTimeout(state.saveTimer);
+  await flushSave();
   state.date = event.target.value;
+  state.pendingAttendance.clear(); state.staffDirty = false; state.metaDirty = false;
   loadReport();
 });
 $("#printButton").addEventListener("click", () => window.print());
@@ -169,3 +207,8 @@ $("#printButton").addEventListener("click", () => window.print());
 state.date = localDateValue();
 $("#reportDate").value = state.date;
 loadReport();
+
+setInterval(() => {
+  const editing = ["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName || "");
+  if (document.visibilityState === "visible" && !editing && !state.loading && !state.savePromise && !hasPendingChanges()) loadReport(true);
+}, 15000);
