@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#0755b5">
   <title>Laporan Kedatangan Harian | SK Ranggu</title>
-  <link rel="stylesheet" href="styles.css?v=5">
+  <link rel="stylesheet" href="styles.css?v=6">
 </head>
 <body>
   <header class="topbar no-print">
@@ -26,9 +26,15 @@
         <h1 id="dateTitle">Pilih tarikh untuk isi kehadiran</h1>
         <p>Semua guru boleh mengisi. Setiap perubahan disimpan secara automatik untuk tarikh yang dipilih.</p>
       </div>
-      <label class="date-picker">Tarikh laporan
-        <input id="reportDate" type="date" required>
-      </label>
+      <div class="entry-controls">
+        <label class="user-picker">Nama pengisi
+          <input id="editorName" type="text" maxlength="140" autocomplete="name" placeholder="Masukkan nama guru" required>
+          <small>Nama dan masa direkod pada setiap perubahan.</small>
+        </label>
+        <label class="date-picker">Tarikh laporan
+          <input id="reportDate" type="date" required>
+        </label>
+      </div>
     </section>
 
     <article class="report-card">
@@ -88,7 +94,6 @@
   </main>
 
   <footer class="site-footer"><strong>Sistem Kehadiran SK Ranggu</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="app.js?v=5" defer></script>
+  <script src="app.js?v=6" defer></script>
 </body>
 </html>
-
