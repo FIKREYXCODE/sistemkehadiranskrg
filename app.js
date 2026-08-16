@@ -110,8 +110,8 @@ const SESSION_LABELS = {
 };
 
 function classSession(row) {
-  if (["pra-mutiara-hati", "pra-permata-hati"].includes(row.id) || /^tahun-[456]-/.test(row.id)) return "morning";
-  if (row.id === "pra-mutiara-kasih" || /^tahun-[123]-/.test(row.id)) return "afternoon";
+  if (/^tahun-[456]-/.test(row.id)) return "morning";
+  if (/^tahun-[123]-/.test(row.id)) return "afternoon";
   return "all";
 }
 
