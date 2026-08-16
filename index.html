@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#0755b5">
   <title>Laporan Kedatangan Harian | SK Ranggu</title>
-  <link rel="stylesheet" href="styles.css?v=6">
+  <link rel="stylesheet" href="styles.css?v=7">
 </head>
 <body>
   <header class="topbar no-print">
@@ -15,6 +15,7 @@
     </a>
     <div class="top-actions">
       <span id="saveStatus" class="save-status" aria-live="polite">Memuatkan data…</span>
+      <button id="adminButton" class="admin-button" type="button">⚙ Tetapan kelas</button>
       <button id="printButton" class="print-button" type="button">🖨 Cetak laporan</button>
     </div>
   </header>
@@ -93,7 +94,41 @@
     </article>
   </main>
 
+  <div id="adminModal" class="modal-backdrop no-print" hidden>
+    <section class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="adminTitle">
+      <button id="adminClose" class="modal-close" type="button" aria-label="Tutup">×</button>
+      <div id="adminLoginView">
+        <p class="modal-kicker">UNTUK PENTADBIR SAHAJA</p>
+        <h2 id="adminTitle">Tetapan Kelas</h2>
+        <p>Tukar nama guru kelas dan bilangan murid dengan kod admin.</p>
+        <form id="adminLoginForm" class="admin-login-form">
+          <label>Kod admin<input id="adminPin" type="password" autocomplete="current-password" required></label>
+          <button class="primary-button" type="submit">Masuk sebagai admin</button>
+          <p id="adminError" class="form-message" role="alert"></p>
+        </form>
+      </div>
+      <div id="adminSettingsView" hidden>
+        <p class="modal-kicker">PENTADBIR DISAHKAN</p>
+        <h2>Tetapan Kelas</h2>
+        <div class="effective-date-row">
+          <label>Berkuat kuasa mulai<input id="profileEffectiveDate" type="date" required></label>
+          <p>Perubahan hanya digunakan mulai tarikh ini. Laporan lama tidak berubah.</p>
+        </div>
+        <div class="admin-table-scroll">
+          <table class="admin-table">
+            <thead><tr><th>Kelas</th><th>Nama guru kelas</th><th>Murid lelaki</th><th>Murid perempuan</th></tr></thead>
+            <tbody id="adminClassBody"></tbody>
+          </table>
+        </div>
+        <div class="admin-save-row">
+          <button id="adminSave" class="primary-button" type="button">Simpan tetapan</button>
+          <span id="adminSaveStatus" class="form-message" role="status"></span>
+        </div>
+      </div>
+    </section>
+  </div>
+
   <footer class="site-footer"><strong>Sistem Kehadiran SK Ranggu</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="app.js?v=7" defer></script>
+  <script src="app.js?v=8" defer></script>
 </body>
 </html>
