@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#0755b5">
   <title>Laporan Kedatangan Harian | SK Ranggu</title>
-  <link rel="stylesheet" href="styles.css?v=7">
+  <link rel="stylesheet" href="styles.css?v=8">
 </head>
 <body>
   <header class="topbar no-print">
@@ -35,6 +35,14 @@
         <label class="date-picker">Tarikh laporan
           <input id="reportDate" type="date" required>
         </label>
+        <label class="session-picker">Paparan kehadiran
+          <select id="sessionFilter">
+            <option value="all">Keseluruhan sekolah</option>
+            <option value="morning">Sidang pagi</option>
+            <option value="afternoon">Sidang petang</option>
+          </select>
+          <small>Pilih sidang untuk semak peratus dan cetak.</small>
+        </label>
       </div>
     </section>
 
@@ -48,6 +56,7 @@
           <p class="report-kicker">LAPORAN KEDATANGAN HARIAN</p>
           <h2>SEKOLAH KEBANGSAAN RANGGU</h2>
           <p>PETI SURAT 842, 91008 TAWAU, SABAH • SESI 2026</p>
+          <strong id="sessionReportLabel" class="session-report-label">KESELURUHAN SEKOLAH</strong>
         </div>
         <div class="report-date-block"><span>Tarikh</span><strong id="dateLong">—</strong><small id="dayLong">—</small></div>
       </header>
@@ -129,6 +138,6 @@
   </div>
 
   <footer class="site-footer"><strong>Sistem Kehadiran SK Ranggu</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="app.js?v=8" defer></script>
+  <script src="app.js?v=9" defer></script>
 </body>
 </html>
