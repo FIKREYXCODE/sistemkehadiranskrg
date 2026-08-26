@@ -1,8 +1,8 @@
 const API_URL = "https://portal-kelas-sekolah-biru.afiqzkablemo.chatgpt.site/api/school";
 const $ = (selector) => document.querySelector(selector);
 const state = {
-  date: "", classes: [], staffAbsences: [], meta: {}, loading: false, saveTimer: null,
-  savePromise: null, pendingAttendance: new Map(), staffDirty: false, metaDirty: false, audit: new Map(), adminPin: "", session: "all",
+  date: "", classes: [], staffAbsences: [], dutyTeachers: { morning: [], afternoon: [] }, meta: {}, loading: false, saveTimer: null,
+  savePromise: null, pendingAttendance: new Map(), staffDirty: false, dutyDirtySessions: new Set(), pendingMeta: {}, audit: new Map(), adminPin: "", session: "all",
 };
 const DRAFT_PREFIX = "skrg-pending-v1:";
 const EDITOR_KEY = "skrg-editor-name-v1";
@@ -14,7 +14,8 @@ function saveDraft() {
     const draft = {
       attendanceUpdates: Array.from(state.pendingAttendance.values()),
       staffAbsences: state.staffDirty ? state.staffAbsences : null,
-      meta: state.metaDirty ? state.meta : null,
+      dutyTeacherUpdates: Array.from(state.dutyDirtySessions).map((session) => ({ session, teachers: state.dutyTeachers[session] })),
+      metaUpdates: Object.keys(state.pendingMeta).length ? state.pendingMeta : null,
     };
     if (hasPendingChanges()) localStorage.setItem(draftKey(), JSON.stringify(draft));
     else localStorage.removeItem(draftKey());
@@ -35,7 +36,15 @@ function restoreDraft() {
       state.pendingAttendance.set(patch.id, pending);
     }
     if (Array.isArray(draft.staffAbsences)) { state.staffAbsences = draft.staffAbsences; state.staffDirty = true; }
-    if (draft.meta && typeof draft.meta === "object") { state.meta = draft.meta; state.metaDirty = true; }
+    for (const update of Array.isArray(draft.dutyTeacherUpdates) ? draft.dutyTeacherUpdates : []) {
+      if (!["morning", "afternoon"].includes(update.session) || !Array.isArray(update.teachers)) continue;
+      state.dutyTeachers[update.session] = update.teachers.slice(0, 5);
+      state.dutyDirtySessions.add(update.session);
+    }
+    if (draft.metaUpdates && typeof draft.metaUpdates === "object") {
+      state.pendingMeta = { ...draft.metaUpdates };
+      state.meta = { ...state.meta, ...draft.metaUpdates };
+    }
     return hasPendingChanges();
   } catch { return false; }
 }
@@ -79,7 +88,7 @@ function applyAttendanceAudit(updates, updatedBy, updatedAt) {
 
 function updateEditingAccess() {
   const allowed = Boolean(editorName());
-  document.querySelectorAll("#attendanceBody input,#staffBody input,#reportNote,#preparedBy,#approvedBy,#approvedTitle").forEach((element) => { element.readOnly = !allowed; });
+  document.querySelectorAll("#attendanceBody input,#dutyMorningBody input,#dutyAfternoonBody input,#staffBody input,.report-notes input,.report-notes textarea").forEach((element) => { element.readOnly = !allowed; });
   $("#editorName").classList.toggle("invalid", !allowed);
   if (!allowed && !state.loading) setStatus("Isi nama pengisi untuk mula");
 }
@@ -164,6 +173,20 @@ function renderTotals() {
   $("#summaryPercent").textContent = percent(totals.presentTotal || 0, totals.enrolTotal || 0);
 }
 
+function renderDutyTeachers() {
+  for (const session of ["morning", "afternoon"]) {
+    while (state.dutyTeachers[session].length < 5) state.dutyTeachers[session].push("");
+    state.dutyTeachers[session] = state.dutyTeachers[session].slice(0, 5);
+    const target = session === "morning" ? $("#dutyMorningBody") : $("#dutyAfternoonBody");
+    target.innerHTML = state.dutyTeachers[session].map((teacherName, index) => {
+      const recordId = `${session}:${index + 1}`;
+      const details = auditDetails("duty", recordId, "teacherName");
+      return `<tr data-duty-session="${session}" data-duty-index="${index}"><td>${index + 1}</td><td><input class="cell-input${details.className}" data-field="teacherName" value="${safe(teacherName)}" aria-label="Guru bertugas ${SESSION_LABELS[session]} ${index + 1}" title="${safe(details.title)}"></td></tr>`;
+    }).join("");
+  }
+  updateEditingAccess();
+}
+
 function renderStaff() {
   while (state.staffAbsences.length < 11) state.staffAbsences.push({ staffName: "", subject: "", reason: "" });
   state.staffAbsences = state.staffAbsences.slice(0, 11);
@@ -172,11 +195,13 @@ function renderStaff() {
 }
 
 function renderMeta() {
-  $("#reportNote").value = state.meta.note || "";
-  $("#preparedBy").value = state.meta.preparedBy || "";
+  $("#reportNoteMorning").value = state.meta.noteMorning || "";
+  $("#preparedByMorning").value = state.meta.preparedByMorning || "";
+  $("#reportNoteAfternoon").value = state.meta.noteAfternoon || "";
+  $("#preparedByAfternoon").value = state.meta.preparedByAfternoon || "";
   $("#approvedBy").value = state.meta.approvedBy || "";
   $("#approvedTitle").value = state.meta.approvedTitle || "";
-  for (const [selector, field] of [["#reportNote", "note"], ["#preparedBy", "preparedBy"], ["#approvedBy", "approvedBy"], ["#approvedTitle", "approvedTitle"]]) {
+  for (const [selector, field] of [["#reportNoteMorning", "noteMorning"], ["#preparedByMorning", "preparedByMorning"], ["#reportNoteAfternoon", "noteAfternoon"], ["#preparedByAfternoon", "preparedByAfternoon"], ["#approvedBy", "approvedBy"], ["#approvedTitle", "approvedTitle"]]) {
     const element = $(selector);
     const details = auditDetails("meta", "report", field);
     element.title = details.title;
@@ -257,7 +282,7 @@ async function saveClassProfiles() {
 }
 
 function hasPendingChanges() {
-  return state.pendingAttendance.size > 0 || state.staffDirty || state.metaDirty;
+  return state.pendingAttendance.size > 0 || state.staffDirty || state.dutyDirtySessions.size > 0 || Object.keys(state.pendingMeta).length > 0;
 }
 
 async function loadReport(silent = false) {
@@ -270,10 +295,15 @@ async function loadReport(silent = false) {
     if (!response.ok) throw new Error(data.error || "Data tidak dapat dibuka");
     state.classes = Array.isArray(data.classes) ? data.classes : [];
     state.staffAbsences = Array.isArray(data.staffAbsences) ? data.staffAbsences : [];
+    state.dutyTeachers = { morning: [], afternoon: [] };
+    for (const item of Array.isArray(data.dutyTeachers) ? data.dutyTeachers : []) {
+      if (!["morning", "afternoon"].includes(item.session)) continue;
+      state.dutyTeachers[item.session][Number(item.rowOrder) - 1] = item.teacherName || "";
+    }
     state.meta = data.meta || {};
     state.audit = new Map((Array.isArray(data.audit) ? data.audit : []).map((item) => [auditKey(item.section, item.recordId, item.fieldName), item]));
     const restoredDraft = !silent && restoreDraft();
-    renderAttendance(); renderStaff(); renderMeta();
+    renderAttendance(); renderDutyTeachers(); renderStaff(); renderMeta();
     if (!silent) {
       setStatus(restoredDraft ? "Menyambung simpanan tertangguh…" : "Data bersama sedia", restoredDraft ? "" : "saved");
       if (restoredDraft) scheduleSave();
@@ -307,13 +337,15 @@ async function flushSave() {
     date: state.date,
     attendanceUpdates: Array.from(state.pendingAttendance.values()).map((item) => ({ ...item })),
     staffAbsences: state.staffDirty ? state.staffAbsences.map((item) => ({ ...item })) : null,
-    meta: state.metaDirty ? { ...state.meta } : null,
+    dutyTeacherUpdates: Array.from(state.dutyDirtySessions).map((session) => ({ session, teachers: [...state.dutyTeachers[session]] })),
+    metaUpdates: { ...state.pendingMeta },
     updatedBy: editorName(),
   };
-  state.pendingAttendance.clear(); state.staffDirty = false; state.metaDirty = false;
+  state.pendingAttendance.clear(); state.staffDirty = false; state.dutyDirtySessions.clear(); state.pendingMeta = {};
   const payload = { date: snapshot.date, attendanceUpdates: snapshot.attendanceUpdates, updatedBy: snapshot.updatedBy };
   if (snapshot.staffAbsences) payload.staffAbsences = snapshot.staffAbsences;
-  if (snapshot.meta) payload.meta = snapshot.meta;
+  if (snapshot.dutyTeacherUpdates.length) payload.dutyTeacherUpdates = snapshot.dutyTeacherUpdates;
+  if (Object.keys(snapshot.metaUpdates).length) payload.metaUpdates = snapshot.metaUpdates;
   state.savePromise = (async () => {
     try {
       const response = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -331,7 +363,8 @@ async function flushSave() {
         state.pendingAttendance.set(oldPatch.id, { ...oldPatch, ...newerPatch });
       }
       if (snapshot.staffAbsences && !state.staffDirty) state.staffDirty = true;
-      if (snapshot.meta && !state.metaDirty) state.metaDirty = true;
+      for (const update of snapshot.dutyTeacherUpdates) state.dutyDirtySessions.add(update.session);
+      state.pendingMeta = { ...snapshot.metaUpdates, ...state.pendingMeta };
       saveDraft();
       setStatus("Belum tersimpan — cuba lagi", "error");
     }
@@ -371,15 +404,31 @@ $("#staffBody").addEventListener("input", (event) => {
   scheduleSave();
 });
 
-[["#reportNote", "note"], ["#preparedBy", "preparedBy"], ["#approvedBy", "approvedBy"], ["#approvedTitle", "approvedTitle"]].forEach(([selector, field]) => {
-  $(selector).addEventListener("input", (event) => { state.meta[field] = event.target.value; state.metaDirty = true; saveDraft(); scheduleSave(); });
+for (const selector of ["#dutyMorningBody", "#dutyAfternoonBody"]) {
+  $(selector).addEventListener("input", (event) => {
+    const input = event.target.closest("input[data-field]");
+    if (!input) return;
+    const row = input.closest("tr[data-duty-session]");
+    const session = row.dataset.dutySession;
+    state.dutyTeachers[session][Number(row.dataset.dutyIndex)] = input.value;
+    state.dutyDirtySessions.add(session);
+    saveDraft(); scheduleSave();
+  });
+}
+
+[["#reportNoteMorning", "noteMorning"], ["#preparedByMorning", "preparedByMorning"], ["#reportNoteAfternoon", "noteAfternoon"], ["#preparedByAfternoon", "preparedByAfternoon"], ["#approvedBy", "approvedBy"], ["#approvedTitle", "approvedTitle"]].forEach(([selector, field]) => {
+  $(selector).addEventListener("input", (event) => {
+    state.meta[field] = event.target.value;
+    state.pendingMeta[field] = event.target.value;
+    saveDraft(); scheduleSave();
+  });
 });
 
 $("#reportDate").addEventListener("change", async (event) => {
   if (!event.target.value) return;
   await flushSave();
   state.date = event.target.value;
-  state.pendingAttendance.clear(); state.staffDirty = false; state.metaDirty = false;
+  state.pendingAttendance.clear(); state.staffDirty = false; state.dutyDirtySessions.clear(); state.pendingMeta = {};
   loadReport();
 });
 $("#sessionFilter").addEventListener("change", (event) => {
