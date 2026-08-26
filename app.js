@@ -128,6 +128,12 @@ function visibleClasses() {
   return state.session === "all" ? state.classes : state.classes.filter((row) => classSession(row) === state.session);
 }
 
+function updateSessionVisibility() {
+  document.querySelectorAll("[data-report-session]").forEach((element) => {
+    element.classList.toggle("session-hidden", state.session !== "all" && element.dataset.reportSession !== state.session);
+  });
+}
+
 function setStatus(message, type = "") {
   const element = $("#saveStatus");
   element.textContent = message;
@@ -303,7 +309,7 @@ async function loadReport(silent = false) {
     state.meta = data.meta || {};
     state.audit = new Map((Array.isArray(data.audit) ? data.audit : []).map((item) => [auditKey(item.section, item.recordId, item.fieldName), item]));
     const restoredDraft = !silent && restoreDraft();
-    renderAttendance(); renderDutyTeachers(); renderStaff(); renderMeta();
+    renderAttendance(); renderDutyTeachers(); renderStaff(); renderMeta(); updateSessionVisibility();
     if (!silent) {
       setStatus(restoredDraft ? "Menyambung simpanan tertangguh…" : "Data bersama sedia", restoredDraft ? "" : "saved");
       if (restoredDraft) scheduleSave();
@@ -434,6 +440,7 @@ $("#reportDate").addEventListener("change", async (event) => {
 $("#sessionFilter").addEventListener("change", (event) => {
   state.session = event.target.value;
   renderAttendance();
+  updateSessionVisibility();
   updateEditingAccess();
 });
 $("#printButton").addEventListener("click", () => window.print());
