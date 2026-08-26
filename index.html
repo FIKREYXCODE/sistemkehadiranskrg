@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#0755b5">
   <title>Laporan Kedatangan Harian | SK Ranggu</title>
-  <link rel="stylesheet" href="styles.css?v=8">
+  <link rel="stylesheet" href="styles.css?v=9">
 </head>
 <body>
   <header class="topbar no-print">
@@ -68,6 +68,20 @@
         <div class="success"><span>Peratus hadir</span><strong id="summaryPercent">0%</strong></div>
       </section>
 
+      <section class="duty-section">
+        <div class="section-heading"><div><h3>Senarai Guru Bertugas Harian</h3></div><p>Setiap sidang mempunyai senarai sendiri dan disimpan mengikut tarikh.</p></div>
+        <div class="duty-session-grid">
+          <div class="duty-session-card morning-card">
+            <h4>Sidang Pagi</h4>
+            <table class="duty-table"><thead><tr><th>Bil</th><th>Nama guru bertugas</th></tr></thead><tbody id="dutyMorningBody"></tbody></table>
+          </div>
+          <div class="duty-session-card afternoon-card">
+            <h4>Sidang Petang</h4>
+            <table class="duty-table"><thead><tr><th>Bil</th><th>Nama guru bertugas</th></tr></thead><tbody id="dutyAfternoonBody"></tbody></table>
+          </div>
+        </div>
+      </section>
+
       <section class="table-section">
         <div class="section-heading"><div><span>01</span><h3>Kehadiran mengikut kelas</h3></div><p>Isi bilangan murid lelaki dan perempuan yang tidak hadir.</p></div>
         <div class="table-scroll">
@@ -93,9 +107,19 @@
       </section>
 
       <section class="report-notes">
-        <label>Catatan laporan<textarea id="reportNote" rows="3" placeholder="Catatan tambahan untuk laporan harian"></textarea></label>
-        <div class="signature-grid">
-          <label>Disediakan oleh<input id="preparedBy" type="text" placeholder="Nama guru bertugas"></label>
+        <div class="session-notes-grid">
+          <div class="session-note-card morning-card">
+            <h4>Sidang Pagi</h4>
+            <label>Catatan laporan<textarea id="reportNoteMorning" rows="3" placeholder="Catatan laporan sidang pagi"></textarea></label>
+            <label>Disediakan oleh<input id="preparedByMorning" type="text" placeholder="Nama guru bertugas sidang pagi"></label>
+          </div>
+          <div class="session-note-card afternoon-card">
+            <h4>Sidang Petang</h4>
+            <label>Catatan laporan<textarea id="reportNoteAfternoon" rows="3" placeholder="Catatan laporan sidang petang"></textarea></label>
+            <label>Disediakan oleh<input id="preparedByAfternoon" type="text" placeholder="Nama guru bertugas sidang petang"></label>
+          </div>
+        </div>
+        <div class="signature-grid approval-grid">
           <label>Disahkan oleh<input id="approvedBy" type="text" placeholder="Nama pegawai pengesah"></label>
           <label>Jawatan<input id="approvedTitle" type="text" placeholder="Contoh: Guru Besar"></label>
         </div>
@@ -138,6 +162,6 @@
   </div>
 
   <footer class="site-footer"><strong>Sistem Kehadiran SK Ranggu</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="app.js?v=10" defer></script>
+  <script src="app.js?v=11" defer></script>
 </body>
 </html>
