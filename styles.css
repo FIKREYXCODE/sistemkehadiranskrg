@@ -42,6 +42,16 @@ body{margin:0;background:linear-gradient(135deg,#edf7ff 0%,#fff 46%,#e9f3ff 100%
 .summary-grid .danger strong{color:var(--red)}
 .summary-grid .success{border-left-color:var(--green)}
 .summary-grid .success strong{color:var(--green)}
+.duty-section{padding:25px 32px 5px;border-top:1px solid var(--line)}
+.duty-session-grid,.session-notes-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.duty-session-card,.session-note-card{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
+.duty-session-card h4,.session-note-card h4{margin:0;padding:11px 15px;color:#fff;background:var(--blue);font-size:.88rem;text-transform:uppercase;letter-spacing:.06em}
+.afternoon-card h4{background:#087ab7}
+.duty-table th:first-child{width:55px}
+.duty-table .cell-input{text-align:left}
+.session-note-card{padding-bottom:15px}
+.session-note-card label{padding:13px 15px 0}
+.approval-grid{grid-template-columns:repeat(2,minmax(0,1fr));padding-top:4px}
 .table-section{padding:26px 32px 6px}
 .section-heading{display:flex;justify-content:space-between;gap:20px;align-items:end;margin-bottom:15px}
 .section-heading>div{display:flex;align-items:center;gap:10px}
@@ -106,6 +116,11 @@ body{background:#fff;color:#000}
 .logo-pair{box-shadow:none}
 .summary-grid{padding:2mm;gap:2mm}
 .summary-grid div{padding:2mm 3mm;border-radius:0}
+.duty-section{padding:2mm 1mm 0;break-inside:avoid}
+.duty-session-grid{gap:3mm}
+.duty-session-card,.session-note-card{border-radius:0}
+.duty-session-card h4,.session-note-card h4{padding:1.5mm 2mm}
+.duty-table th,.duty-table td{padding:1mm}
 .table-section{padding:3mm 1mm 0}
 .section-heading{margin-bottom:2mm}
 .section-heading p{display:none}
@@ -156,5 +171,5 @@ body{background:#fff;color:#000}
 .admin-table input[type=number]{text-align:center;min-width:95px}
 .admin-save-row{display:flex;align-items:center;gap:14px;margin-top:18px}
 .admin-save-row .form-message{color:var(--green)}
-@media(max-width:800px){.entry-controls{grid-template-columns:1fr}}
+@media(max-width:800px){.entry-controls{grid-template-columns:1fr}.duty-session-grid,.session-notes-grid,.approval-grid{grid-template-columns:1fr}.duty-section{padding-left:15px;padding-right:15px}}
 @media(max-width:800px){.admin-button{font-size:0;padding:10px 12px}.admin-button:first-letter{font-size:1rem}.admin-modal{padding:24px 16px}.effective-date-row{display:block}.effective-date-row p{margin-top:10px}}
