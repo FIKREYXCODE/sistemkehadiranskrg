@@ -3,6 +3,7 @@ const $ = (selector) => document.querySelector(selector);
 const state = {
   date: "", classes: [], staffAbsences: [], dutyTeachers: { morning: [], afternoon: [] }, meta: {}, loading: false, saveTimer: null,
   savePromise: null, pendingAttendance: new Map(), staffDirty: false, dutyDirtySessions: new Set(), pendingMeta: {}, audit: new Map(), adminPin: "", session: "all",
+  analytics: { period: "week", date: "", loading: false },
 };
 const DRAFT_PREFIX = "skrg-pending-v1:";
 const EDITOR_KEY = "skrg-editor-name-v1";
@@ -122,6 +123,125 @@ function classSession(row) {
   if (/^tahun-[456]-/.test(row.id)) return "morning";
   if (/^tahun-[123]-/.test(row.id)) return "afternoon";
   return "all";
+}
+
+function dateObject(value) { return new Date(`${value}T00:00:00Z`); }
+function dateValue(date) { return date.toISOString().slice(0, 10); }
+function addDays(date, days) { const next = new Date(date); next.setUTCDate(next.getUTCDate() + days); return next; }
+
+function analyticsRange(period, anchorValue) {
+  const anchor = dateObject(anchorValue);
+  if (period === "month") {
+    const from = new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth(), 1));
+    const to = new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + 1, 0));
+    return { from: dateValue(from), to: dateValue(to) };
+  }
+  const mondayOffset = (anchor.getUTCDay() + 6) % 7;
+  const from = addDays(anchor, -mondayOffset);
+  return { from: dateValue(from), to: dateValue(addDays(from, 6)) };
+}
+
+function datesInRange(from, to) {
+  const values = [];
+  for (let cursor = dateObject(from); cursor <= dateObject(to); cursor = addDays(cursor, 1)) values.push(dateValue(cursor));
+  return values;
+}
+
+function analyticsRecordSession(row) {
+  if (/^tahun-[456]-/.test(row.id)) return "morning";
+  if (/^tahun-[123]-/.test(row.id)) return "afternoon";
+  return "all";
+}
+
+function aggregateAnalytics(records, from, to) {
+  const days = datesInRange(from, to).map((date) => ({ date, all: null, morning: null, afternoon: null, recordCount: 0 }));
+  const byDate = new Map(days.map((day) => [day.date, day]));
+  const totals = Object.fromEntries(["all", "morning", "afternoon"].map((session) => [session, { enrol: 0, present: 0, days: new Set(), records: 0 }]));
+  const dailyTotals = new Map();
+  for (const row of records) {
+    const enrol = count(row.enrolMale, 300) + count(row.enrolFemale, 300);
+    const absent = Math.min(count(row.absentMale, 300) + count(row.absentFemale, 300), enrol);
+    const session = analyticsRecordSession(row);
+    const sessions = session === "all" ? ["all"] : ["all", session];
+    const day = byDate.get(row.date);
+    if (!day || enrol <= 0) continue;
+    day.recordCount += 1;
+    for (const key of sessions) {
+      const dailyKey = `${row.date}:${key}`;
+      const daily = dailyTotals.get(dailyKey) || { enrol: 0, present: 0 };
+      daily.enrol += enrol; daily.present += enrol - absent; dailyTotals.set(dailyKey, daily);
+      totals[key].enrol += enrol; totals[key].present += enrol - absent; totals[key].records += 1; totals[key].days.add(row.date);
+    }
+  }
+  for (const day of days) for (const session of ["all", "morning", "afternoon"]) {
+    const value = dailyTotals.get(`${day.date}:${session}`);
+    if (value?.enrol) day[session] = (value.present / value.enrol) * 100;
+  }
+  return { days, totals };
+}
+
+function analysisPercent(value) { return Number.isFinite(value) ? `${value.toFixed(2)}%` : "—"; }
+
+function chartPaths(points) {
+  const paths = []; let segment = [];
+  for (const point of points) {
+    if (point) segment.push(point);
+    else if (segment.length) { paths.push(segment); segment = []; }
+  }
+  if (segment.length) paths.push(segment);
+  return paths;
+}
+
+function renderAnalytics(records, range) {
+  const { days, totals } = aggregateAnalytics(records, range.from, range.to);
+  const labels = { all: "Keseluruhan", morning: "Sidang pagi", afternoon: "Sidang petang" };
+  $("#analysisSummary").innerHTML = ["all", "morning", "afternoon"].map((session) => {
+    const item = totals[session];
+    const average = item.enrol ? (item.present / item.enrol) * 100 : NaN;
+    return `<article class="${session}"><span>${labels[session]}</span><strong>${analysisPercent(average)}</strong><small>${item.days.size} hari • ${item.records} rekod kelas</small></article>`;
+  }).join("");
+  const rangeFormatter = new Intl.DateTimeFormat("ms-MY", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
+  $("#analysisRangeLabel").textContent = `${rangeFormatter.format(dateObject(range.from))} – ${rangeFormatter.format(dateObject(range.to))}`;
+  const width = 1000, height = 350, left = 58, right = 24, top = 24, bottom = 52;
+  const plotWidth = width - left - right, plotHeight = height - top - bottom;
+  const x = (index) => left + (days.length === 1 ? plotWidth / 2 : (index / (days.length - 1)) * plotWidth);
+  const y = (value) => top + ((100 - Math.max(0, Math.min(100, value))) / 100) * plotHeight;
+  const colors = { all: "#0755b5", morning: "#08a06c", afternoon: "#f28b23" };
+  const grids = [0, 25, 50, 75, 100].map((value) => `<line class="chart-grid" x1="${left}" y1="${y(value)}" x2="${width-right}" y2="${y(value)}"/><text class="chart-axis-text" x="${left-10}" y="${y(value)+4}" text-anchor="end">${value}%</text>`).join("");
+  const labelEvery = days.length > 10 ? 5 : 1;
+  const xLabels = days.map((day, index) => (index % labelEvery === 0 || index === days.length - 1) ? `<text class="chart-axis-text" x="${x(index)}" y="${height-20}" text-anchor="middle">${new Intl.DateTimeFormat("ms-MY", { day: "2-digit", month: "short", timeZone: "UTC" }).format(dateObject(day.date))}</text>` : "").join("");
+  const series = ["all", "morning", "afternoon"].map((session) => {
+    const points = days.map((day, index) => Number.isFinite(day[session]) ? { x: x(index), y: y(day[session]), value: day[session], date: day.date } : null);
+    const paths = chartPaths(points).map((segment) => segment.length === 1
+      ? ""
+      : `<polyline class="chart-line" stroke="${colors[session]}" points="${segment.map((point) => `${point.x},${point.y}`).join(" ")}"/>`).join("");
+    const dots = points.filter(Boolean).map((point) => `<circle class="chart-dot" fill="${colors[session]}" cx="${point.x}" cy="${point.y}" r="6"><title>${labels[session]} • ${point.date}: ${point.value.toFixed(2)}%</title></circle>`).join("");
+    return paths + dots;
+  }).join("");
+  $("#attendanceChart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Graf peratus kehadiran ${safe($("#analysisRangeLabel").textContent)}">${grids}${xLabels}${series}</svg>`;
+  $("#analysisTableBody").innerHTML = days.map((day) => `<tr><td>${rangeFormatter.format(dateObject(day.date))}</td><td>${analysisPercent(day.all)}</td><td>${analysisPercent(day.morning)}</td><td>${analysisPercent(day.afternoon)}</td><td>${day.recordCount}</td></tr>`).join("");
+  const totalRecords = records.length;
+  $("#analysisStatus").className = "analysis-status";
+  $("#analysisStatus").textContent = totalRecords ? `${totalRecords} rekod kelas ditemui. Analisis ini tidak mengubah data asal.` : "Belum ada rekod kehadiran tersimpan dalam tempoh ini.";
+}
+
+async function loadAnalytics() {
+  if (state.analytics.loading) return;
+  state.analytics.loading = true;
+  const range = analyticsRange($("#analysisPeriod").value, $("#analysisDate").value || state.date);
+  $("#analysisStatus").className = "analysis-status";
+  $("#analysisStatus").textContent = "Memuatkan analisis…";
+  $("#analysisRefresh").disabled = true;
+  try {
+    const response = await fetch(`${API_URL}?mode=analytics&from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`, { cache: "no-store" });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Analisis tidak dapat dibuka.");
+    renderAnalytics(Array.isArray(data.records) ? data.records : [], range);
+  } catch (error) {
+    console.error(error);
+    $("#analysisStatus").className = "analysis-status error";
+    $("#analysisStatus").textContent = error.message || "Analisis tidak dapat dibuka. Cuba lagi.";
+  } finally { state.analytics.loading = false; $("#analysisRefresh").disabled = false; }
 }
 
 function visibleClasses() {
@@ -444,6 +564,8 @@ $("#sessionFilter").addEventListener("change", (event) => {
   updateEditingAccess();
 });
 $("#printButton").addEventListener("click", () => window.print());
+$("#analysisRefresh").addEventListener("click", loadAnalytics);
+$("#analysisPeriod").addEventListener("change", loadAnalytics);
 $("#adminButton").addEventListener("click", async () => {
   await flushSave();
   $("#adminModal").hidden = false;
@@ -471,8 +593,11 @@ $("#editorName").addEventListener("input", (event) => {
 
 state.date = localDateValue();
 $("#reportDate").value = state.date;
+state.analytics.date = state.date;
+$("#analysisDate").value = state.date;
 try { $("#editorName").value = localStorage.getItem(EDITOR_KEY) || ""; } catch { /* abaikan */ }
 loadReport();
+loadAnalytics();
 
 setInterval(() => {
   const editing = ["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName || "");

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#0755b5">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="stylesheet" href="styles.css?v=10">
+  <link rel="stylesheet" href="styles.css?v=11">
 </head>
 <body>
   <header class="topbar no-print">
@@ -125,6 +125,44 @@
         </div>
       </section>
     </article>
+
+    <section id="attendanceAnalysis" class="analysis-card no-print" aria-labelledby="analysisTitle">
+      <div class="analysis-head">
+        <div>
+          <p class="eyebrow">Analisis data bersama</p>
+          <h2 id="analysisTitle">Analisis Kehadiran Mingguan &amp; Bulanan</h2>
+          <p>Bandingkan peratus kehadiran keseluruhan, sidang pagi dan sidang petang berdasarkan rekod yang telah disimpan.</p>
+        </div>
+        <div class="analysis-controls">
+          <label>Tempoh
+            <select id="analysisPeriod">
+              <option value="week">Mingguan</option>
+              <option value="month">Bulanan</option>
+            </select>
+          </label>
+          <label>Tarikh rujukan
+            <input id="analysisDate" type="date" required>
+          </label>
+          <button id="analysisRefresh" class="primary-button" type="button">Jana analisis</button>
+        </div>
+      </div>
+      <div id="analysisStatus" class="analysis-status" role="status" aria-live="polite">Memuatkan analisis…</div>
+      <div id="analysisSummary" class="analysis-summary" aria-label="Ringkasan peratus kehadiran"></div>
+      <div class="chart-shell">
+        <div class="chart-title-row">
+          <div><strong id="analysisRangeLabel">—</strong><small>Peratus kehadiran bagi tarikh yang mempunyai rekod</small></div>
+          <div class="chart-legend" aria-label="Petunjuk carta"><span><i class="legend-all"></i>Keseluruhan</span><span><i class="legend-morning"></i>Sidang pagi</span><span><i class="legend-afternoon"></i>Sidang petang</span></div>
+        </div>
+        <div id="attendanceChart" class="attendance-chart" aria-label="Carta graf peratus kehadiran"></div>
+      </div>
+      <div class="analysis-table-wrap">
+        <table class="analysis-table">
+          <thead><tr><th>Tarikh</th><th>Keseluruhan</th><th>Sidang pagi</th><th>Sidang petang</th><th>Rekod kelas</th></tr></thead>
+          <tbody id="analysisTableBody"></tbody>
+        </table>
+      </div>
+      <p class="analysis-note">Nota: Prasekolah dikira dalam keseluruhan sekolah sahaja. Tanda “—” bermaksud belum ada rekod disimpan bagi sidang atau tarikh tersebut.</p>
+    </section>
   </main>
 
   <div id="adminModal" class="modal-backdrop no-print" hidden>
@@ -162,6 +200,6 @@
   </div>
 
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="app.js?v=12" defer></script>
+  <script src="app.js?v=13" defer></script>
 </body>
 </html>
