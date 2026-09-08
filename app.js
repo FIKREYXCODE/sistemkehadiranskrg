@@ -182,43 +182,36 @@ function aggregateAnalytics(records, from, to) {
 
 function analysisPercent(value) { return Number.isFinite(value) ? `${value.toFixed(2)}%` : "—"; }
 
-function chartPaths(points) {
-  const paths = []; let segment = [];
-  for (const point of points) {
-    if (point) segment.push(point);
-    else if (segment.length) { paths.push(segment); segment = []; }
-  }
-  if (segment.length) paths.push(segment);
-  return paths;
-}
-
 function renderAnalytics(records, range) {
   const { days, totals } = aggregateAnalytics(records, range.from, range.to);
   const labels = { all: "Keseluruhan", morning: "Sidang pagi", afternoon: "Sidang petang" };
+  const periodLabel = $("#analysisPeriod").value === "month" ? "Purata bulanan" : "Purata mingguan";
   $("#analysisSummary").innerHTML = ["all", "morning", "afternoon"].map((session) => {
     const item = totals[session];
     const average = item.enrol ? (item.present / item.enrol) * 100 : NaN;
-    return `<article class="${session}"><span>${labels[session]}</span><strong>${analysisPercent(average)}</strong><small>${item.days.size} hari • ${item.records} rekod kelas</small></article>`;
+    return `<article class="${session}"><span>${periodLabel} — ${labels[session]}</span><strong>${analysisPercent(average)}</strong><small>${item.days.size} hari • ${item.records} rekod kelas</small></article>`;
   }).join("");
   const rangeFormatter = new Intl.DateTimeFormat("ms-MY", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
   $("#analysisRangeLabel").textContent = `${rangeFormatter.format(dateObject(range.from))} – ${rangeFormatter.format(dateObject(range.to))}`;
   const width = 1000, height = 350, left = 58, right = 24, top = 24, bottom = 52;
   const plotWidth = width - left - right, plotHeight = height - top - bottom;
-  const x = (index) => left + (days.length === 1 ? plotWidth / 2 : (index / (days.length - 1)) * plotWidth);
+  const groupWidth = plotWidth / Math.max(days.length, 1);
+  const x = (index) => left + (index + 0.5) * groupWidth;
   const y = (value) => top + ((100 - Math.max(0, Math.min(100, value))) / 100) * plotHeight;
   const colors = { all: "#0755b5", morning: "#08a06c", afternoon: "#f28b23" };
   const grids = [0, 25, 50, 75, 100].map((value) => `<line class="chart-grid" x1="${left}" y1="${y(value)}" x2="${width-right}" y2="${y(value)}"/><text class="chart-axis-text" x="${left-10}" y="${y(value)+4}" text-anchor="end">${value}%</text>`).join("");
   const labelEvery = days.length > 10 ? 5 : 1;
   const xLabels = days.map((day, index) => (index % labelEvery === 0 || index === days.length - 1) ? `<text class="chart-axis-text" x="${x(index)}" y="${height-20}" text-anchor="middle">${new Intl.DateTimeFormat("ms-MY", { day: "2-digit", month: "short", timeZone: "UTC" }).format(dateObject(day.date))}</text>` : "").join("");
-  const series = ["all", "morning", "afternoon"].map((session) => {
-    const points = days.map((day, index) => Number.isFinite(day[session]) ? { x: x(index), y: y(day[session]), value: day[session], date: day.date } : null);
-    const paths = chartPaths(points).map((segment) => segment.length === 1
-      ? ""
-      : `<polyline class="chart-line" stroke="${colors[session]}" points="${segment.map((point) => `${point.x},${point.y}`).join(" ")}"/>`).join("");
-    const dots = points.filter(Boolean).map((point) => `<circle class="chart-dot" fill="${colors[session]}" cx="${point.x}" cy="${point.y}" r="6"><title>${labels[session]} • ${point.date}: ${point.value.toFixed(2)}%</title></circle>`).join("");
-    return paths + dots;
-  }).join("");
-  $("#attendanceChart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Graf peratus kehadiran ${safe($("#analysisRangeLabel").textContent)}">${grids}${xLabels}${series}</svg>`;
+  const sessions = ["all", "morning", "afternoon"];
+  const barWidth = Math.max(3, Math.min(20, groupWidth * 0.24));
+  const bars = days.map((day, index) => sessions.map((session, sessionIndex) => {
+    const value = day[session];
+    if (!Number.isFinite(value)) return "";
+    const barX = x(index) + (sessionIndex - 1) * (barWidth + 2) - barWidth / 2;
+    const barY = y(value);
+    return `<rect class="chart-bar" fill="${colors[session]}" x="${barX}" y="${barY}" width="${barWidth}" height="${top + plotHeight - barY}" rx="3"><title>${labels[session]} • ${day.date}: ${value.toFixed(2)}%</title></rect>`;
+  }).join("")).join("");
+  $("#attendanceChart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Graf bar peratus kehadiran ${safe($("#analysisRangeLabel").textContent)}">${grids}${xLabels}${bars}</svg>`;
   $("#analysisTableBody").innerHTML = days.map((day) => `<tr><td>${rangeFormatter.format(dateObject(day.date))}</td><td>${analysisPercent(day.all)}</td><td>${analysisPercent(day.morning)}</td><td>${analysisPercent(day.afternoon)}</td><td>${day.recordCount}</td></tr>`).join("");
   const totalRecords = records.length;
   $("#analysisStatus").className = "analysis-status";
