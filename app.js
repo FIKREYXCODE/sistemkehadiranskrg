@@ -608,3 +608,10 @@ window.addEventListener("beforeunload", (event) => {
   if (!hasPendingChanges() && !state.savePromise) return;
   event.preventDefault(); event.returnValue = "";
 });
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js", { scope: "./", updateViaCache: "none" })
+      .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
+  });
+}
