@@ -209,7 +209,13 @@ function renderAnalytics(records, range) {
     if (!Number.isFinite(value)) return "";
     const barX = x(index) + (sessionIndex - 1) * (barWidth + 2) - barWidth / 2;
     const barY = y(value);
-    return `<rect class="chart-bar" fill="${colors[session]}" x="${barX}" y="${barY}" width="${barWidth}" height="${top + plotHeight - barY}" rx="3"><title>${labels[session]} • ${day.date}: ${value.toFixed(2)}%</title></rect>`;
+    const barHeight = top + plotHeight - barY;
+    const barCenter = barX + barWidth / 2;
+    const valueText = `${value.toFixed(1)}%`;
+    const valueLabel = barHeight >= 42
+      ? `<text class="chart-bar-value" x="${barCenter}" y="${barY + barHeight / 2}" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90 ${barCenter} ${barY + barHeight / 2})">${valueText}</text>`
+      : `<text class="chart-bar-value outside" x="${barCenter}" y="${Math.max(top + 10, barY - 5)}" text-anchor="middle">${valueText}</text>`;
+    return `<rect class="chart-bar" fill="${colors[session]}" x="${barX}" y="${barY}" width="${barWidth}" height="${barHeight}" rx="3"><title>${labels[session]} • ${day.date}: ${value.toFixed(2)}%</title></rect>${valueLabel}`;
   }).join("")).join("");
   $("#attendanceChart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Graf bar peratus kehadiran ${safe($("#analysisRangeLabel").textContent)}">${grids}${xLabels}${bars}</svg>`;
   $("#analysisTableBody").innerHTML = days.map((day) => `<tr><td>${rangeFormatter.format(dateObject(day.date))}</td><td>${analysisPercent(day.all)}</td><td>${analysisPercent(day.morning)}</td><td>${analysisPercent(day.afternoon)}</td><td>${day.recordCount}</td></tr>`).join("");

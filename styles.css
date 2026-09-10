@@ -108,7 +108,7 @@ tfoot td{background:#dfeaf4;font-weight:900}
 .chart-title-row strong,.chart-title-row small{display:block}.chart-title-row small{margin-top:4px;color:var(--muted);font-size:.72rem}
 .chart-legend{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:.72rem;font-weight:700}
 .chart-legend span{display:flex;align-items:center;gap:6px}.chart-legend i{width:22px;height:4px;border-radius:4px;background:#0755b5}.chart-legend .legend-morning{background:#08a06c}.chart-legend .legend-afternoon{background:#f28b23}
-.attendance-chart{min-height:330px;margin-top:12px;overflow-x:auto}.attendance-chart svg{display:block;width:100%;min-width:720px;height:auto}.chart-grid{stroke:#dbe7f4;stroke-width:1}.chart-axis-text{fill:#6b7d97;font-size:12px}.chart-bar{opacity:.9;transition:opacity .15s}.chart-bar:hover{opacity:1;stroke:#14213d;stroke-width:1}
+.attendance-chart{min-height:330px;margin-top:12px;overflow-x:auto}.attendance-chart svg{display:block;width:100%;min-width:720px;height:auto}.chart-grid{stroke:#dbe7f4;stroke-width:1}.chart-axis-text{fill:#6b7d97;font-size:12px}.chart-bar{opacity:.9;transition:opacity .15s}.chart-bar:hover{opacity:1;stroke:#14213d;stroke-width:1}.chart-bar-value{fill:#fff;font-size:10px;font-weight:900;pointer-events:none}.chart-bar-value.outside{fill:#14213d;font-size:9px}
 .analysis-table-wrap{margin-top:16px;overflow:auto;border:1px solid var(--line);border-radius:12px}.analysis-table{min-width:680px}.analysis-table th{background:var(--navy)}.analysis-table td{font-size:.8rem}.analysis-table td:not(:first-child){font-weight:800}
 .analysis-note{margin:12px 0 0;color:var(--muted);font-size:.75rem}
 @media(max-width:800px){.topbar{height:auto;min-height:76px;padding:13px 16px}
