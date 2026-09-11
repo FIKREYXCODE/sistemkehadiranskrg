@@ -1,9 +1,9 @@
-const CACHE_NAME = "hem-smarttrack-v18";
+const CACHE_NAME = "hem-smarttrack-v19";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./styles.css?v=13",
-  "./app.js?v=18",
+  "./styles.css?v=19",
+  "./app.js?v=19",
   "./manifest.webmanifest",
   "./icon-192.png",
   "./icon-512.png",

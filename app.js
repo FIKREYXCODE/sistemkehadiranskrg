@@ -704,6 +704,16 @@ $("#reportDate").addEventListener("change", async (event) => {
   if (!event.target.value) return;
   await flushSave();
   state.date = event.target.value;
+  $("#monitoringDate").value = state.date;
+  state.pendingAttendance.clear(); state.staffDirty = false; state.dutyDirtySessions.clear(); state.pendingMeta = {};
+  loadReport();
+  loadMonitoringReports();
+});
+$("#monitoringDate").addEventListener("change", async (event) => {
+  if (!event.target.value || event.target.value === state.date) return;
+  await flushSave();
+  state.date = event.target.value;
+  $("#reportDate").value = state.date;
   state.pendingAttendance.clear(); state.staffDirty = false; state.dutyDirtySessions.clear(); state.pendingMeta = {};
   loadReport();
   loadMonitoringReports();
@@ -714,6 +724,23 @@ $("#sessionFilter").addEventListener("change", (event) => {
   updateSessionVisibility();
   updateEditingAccess();
 });
+const VIEW_HASHES = { attendance: "kehadiran", monitoring: "laporan-bergambar", analysis: "analisis" };
+const HASH_VIEWS = Object.fromEntries(Object.entries(VIEW_HASHES).map(([view, hash]) => [hash, view]));
+
+function activateViewFromHash() {
+  const requested = HASH_VIEWS[window.location.hash.replace(/^#/, "")] || "attendance";
+  document.querySelectorAll("[data-view-panel]").forEach((panel) => { panel.hidden = panel.dataset.viewPanel !== requested; });
+  document.querySelectorAll("[data-view-link]").forEach((link) => {
+    if (link.dataset.viewLink === requested) link.setAttribute("aria-current", "page");
+    else link.removeAttribute("aria-current");
+  });
+  $("#printButton").hidden = requested !== "attendance";
+  if (requested === "analysis") loadAnalytics();
+  if (requested === "monitoring") loadMonitoringReports();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+window.addEventListener("hashchange", activateViewFromHash);
 $("#printButton").addEventListener("click", () => window.print());
 $("#analysisRefresh").addEventListener("click", loadAnalytics);
 $("#analysisPeriod").addEventListener("change", loadAnalytics);
@@ -754,10 +781,12 @@ $("#editorName").addEventListener("change", (event) => {
 
 state.date = localDateValue();
 $("#reportDate").value = state.date;
+$("#monitoringDate").value = state.date;
 state.analytics.date = state.date;
 $("#analysisDate").value = state.date;
 $("#staffNames").innerHTML = STAFF_NAMES.map((name) => `<option value="${safe(name)}"></option>`).join("");
 try { $("#editorName").value = localStorage.getItem(EDITOR_KEY) || ""; } catch { /* abaikan */ }
+activateViewFromHash();
 loadReport();
 loadAnalytics();
 loadMonitoringReports();
