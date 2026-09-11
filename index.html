@@ -10,7 +10,7 @@
   <title>HEM SMARTTRACK | SK Ranggu</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=12">
+  <link rel="stylesheet" href="styles.css?v=13">
 </head>
 <body>
   <header class="topbar no-print">
@@ -34,8 +34,9 @@
       </div>
       <div class="entry-controls">
         <label class="user-picker">Nama pengisi
-          <input id="editorName" type="text" maxlength="140" autocomplete="name" placeholder="Masukkan nama guru" required>
-          <small>Nama dan masa direkod pada setiap perubahan.</small>
+          <input id="editorName" type="text" list="staffNames" maxlength="140" autocomplete="off" placeholder="Cari atau pilih nama" required>
+          <datalist id="staffNames"></datalist>
+          <small>Taip beberapa huruf atau buka senarai, kemudian pilih nama. Nama dan masa direkod pada setiap perubahan.</small>
         </label>
         <label class="date-picker">Tarikh laporan
           <input id="reportDate" type="date" required>
@@ -131,6 +132,68 @@
       </section>
     </article>
 
+    <section id="monitoringReports" class="monitoring-card no-print" aria-labelledby="monitoringTitle">
+      <div class="monitoring-head">
+        <div>
+          <p class="eyebrow">Pemantauan sekolah</p>
+          <h2 id="monitoringTitle">Laporan Bergambar Kebersihan &amp; Keselamatan</h2>
+          <p>Guru boleh memuat naik gambar dan merekod keadaan, isu serta cadangan tindakan. Laporan disimpan bersama mengikut tarikh yang dipilih.</p>
+        </div>
+        <span class="monitoring-date-label">Tarikh laporan: <strong id="monitoringDateLabel">—</strong></span>
+      </div>
+      <form id="monitoringForm" class="monitoring-form">
+        <div class="monitoring-grid">
+          <label>Kategori
+            <select id="monitoringCategory" required>
+              <option value="cleanliness">Kebersihan</option>
+              <option value="safety">Keselamatan</option>
+              <option value="both">Kebersihan dan keselamatan</option>
+            </select>
+          </label>
+          <label>Lokasi pemantauan
+            <input id="monitoringLocation" type="text" maxlength="180" placeholder="Contoh: Laluan blok A" required>
+          </label>
+          <label>Status keselamatan laluan murid
+            <select id="routeStatus" required>
+              <option value="controlled">Terkawal</option>
+              <option value="attention">Perlu perhatian</option>
+              <option value="not_applicable">Tidak berkaitan</option>
+            </select>
+          </label>
+          <label>Status kawasan meletakkan kenderaan
+            <select id="parkingStatus" required>
+              <option value="controlled">Terkawal</option>
+              <option value="attention">Perlu perhatian</option>
+              <option value="not_applicable">Tidak berkaitan</option>
+            </select>
+          </label>
+        </div>
+        <div class="monitoring-text-grid">
+          <label>Isu, keadaan atau kejadian yang ingin direkodkan
+            <textarea id="monitoringIssue" rows="4" maxlength="1500" placeholder="Terangkan keadaan yang dipantau" required></textarea>
+          </label>
+          <label>Maklum balas atau cadangan tindakan
+            <textarea id="monitoringAction" rows="4" maxlength="1500" placeholder="Nyatakan tindakan segera atau cadangan susulan" required></textarea>
+          </label>
+        </div>
+        <label class="photo-uploader">Gambar pemantauan
+          <input id="monitoringPhotos" type="file" accept="image/jpeg,image/png,image/webp" multiple required>
+          <span>Pilih 1 hingga 4 gambar JPG, PNG atau WebP. Maksimum 5 MB bagi setiap gambar.</span>
+        </label>
+        <div id="monitoringPreview" class="monitoring-preview" aria-live="polite"></div>
+        <div class="monitoring-submit-row">
+          <button id="monitoringSave" class="primary-button" type="submit">Simpan laporan bergambar</button>
+          <p id="monitoringFormStatus" class="form-message" role="status" aria-live="polite"></p>
+        </div>
+      </form>
+      <div class="monitoring-gallery-head">
+        <div><h3>Laporan pada tarikh dipilih</h3><p>Gambar dan catatan boleh dilihat oleh semua guru yang membuka sistem.</p></div>
+        <button id="monitoringRefresh" class="secondary-button" type="button">Muat semula</button>
+      </div>
+      <div id="monitoringListStatus" class="monitoring-list-status" role="status" aria-live="polite">Memuatkan laporan…</div>
+      <div id="monitoringGallery" class="monitoring-gallery"></div>
+    </section>
+
     <section id="attendanceAnalysis" class="analysis-card no-print" aria-labelledby="analysisTitle">
       <div class="analysis-head">
         <div>
@@ -205,6 +268,6 @@
   </div>
 
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="app.js?v=16" defer></script>
+  <script src="app.js?v=17" defer></script>
 </body>
 </html>

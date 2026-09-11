@@ -1,12 +1,30 @@
 const API_URL = "https://portal-kelas-sekolah-biru.afiqzkablemo.chatgpt.site/api/school";
+const SAFETY_API_URL = API_URL.replace(/\/school$/, "/safety");
 const $ = (selector) => document.querySelector(selector);
 const state = {
   date: "", classes: [], staffAbsences: [], dutyTeachers: { morning: [], afternoon: [] }, meta: {}, loading: false, saveTimer: null,
   savePromise: null, pendingAttendance: new Map(), staffDirty: false, dutyDirtySessions: new Set(), pendingMeta: {}, audit: new Map(), adminPin: "", session: "all",
   analytics: { period: "week", date: "", loading: false },
+  monitoring: { reports: [], loading: false, previewUrls: [] },
 };
 const DRAFT_PREFIX = "skrg-pending-v1:";
 const EDITOR_KEY = "skrg-editor-name-v1";
+const STAFF_NAMES = [
+  "YUNUS BIN PATARAI", "RAHMATIAH BINTI MOHD JUDA", "KOMALA BINTI JOSEPH", "WARNAH BINTI SIRA", "EMRAN BIN HJ SELAMAT",
+  "AG KU KEMAINDDRA BIN PG MOHD TAIB", "AHAD BIN JAAFAR", "AINATUN NADHIRAH BINTI DHARMAWI", "ANI BINTI PATOLA", "ASMADI BIN LAJJAKASI",
+  "BAJAM BINTI LADUNG", "DARMAWATI BTE LOKKONG", "EVALORENNA BINTI LAMINSIN", "FARIDAH BINTI SUNU", "HALIM BIN BIDI",
+  "HAMSIAH BINTI HAMID", "HASNAN BIN MAT ZIN", "JAIBY BIN JULIAN", "JAINAH BINTI SULAIMAN", "JUNAID BIN NURDIN",
+  "MARIANA BINTI KASSIM", "MARINI BINTI LADI", "MASTURAH BINTI TUDA", "MOHAMMAD FIKREY BIN ABDUL GAPAR", "MOHAMMAD IKHWAN BIN ABDURAIS",
+  "MOHD ALFAIZAL BIN DAUD", "MOHD MUEMIN BIN MOHD AMIN JAPAR", "MUHAMADIAN BIN SUAIBU", "NECHI BINTI SERUNAI", "NOOR SYAFIQAH NADHIRAH BINTI JAMALUDDIN",
+  "NORIMAH BINTI JOYO REJO", "NORLINA BINTI BAGWAS", "NOZE BINTI TUKIJAN", "NUR FAEZAH BINTI BANTALANI", "NURUL ANISA BINTI SAPARUDIN",
+  "RASMAWATI BINTI TAUSE", "RINI BINTI DAUD", "ROBIATUL AIDAWYAH", "RONI BIN BACHO", "ROSIDIAN BIN IDRIS",
+  "ROSMINAH BINTI SAPAR", "RUHAYA BINTI AHMAD", "S.LILI BINTI LADI", "SABRIAH @ HABIBAH BINTI ABDUL SABAR", "SALSABILA BINTI SHAHRUDDIN",
+  "SITI JAWARA BINTI LUKMAN", "SITI NAURIN FADZILAH BINTI JALAL", "SITI RABIA BIN IBRAHIM", "SUNARTI BINTI TAPPA", "TANJANG BIN TURE",
+  "WAFA FARHANA BINTI ABD KADIR", "WAN MUHAMAD YUSUF BIN WAN ABDUL AZIZ", "YUSNI BINTI WAHJUDIN", "ZAMRIE BIN OMAR ALI", "HANISAH BINTI MANSOR",
+  "NURAIDA BINTI KAIMUDIN", "MULYANTI BINTI MIKIL @ MOHAMED ISHAK", "RAPIDAH BINTI KARIM", "YENNY BINTI SANAUDI", "FARIDAH BINTI ACHO",
+];
+const MONITORING_CATEGORY_LABELS = { cleanliness: "Kebersihan", safety: "Keselamatan", both: "Kebersihan dan keselamatan" };
+const MONITORING_STATUS_LABELS = { controlled: "Terkawal", attention: "Perlu perhatian", not_applicable: "Tidak berkaitan" };
 
 function draftKey(date = state.date) { return `${DRAFT_PREFIX}${date}`; }
 
@@ -91,6 +109,7 @@ function updateEditingAccess() {
   const allowed = Boolean(editorName());
   document.querySelectorAll("#attendanceBody input,#dutyMorningBody input,#dutyAfternoonBody input,#staffBody input,.report-notes input,.report-notes textarea").forEach((element) => { element.readOnly = !allowed; });
   $("#editorName").classList.toggle("invalid", !allowed);
+  $("#monitoringSave").disabled = !allowed;
   if (!allowed && !state.loading) setStatus("Isi nama pengisi untuk mula");
 }
 
@@ -243,6 +262,121 @@ async function loadAnalytics() {
   } finally { state.analytics.loading = false; $("#analysisRefresh").disabled = false; }
 }
 
+function clearMonitoringPreview() {
+  for (const url of state.monitoring.previewUrls) URL.revokeObjectURL(url);
+  state.monitoring.previewUrls = [];
+  $("#monitoringPreview").innerHTML = "";
+}
+
+function validateMonitoringFiles(files) {
+  const selected = Array.from(files || []);
+  const allowed = new Set(["image/jpeg", "image/png", "image/webp"]);
+  if (!selected.length) throw new Error("Pilih sekurang-kurangnya satu gambar.");
+  if (selected.length > 4) throw new Error("Maksimum 4 gambar bagi setiap laporan.");
+  if (selected.some((file) => !allowed.has(file.type))) throw new Error("Hanya gambar JPG, PNG atau WebP dibenarkan.");
+  if (selected.some((file) => file.size > 5 * 1024 * 1024)) throw new Error("Setiap gambar mestilah tidak melebihi 5 MB.");
+  return selected;
+}
+
+function renderMonitoringPreview(files) {
+  clearMonitoringPreview();
+  try {
+    const selected = validateMonitoringFiles(files);
+    state.monitoring.previewUrls = selected.map((file) => URL.createObjectURL(file));
+    $("#monitoringPreview").innerHTML = state.monitoring.previewUrls.map((url, index) =>
+      `<figure><img src="${safe(url)}" alt="Pratonton gambar ${index + 1}"><figcaption>Gambar ${index + 1}</figcaption></figure>`
+    ).join("");
+    $("#monitoringFormStatus").textContent = `${selected.length} gambar dipilih.`;
+  } catch (error) {
+    $("#monitoringPhotos").value = "";
+    $("#monitoringFormStatus").textContent = error.message;
+  }
+}
+
+function monitoringStatusClass(value) {
+  return value === "controlled" ? "controlled" : value === "attention" ? "attention" : "neutral";
+}
+
+function renderMonitoringReports() {
+  const reports = state.monitoring.reports;
+  $("#monitoringGallery").innerHTML = reports.map((report) => {
+    const created = new Intl.DateTimeFormat("ms-MY", { dateStyle: "medium", timeStyle: "short" }).format(new Date(Number(report.createdAt)));
+    const photos = (Array.isArray(report.photos) ? report.photos : []).map((photo, index) =>
+      `<a href="${safe(photo.url)}" target="_blank" rel="noopener"><img src="${safe(photo.url)}" loading="lazy" alt="${safe(MONITORING_CATEGORY_LABELS[report.category] || "Pemantauan")} di ${safe(report.location)}, gambar ${index + 1}"></a>`
+    ).join("");
+    return `<article class="monitoring-report">
+      <div class="monitoring-photo-grid">${photos}</div>
+      <div class="monitoring-report-body">
+        <div class="monitoring-report-top"><span class="category-badge">${safe(MONITORING_CATEGORY_LABELS[report.category] || report.category)}</span><time>${safe(created)}</time></div>
+        <h3>${safe(report.location)}</h3>
+        <p class="monitoring-by">Diisi oleh <strong>${safe(report.updatedBy)}</strong></p>
+        <div class="monitoring-statuses">
+          <span class="${monitoringStatusClass(report.routeStatus)}">Laluan murid: <strong>${safe(MONITORING_STATUS_LABELS[report.routeStatus] || report.routeStatus)}</strong></span>
+          <span class="${monitoringStatusClass(report.parkingStatus)}">Parkir: <strong>${safe(MONITORING_STATUS_LABELS[report.parkingStatus] || report.parkingStatus)}</strong></span>
+        </div>
+        <dl><div><dt>Ringkasan pemantauan</dt><dd>${safe(report.issue)}</dd></div><div><dt>Maklum balas atau cadangan tindakan</dt><dd>${safe(report.action)}</dd></div></dl>
+      </div>
+    </article>`;
+  }).join("");
+  $("#monitoringListStatus").textContent = reports.length ? `${reports.length} laporan bergambar ditemui.` : "Belum ada laporan bergambar pada tarikh ini.";
+}
+
+async function loadMonitoringReports() {
+  if (state.monitoring.loading) return;
+  state.monitoring.loading = true;
+  $("#monitoringListStatus").className = "monitoring-list-status";
+  $("#monitoringListStatus").textContent = "Memuatkan laporan…";
+  try {
+    const response = await fetch(`${SAFETY_API_URL}?date=${encodeURIComponent(state.date)}`, { cache: "no-store" });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Laporan bergambar tidak dapat dibuka.");
+    state.monitoring.reports = Array.isArray(data.reports) ? data.reports : [];
+    renderMonitoringReports();
+  } catch (error) {
+    console.error(error);
+    state.monitoring.reports = [];
+    $("#monitoringGallery").innerHTML = "";
+    $("#monitoringListStatus").className = "monitoring-list-status error";
+    $("#monitoringListStatus").textContent = error.message || "Laporan bergambar tidak dapat dibuka. Cuba lagi.";
+  } finally { state.monitoring.loading = false; }
+}
+
+async function saveMonitoringReport(event) {
+  event.preventDefault();
+  if (!editorName()) {
+    $("#monitoringFormStatus").textContent = "Pilih nama pengisi di bahagian atas dahulu.";
+    $("#editorName").focus();
+    return;
+  }
+  let files;
+  try { files = validateMonitoringFiles($("#monitoringPhotos").files); }
+  catch (error) { $("#monitoringFormStatus").textContent = error.message; return; }
+  const data = new FormData();
+  data.set("date", state.date);
+  data.set("updatedBy", editorName());
+  data.set("category", $("#monitoringCategory").value);
+  data.set("location", $("#monitoringLocation").value.trim());
+  data.set("routeStatus", $("#routeStatus").value);
+  data.set("parkingStatus", $("#parkingStatus").value);
+  data.set("issue", $("#monitoringIssue").value.trim());
+  data.set("action", $("#monitoringAction").value.trim());
+  for (const file of files) data.append("photos", file, file.name);
+  $("#monitoringSave").disabled = true;
+  $("#monitoringFormStatus").textContent = "Memuat naik gambar dan menyimpan laporan…";
+  try {
+    const response = await fetch(SAFETY_API_URL, { method: "POST", body: data });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Laporan gagal disimpan.");
+    $("#monitoringForm").reset();
+    clearMonitoringPreview();
+    $("#monitoringFormStatus").textContent = "Laporan bergambar berjaya disimpan dan boleh dilihat oleh guru lain.";
+    await loadMonitoringReports();
+  } catch (error) {
+    console.error(error);
+    $("#monitoringFormStatus").textContent = error.message || "Laporan gagal disimpan. Cuba lagi.";
+  } finally { updateEditingAccess(); }
+}
+
 function visibleClasses() {
   return state.session === "all" ? state.classes : state.classes.filter((row) => classSession(row) === state.session);
 }
@@ -264,6 +398,7 @@ function updateDateHeading() {
   if (Number.isNaN(date.getTime())) return;
   $("#dateLong").textContent = new Intl.DateTimeFormat("ms-MY", { day: "2-digit", month: "long", year: "numeric" }).format(date);
   $("#dayLong").textContent = new Intl.DateTimeFormat("ms-MY", { weekday: "long" }).format(date);
+  $("#monitoringDateLabel").textContent = new Intl.DateTimeFormat("ms-MY", { day: "2-digit", month: "long", year: "numeric" }).format(date);
 }
 
 function renderAttendance() {
@@ -555,6 +690,7 @@ $("#reportDate").addEventListener("change", async (event) => {
   state.date = event.target.value;
   state.pendingAttendance.clear(); state.staffDirty = false; state.dutyDirtySessions.clear(); state.pendingMeta = {};
   loadReport();
+  loadMonitoringReports();
 });
 $("#sessionFilter").addEventListener("change", (event) => {
   state.session = event.target.value;
@@ -565,6 +701,9 @@ $("#sessionFilter").addEventListener("change", (event) => {
 $("#printButton").addEventListener("click", () => window.print());
 $("#analysisRefresh").addEventListener("click", loadAnalytics);
 $("#analysisPeriod").addEventListener("change", loadAnalytics);
+$("#monitoringRefresh").addEventListener("click", loadMonitoringReports);
+$("#monitoringPhotos").addEventListener("change", (event) => renderMonitoringPreview(event.target.files));
+$("#monitoringForm").addEventListener("submit", saveMonitoringReport);
 $("#adminButton").addEventListener("click", async () => {
   await flushSave();
   $("#adminModal").hidden = false;
@@ -589,19 +728,33 @@ $("#editorName").addEventListener("input", (event) => {
     else setStatus("Nama pengisi sedia", "saved");
   }
 });
+$("#editorName").addEventListener("change", (event) => {
+  const match = STAFF_NAMES.find((name) => name.toLocaleLowerCase("ms") === event.target.value.trim().toLocaleLowerCase("ms"));
+  if (match && event.target.value !== match) {
+    event.target.value = match;
+    event.target.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+});
 
 state.date = localDateValue();
 $("#reportDate").value = state.date;
 state.analytics.date = state.date;
 $("#analysisDate").value = state.date;
+$("#staffNames").innerHTML = STAFF_NAMES.map((name) => `<option value="${safe(name)}"></option>`).join("");
 try { $("#editorName").value = localStorage.getItem(EDITOR_KEY) || ""; } catch { /* abaikan */ }
 loadReport();
 loadAnalytics();
+loadMonitoringReports();
 
 setInterval(() => {
   const editing = ["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName || "");
   if (document.visibilityState === "visible" && !editing && !state.loading && !state.savePromise && !hasPendingChanges()) loadReport(true);
 }, 15000);
+
+setInterval(() => {
+  const monitoringEditing = $("#monitoringReports").contains(document.activeElement);
+  if (document.visibilityState === "visible" && !monitoringEditing && !state.monitoring.loading) loadMonitoringReports();
+}, 30000);
 
 window.addEventListener("online", () => { if (hasPendingChanges()) scheduleSave(); });
 window.addEventListener("beforeunload", (event) => {
