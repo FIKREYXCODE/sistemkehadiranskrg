@@ -351,20 +351,36 @@ async function saveMonitoringReport(event) {
   let files;
   try { files = validateMonitoringFiles($("#monitoringPhotos").files); }
   catch (error) { $("#monitoringFormStatus").textContent = error.message; return; }
-  const data = new FormData();
-  data.set("date", state.date);
-  data.set("updatedBy", editorName());
-  data.set("category", $("#monitoringCategory").value);
-  data.set("location", $("#monitoringLocation").value.trim());
-  data.set("routeStatus", $("#routeStatus").value);
-  data.set("parkingStatus", $("#parkingStatus").value);
-  data.set("issue", $("#monitoringIssue").value.trim());
-  data.set("action", $("#monitoringAction").value.trim());
-  for (const file of files) data.append("photos", file, file.name);
   $("#monitoringSave").disabled = true;
   $("#monitoringFormStatus").textContent = "Memuat naik gambar dan menyimpan laporan…";
   try {
-    const response = await fetch(SAFETY_API_URL, { method: "POST", body: data });
+    const photos = await Promise.all(files.map((file) => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve({
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        data: String(reader.result).split(",", 2)[1] || "",
+      });
+      reader.onerror = () => reject(new Error(`Gambar ${file.name} tidak dapat dibaca.`));
+      reader.readAsDataURL(file);
+    })));
+    const payload = {
+      date: state.date,
+      updatedBy: editorName(),
+      category: $("#monitoringCategory").value,
+      location: $("#monitoringLocation").value.trim(),
+      routeStatus: $("#routeStatus").value,
+      parkingStatus: $("#parkingStatus").value,
+      issue: $("#monitoringIssue").value.trim(),
+      action: $("#monitoringAction").value.trim(),
+      photos,
+    };
+    const response = await fetch(SAFETY_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
     const result = await response.json();
     if (!response.ok) throw new Error(result.error || "Laporan gagal disimpan.");
     $("#monitoringForm").reset();
