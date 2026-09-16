@@ -270,12 +270,68 @@ function clearMonitoringPreview() {
 
 function validateMonitoringFiles(files) {
   const selected = Array.from(files || []);
-  const allowed = new Set(["image/jpeg", "image/png", "image/webp"]);
   if (!selected.length) throw new Error("Pilih sekurang-kurangnya satu gambar.");
   if (selected.length > 4) throw new Error("Maksimum 4 gambar bagi setiap laporan.");
-  if (selected.some((file) => !allowed.has(file.type))) throw new Error("Hanya gambar JPG, PNG atau WebP dibenarkan.");
-  if (selected.some((file) => file.size > 5 * 1024 * 1024)) throw new Error("Setiap gambar mestilah tidak melebihi 5 MB.");
+  if (selected.some((file) => !(file.type || "").startsWith("image/") && !/\.(jpe?g|png|webp|heic|heif)$/i.test(file.name))) {
+    throw new Error("Fail yang dipilih mestilah gambar.");
+  }
+  if (selected.some((file) => file.size > 25 * 1024 * 1024)) throw new Error("Setiap gambar asal mestilah tidak melebihi 25 MB.");
   return selected;
+}
+
+function readBlobAsBase64(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",", 2)[1] || "");
+    reader.onerror = () => reject(new Error("Gambar yang telah diproses tidak dapat dibaca."));
+    reader.readAsDataURL(blob);
+  });
+}
+
+function loadMonitoringImage(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => { URL.revokeObjectURL(url); resolve(image); };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error(`Gambar ${file.name} tidak dapat dibuka. Jika gambar HEIC gagal, pilih versi JPG.`));
+    };
+    image.src = url;
+  });
+}
+
+async function prepareMonitoringPhoto(file, index) {
+  const image = await loadMonitoringImage(file);
+  const maxDimension = 1600;
+  const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
+  const width = Math.max(1, Math.round(image.naturalWidth * scale));
+  const height = Math.max(1, Math.round(image.naturalHeight * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error(`Gambar ${file.name} tidak dapat diproses.`);
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, width, height);
+  context.drawImage(image, 0, 0, width, height);
+  const blob = await new Promise((resolve, reject) => canvas.toBlob(
+    (result) => result ? resolve(result) : reject(new Error(`Gambar ${file.name} tidak dapat dikecilkan.`)),
+    "image/jpeg",
+    0.82,
+  ));
+  return {
+    name: `gambar-${index + 1}.jpg`,
+    type: "image/jpeg",
+    size: blob.size,
+    data: await readBlobAsBase64(blob),
+  };
+}
+
+async function responseJson(response, fallbackMessage) {
+  const text = await response.text();
+  try { return text ? JSON.parse(text) : {}; }
+  catch { throw new Error(response.ok ? fallbackMessage : `${fallbackMessage} Pelayan memberi respons yang tidak lengkap.`); }
 }
 
 function renderMonitoringPreview(files) {
@@ -328,7 +384,7 @@ async function loadMonitoringReports() {
   $("#monitoringListStatus").textContent = "Memuatkan laporan…";
   try {
     const response = await fetch(`${SAFETY_API_URL}?date=${encodeURIComponent(state.date)}`, { cache: "no-store" });
-    const data = await response.json();
+    const data = await responseJson(response, "Laporan bergambar tidak dapat dibuka.");
     if (!response.ok) throw new Error(data.error || "Laporan bergambar tidak dapat dibuka.");
     state.monitoring.reports = Array.isArray(data.reports) ? data.reports : [];
     renderMonitoringReports();
@@ -352,19 +408,10 @@ async function saveMonitoringReport(event) {
   try { files = validateMonitoringFiles($("#monitoringPhotos").files); }
   catch (error) { $("#monitoringFormStatus").textContent = error.message; return; }
   $("#monitoringSave").disabled = true;
-  $("#monitoringFormStatus").textContent = "Memuat naik gambar dan menyimpan laporan…";
+  $("#monitoringFormStatus").textContent = "Mengecilkan gambar supaya mudah dimuat naik…";
   try {
-    const photos = await Promise.all(files.map((file) => new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve({
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        data: String(reader.result).split(",", 2)[1] || "",
-      });
-      reader.onerror = () => reject(new Error(`Gambar ${file.name} tidak dapat dibaca.`));
-      reader.readAsDataURL(file);
-    })));
+    const photos = await Promise.all(files.map(prepareMonitoringPhoto));
+    $("#monitoringFormStatus").textContent = "Memuat naik gambar dan menyimpan laporan…";
     const payload = {
       date: state.date,
       updatedBy: editorName(),
@@ -381,7 +428,7 @@ async function saveMonitoringReport(event) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    const result = await response.json();
+    const result = await responseJson(response, "Laporan gagal disimpan.");
     if (!response.ok) throw new Error(result.error || "Laporan gagal disimpan.");
     $("#monitoringForm").reset();
     clearMonitoringPreview();

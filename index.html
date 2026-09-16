@@ -10,7 +10,7 @@
   <title>HEM SMARTTRACK | SK Ranggu</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=19">
+  <link rel="stylesheet" href="styles.css?v=20">
 </head>
 <body>
   <header class="topbar no-print">
@@ -191,8 +191,8 @@
           </label>
         </div>
         <label class="photo-uploader">Gambar pemantauan
-          <input id="monitoringPhotos" type="file" accept="image/jpeg,image/png,image/webp" multiple required>
-          <span>Pilih 1 hingga 4 gambar JPG, PNG atau WebP. Maksimum 5 MB bagi setiap gambar.</span>
+          <input id="monitoringPhotos" type="file" accept="image/*,.heic,.heif" multiple required>
+          <span>Pilih 1 hingga 4 gambar. Gambar telefon akan dikecilkan secara automatik (maksimum 25 MB bagi setiap gambar asal).</span>
         </label>
         <div id="monitoringPreview" class="monitoring-preview" aria-live="polite"></div>
         <div class="monitoring-submit-row">
@@ -282,6 +282,6 @@
   </div>
 
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="app.js?v=19" defer></script>
+  <script src="app.js?v=20" defer></script>
 </body>
 </html>
