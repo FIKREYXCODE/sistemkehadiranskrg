@@ -100,6 +100,7 @@ tfoot td{background:#dfeaf4;font-weight:900}
 .staff-table th:nth-child(2){width:32%}
 .staff-table th:nth-child(3){width:24%}
 .staff-table .cell-input{text-align:left;min-width:160px}
+.staff-table .staff-name-select{min-width:220px;cursor:pointer;background:#fff;color:var(--ink)}
 .report-notes{padding:27px 32px 34px;display:grid;gap:22px}
 .report-notes label{display:block;font-size:.82rem;font-weight:800}
 .report-notes textarea,.report-notes input{width:100%;margin-top:7px;border:1px solid #bfcde0;border-radius:10px;padding:11px;font:inherit;color:var(--ink)}

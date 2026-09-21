@@ -108,6 +108,7 @@ function applyAttendanceAudit(updates, updatedBy, updatedAt) {
 function updateEditingAccess() {
   const allowed = Boolean(editorName());
   document.querySelectorAll("#attendanceBody input,#dutyMorningBody input,#dutyAfternoonBody input,#staffBody input,.report-notes input,.report-notes textarea").forEach((element) => { element.readOnly = !allowed; });
+  document.querySelectorAll("#staffBody select").forEach((element) => { element.disabled = !allowed; });
   $("#editorName").classList.toggle("invalid", !allowed);
   $("#monitoringSave").disabled = !allowed;
   if (!allowed && !state.loading) setStatus("Isi nama pengisi untuk mula");
@@ -523,7 +524,15 @@ function renderDutyTeachers() {
 function renderStaff() {
   while (state.staffAbsences.length < 11) state.staffAbsences.push({ staffName: "", subject: "", reason: "" });
   state.staffAbsences = state.staffAbsences.slice(0, 11);
-  $("#staffBody").innerHTML = state.staffAbsences.map((row, index) => `<tr data-staff-index="${index}"><td>${index + 1}</td><td><input class="cell-input${auditDetails("staff", String(index + 1), "staffName").className}" data-field="staffName" value="${safe(row.staffName)}" aria-label="Nama guru atau AKP ${index + 1}" title="${safe(auditDetails("staff", String(index + 1), "staffName").title)}"></td><td><input class="cell-input${auditDetails("staff", String(index + 1), "subject").className}" data-field="subject" value="${safe(row.subject)}" aria-label="Subjek atau jawatan ${index + 1}" title="${safe(auditDetails("staff", String(index + 1), "subject").title)}"></td><td><input class="cell-input${auditDetails("staff", String(index + 1), "reason").className}" data-field="reason" value="${safe(row.reason)}" aria-label="Sebab ${index + 1}" title="${safe(auditDetails("staff", String(index + 1), "reason").title)}"></td></tr>`).join("");
+  const sortedNames = [...new Set(STAFF_NAMES)].sort((a, b) => a.localeCompare(b, "ms"));
+  $("#staffBody").innerHTML = state.staffAbsences.map((row, index) => {
+    const staffAudit = auditDetails("staff", String(index + 1), "staffName");
+    const savedName = String(row.staffName || "");
+    const knownName = sortedNames.includes(savedName);
+    const names = knownName || !savedName ? sortedNames : [savedName, ...sortedNames];
+    const options = names.map((name) => `<option value="${safe(name)}"${name === savedName ? " selected" : ""}>${safe(name)}</option>`).join("");
+    return `<tr data-staff-index="${index}"><td>${index + 1}</td><td><select class="cell-input staff-name-select${staffAudit.className}" data-field="staffName" aria-label="Nama guru atau AKP ${index + 1}" title="${safe(staffAudit.title)}"><option value="">Pilih nama guru / AKP</option>${options}</select></td><td><input class="cell-input${auditDetails("staff", String(index + 1), "subject").className}" data-field="subject" value="${safe(row.subject)}" aria-label="Subjek atau jawatan ${index + 1}" title="${safe(auditDetails("staff", String(index + 1), "subject").title)}"></td><td><input class="cell-input${auditDetails("staff", String(index + 1), "reason").className}" data-field="reason" value="${safe(row.reason)}" aria-label="Sebab ${index + 1}" title="${safe(auditDetails("staff", String(index + 1), "reason").title)}"></td></tr>`;
+  }).join("");
   updateEditingAccess();
 }
 
@@ -729,15 +738,17 @@ $("#attendanceBody").addEventListener("input", (event) => {
   renderTotals(); scheduleSave();
 });
 
-$("#staffBody").addEventListener("input", (event) => {
-  const input = event.target.closest("input[data-field]");
+function updateStaffRow(event) {
+  const input = event.target.closest("input[data-field],select[data-field]");
   if (!input) return;
   const index = Number(input.closest("tr").dataset.staffIndex);
   state.staffAbsences[index][input.dataset.field] = input.value;
   state.staffDirty = true;
   saveDraft();
   scheduleSave();
-});
+}
+$("#staffBody").addEventListener("input", (event) => { if (event.target.matches("input[data-field]")) updateStaffRow(event); });
+$("#staffBody").addEventListener("change", (event) => { if (event.target.matches("select[data-field]")) updateStaffRow(event); });
 
 for (const selector of ["#dutyMorningBody", "#dutyAfternoonBody"]) {
   $(selector).addEventListener("input", (event) => {
