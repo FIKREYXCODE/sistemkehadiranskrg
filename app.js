@@ -355,7 +355,7 @@ function monitoringStatusClass(value) {
 
 function renderMonitoringReports() {
   const reports = state.monitoring.reports;
-  $("#monitoringGallery").innerHTML = reports.map((report) => {
+  const renderReport = (report) => {
     const created = new Intl.DateTimeFormat("ms-MY", { dateStyle: "medium", timeStyle: "short" }).format(new Date(Number(report.createdAt)));
     const photos = (Array.isArray(report.photos) ? report.photos : []).map((photo, index) =>
       `<a href="${safe(photo.url)}" target="_blank" rel="noopener"><img src="${safe(photo.url)}" loading="lazy" alt="${safe(MONITORING_CATEGORY_LABELS[report.category] || "Pemantauan")} di ${safe(report.location)}, gambar ${index + 1}"></a>`
@@ -373,6 +373,13 @@ function renderMonitoringReports() {
         <dl><div><dt>Ringkasan pemantauan</dt><dd>${safe(report.issue)}</dd></div><div><dt>Maklum balas atau cadangan tindakan</dt><dd>${safe(report.action)}</dd></div></dl>
       </div>
     </article>`;
+  };
+  $("#monitoringGallery").innerHTML = [
+    ["morning", "Sidang Pagi"], ["afternoon", "Sidang Petang"], ["legacy", "Laporan lama — sidang belum ditetapkan"],
+  ].map(([session, label]) => {
+    const grouped = reports.filter((report) => (report.session || "legacy") === session);
+    if (session === "legacy" && !grouped.length) return "";
+    return `<section class="monitoring-session-group"><h4>${label} <span>${grouped.length} laporan</span></h4>${grouped.length ? grouped.map(renderReport).join("") : '<p class="monitoring-empty">Belum ada laporan untuk sidang ini.</p>'}</section>`;
   }).join("");
   $("#monitoringListStatus").textContent = reports.length ? `${reports.length} laporan bergambar ditemui.` : "Belum ada laporan bergambar pada tarikh ini.";
 }
@@ -416,6 +423,7 @@ async function saveMonitoringReport(event) {
       date: state.date,
       updatedBy: editorName(),
       category: $("#monitoringCategory").value,
+      session: $("#monitoringSession").value,
       location: $("#monitoringLocation").value.trim(),
       routeStatus: $("#routeStatus").value,
       parkingStatus: $("#parkingStatus").value,
@@ -430,7 +438,9 @@ async function saveMonitoringReport(event) {
     });
     const result = await responseJson(response, "Laporan gagal disimpan.");
     if (!response.ok) throw new Error(result.error || "Laporan gagal disimpan.");
+    const savedSession = payload.session;
     $("#monitoringForm").reset();
+    $("#monitoringSession").value = savedSession;
     clearMonitoringPreview();
     $("#monitoringFormStatus").textContent = "Laporan bergambar berjaya disimpan dan boleh dilihat oleh guru lain.";
     await loadMonitoringReports();
@@ -522,9 +532,11 @@ function renderMeta() {
   $("#preparedByMorning").value = state.meta.preparedByMorning || "";
   $("#reportNoteAfternoon").value = state.meta.noteAfternoon || "";
   $("#preparedByAfternoon").value = state.meta.preparedByAfternoon || "";
-  $("#approvedBy").value = state.meta.approvedBy || "";
-  $("#approvedTitle").value = state.meta.approvedTitle || "";
-  for (const [selector, field] of [["#reportNoteMorning", "noteMorning"], ["#preparedByMorning", "preparedByMorning"], ["#reportNoteAfternoon", "noteAfternoon"], ["#preparedByAfternoon", "preparedByAfternoon"], ["#approvedBy", "approvedBy"], ["#approvedTitle", "approvedTitle"]]) {
+  for (const field of ["approvedByMorning", "approvedTitleMorning", "approvedByAfternoon", "approvedTitleAfternoon"]) $("#" + field).value = state.meta[field] || "";
+  const legacyApproval = [state.meta.approvedBy, state.meta.approvedTitle].filter(Boolean).join(" · ");
+  $("#legacyApprovalNote").hidden = !legacyApproval;
+  $("#legacyApprovalValue").textContent = legacyApproval;
+  for (const [selector, field] of [["#reportNoteMorning", "noteMorning"], ["#preparedByMorning", "preparedByMorning"], ["#reportNoteAfternoon", "noteAfternoon"], ["#preparedByAfternoon", "preparedByAfternoon"], ["#approvedByMorning", "approvedByMorning"], ["#approvedTitleMorning", "approvedTitleMorning"], ["#approvedByAfternoon", "approvedByAfternoon"], ["#approvedTitleAfternoon", "approvedTitleAfternoon"]]) {
     const element = $(selector);
     const details = auditDetails("meta", "report", field);
     element.title = details.title;
@@ -739,7 +751,7 @@ for (const selector of ["#dutyMorningBody", "#dutyAfternoonBody"]) {
   });
 }
 
-[["#reportNoteMorning", "noteMorning"], ["#preparedByMorning", "preparedByMorning"], ["#reportNoteAfternoon", "noteAfternoon"], ["#preparedByAfternoon", "preparedByAfternoon"], ["#approvedBy", "approvedBy"], ["#approvedTitle", "approvedTitle"]].forEach(([selector, field]) => {
+[["#reportNoteMorning", "noteMorning"], ["#preparedByMorning", "preparedByMorning"], ["#reportNoteAfternoon", "noteAfternoon"], ["#preparedByAfternoon", "preparedByAfternoon"], ["#approvedByMorning", "approvedByMorning"], ["#approvedTitleMorning", "approvedTitleMorning"], ["#approvedByAfternoon", "approvedByAfternoon"], ["#approvedTitleAfternoon", "approvedTitleAfternoon"]].forEach(([selector, field]) => {
   $(selector).addEventListener("input", (event) => {
     state.meta[field] = event.target.value;
     state.pendingMeta[field] = event.target.value;

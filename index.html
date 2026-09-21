@@ -10,7 +10,7 @@
   <title>HEM SMARTTRACK | SK Ranggu</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icon-192.png">
-  <link rel="stylesheet" href="styles.css?v=20">
+  <link rel="stylesheet" href="styles.css?v=21">
 </head>
 <body>
   <header class="topbar no-print">
@@ -128,17 +128,18 @@
             <h4>Sidang Pagi</h4>
             <label>Catatan laporan<textarea id="reportNoteMorning" rows="3" placeholder="Catatan laporan sidang pagi"></textarea></label>
             <label>Disediakan oleh<input id="preparedByMorning" type="text" placeholder="Nama guru bertugas sidang pagi"></label>
+            <label>Disahkan oleh<input id="approvedByMorning" type="text" placeholder="Nama pegawai pengesah sidang pagi"></label>
+            <label>Jawatan pegawai pengesah<input id="approvedTitleMorning" type="text" placeholder="Contoh: Guru Besar"></label>
           </div>
           <div class="session-note-card afternoon-card" data-report-session="afternoon">
             <h4>Sidang Petang</h4>
             <label>Catatan laporan<textarea id="reportNoteAfternoon" rows="3" placeholder="Catatan laporan sidang petang"></textarea></label>
             <label>Disediakan oleh<input id="preparedByAfternoon" type="text" placeholder="Nama guru bertugas sidang petang"></label>
+            <label>Disahkan oleh<input id="approvedByAfternoon" type="text" placeholder="Nama pegawai pengesah sidang petang"></label>
+            <label>Jawatan pegawai pengesah<input id="approvedTitleAfternoon" type="text" placeholder="Contoh: Guru Besar"></label>
           </div>
         </div>
-        <div class="signature-grid approval-grid">
-          <label>Disahkan oleh<input id="approvedBy" type="text" placeholder="Nama pegawai pengesah"></label>
-          <label>Jawatan<input id="approvedTitle" type="text" placeholder="Contoh: Guru Besar"></label>
-        </div>
+        <p class="legacy-approval-note" id="legacyApprovalNote" hidden>Rekod pengesahan lama (belum diasingkan mengikut sidang): <span id="legacyApprovalValue"></span></p>
       </section>
     </article>
     </section>
@@ -157,6 +158,13 @@
       </div>
       <form id="monitoringForm" class="monitoring-form">
         <div class="monitoring-grid">
+          <label>Sidang laporan
+            <select id="monitoringSession" required>
+              <option value="">Pilih sidang</option>
+              <option value="morning">Sidang Pagi</option>
+              <option value="afternoon">Sidang Petang</option>
+            </select>
+          </label>
           <label>Kategori
             <select id="monitoringCategory" required>
               <option value="cleanliness">Kebersihan</option>
@@ -282,6 +290,6 @@
   </div>
 
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="app.js?v=20" defer></script>
+  <script src="app.js?v=21" defer></script>
 </body>
 </html>
