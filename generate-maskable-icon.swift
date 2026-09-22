@@ -2,8 +2,8 @@ import AppKit
 import Foundation
 
 // Keep the supplied artwork unchanged while giving Android icon masks safe margins.
-let sourcePath = "icon-smarttrack-custom-master.png"
-let outputPath = "icon-smarttrack-custom-maskable-512.png"
+let sourcePath = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : "icon-smarttrack-custom-master.png"
+let outputPath = CommandLine.arguments.count > 2 ? CommandLine.arguments[2] : "icon-smarttrack-custom-maskable-512.png"
 let canvasSize = 512
 let artworkSize: CGFloat = 384
 
