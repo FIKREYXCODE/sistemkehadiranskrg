@@ -1,13 +1,13 @@
-const CACHE_NAME = "hem-smarttrack-v23";
+const CACHE_NAME = "hem-smarttrack-v24";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./styles.css?v=22",
   "./app.js?v=22",
-  "./manifest.webmanifest?v=23",
-  "./icon-smarttrack-180.png",
-  "./icon-smarttrack-192.png",
-  "./icon-smarttrack-512.png",
+  "./manifest.webmanifest?v=24",
+  "./icon-smarttrack-school-180.png",
+  "./icon-smarttrack-school-192.png",
+  "./icon-smarttrack-school-512.png",
 ];
 
 self.addEventListener("install", (event) => {
