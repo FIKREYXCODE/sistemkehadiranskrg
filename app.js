@@ -4,12 +4,13 @@ const $ = (selector) => document.querySelector(selector);
 const state = {
   date: "", classes: [], staffAbsences: [], dutyTeachers: { morning: [], afternoon: [] }, meta: {}, loading: false, saveTimer: null,
   savePromise: null, pendingAttendance: new Map(), staffDirty: false, dutyDirtySessions: new Set(), pendingMeta: {}, audit: new Map(), adminPin: "", session: "all",
+  staffDirectory: [], adminStaffDirectory: [],
   analytics: { period: "week", date: "", loading: false },
   monitoring: { reports: [], loading: false, previewUrls: [] },
 };
 const DRAFT_PREFIX = "skrg-pending-v1:";
 const EDITOR_KEY = "skrg-editor-name-v1";
-const STAFF_NAMES = [
+const DEFAULT_STAFF_NAMES = [
   "YUNUS BIN PATARAI", "RAHMATIAH BINTI MOHD JUDA", "KOMALA BINTI JOSEPH", "WARNAH BINTI SIRA", "EMRAN BIN HJ SELAMAT",
   "AG KU KEMAINDDRA BIN PG MOHD TAIB", "AHAD BIN JAAFAR", "AINATUN NADHIRAH BINTI DHARMAWI", "ANI BINTI PATOLA", "ASMADI BIN LAJJAKASI",
   "BAJAM BINTI LADUNG", "DARMAWATI BTE LOKKONG", "EVALORENNA BINTI LAMINSIN", "FARIDAH BINTI SUNU", "HALIM BIN BIDI",
@@ -76,6 +77,15 @@ function localDateValue() {
 
 function safe(value) {
   return String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
+}
+
+function activeStaffNames() {
+  const names = state.staffDirectory.filter((item) => item.active !== false).map((item) => String(item.name || "").trim()).filter(Boolean);
+  return [...new Set(names.length ? names : DEFAULT_STAFF_NAMES)].sort((a, b) => a.localeCompare(b, "ms"));
+}
+
+function refreshStaffNameChoices() {
+  $("#staffNames").innerHTML = activeStaffNames().map((name) => `<option value="${safe(name)}"></option>`).join("");
 }
 
 function editorName() { return $("#editorName").value.trim(); }
@@ -524,7 +534,7 @@ function renderDutyTeachers() {
 function renderStaff() {
   while (state.staffAbsences.length < 11) state.staffAbsences.push({ staffName: "", subject: "", reason: "" });
   state.staffAbsences = state.staffAbsences.slice(0, 11);
-  const sortedNames = [...new Set(STAFF_NAMES)].sort((a, b) => a.localeCompare(b, "ms"));
+  const sortedNames = activeStaffNames();
   $("#staffBody").innerHTML = state.staffAbsences.map((row, index) => {
     const staffAudit = auditDetails("staff", String(index + 1), "staffName");
     const savedName = String(row.staffName || "");
@@ -563,6 +573,33 @@ function renderAdminClasses() {
   </tr>`).join("");
 }
 
+function renderAdminStaffDirectory() {
+  $("#adminStaffBody").innerHTML = state.adminStaffDirectory.map((item, index) => {
+    const active = item.active !== false;
+    return `<tr data-admin-staff-id="${item.id || ""}" data-admin-staff-active="${active}">
+      <td>${index + 1}</td>
+      <td><input data-admin-staff-name type="text" maxlength="140" value="${safe(item.name)}" aria-label="Nama guru atau AKP ${index + 1}"></td>
+      <td><span class="staff-status ${active ? "active" : "inactive"}">${active ? "Aktif" : "Tidak aktif"}</span></td>
+      <td><button class="staff-toggle-button ${active ? "deactivate" : "activate"}" type="button" data-admin-staff-toggle>${active ? "Nyahaktif" : "Aktifkan"}</button></td>
+    </tr>`;
+  }).join("");
+}
+
+function addAdminStaffRow() {
+  syncAdminStaffDirectoryFromRows();
+  state.adminStaffDirectory.push({ id: null, name: "", active: true });
+  renderAdminStaffDirectory();
+  $("#adminStaffBody tr:last-child input")?.focus();
+}
+
+function syncAdminStaffDirectoryFromRows() {
+  state.adminStaffDirectory = Array.from(document.querySelectorAll("#adminStaffBody tr")).map((row) => ({
+    id: row.dataset.adminStaffId ? Number(row.dataset.adminStaffId) : null,
+    name: row.querySelector("[data-admin-staff-name]").value.trim(),
+    active: row.dataset.adminStaffActive === "true",
+  }));
+}
+
 function showAdminLogin(message = "") {
   state.adminPin = "";
   $("#adminSettingsView").hidden = true;
@@ -588,16 +625,43 @@ async function verifyAdmin(event) {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Kod admin tidak sah.");
     state.adminPin = pin;
+    state.adminStaffDirectory = Array.isArray(data.staffDirectory) ? data.staffDirectory.map((item) => ({ ...item, active: Boolean(item.active) })) : [];
     $("#adminPin").value = "";
     $("#adminLoginView").hidden = true;
     $("#adminSettingsView").hidden = false;
     $("#profileEffectiveDate").value = state.date || localDateValue();
     $("#adminSaveStatus").textContent = "";
     renderAdminClasses();
+    renderAdminStaffDirectory();
   } catch (error) {
     state.adminPin = "";
     $("#adminError").textContent = error.message || "Kod admin tidak sah.";
   }
+}
+
+async function saveStaffDirectory() {
+  const entries = Array.from(document.querySelectorAll("#adminStaffBody tr")).map((row) => ({
+    id: row.dataset.adminStaffId ? Number(row.dataset.adminStaffId) : null,
+    name: row.querySelector("[data-admin-staff-name]").value.trim(),
+    active: row.dataset.adminStaffActive === "true",
+  }));
+  if (entries.some((item) => !item.name)) { $("#adminStaffSaveStatus").textContent = "Sila isi semua nama dahulu."; return; }
+  $("#adminStaffSave").disabled = true;
+  $("#adminStaffSaveStatus").textContent = "Menyimpan…";
+  try {
+    const response = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "updateStaffDirectory", adminPin: state.adminPin, entries }) });
+    const data = await response.json();
+    if (!response.ok) {
+      if (response.status === 403) { showAdminLogin("Sesi admin tamat. Masukkan kod semula."); return; }
+      throw new Error(data.error || "Senarai nama gagal disimpan.");
+    }
+    state.adminStaffDirectory = Array.isArray(data.staffDirectory) ? data.staffDirectory.map((item) => ({ ...item, active: Boolean(item.active) })) : entries;
+    state.staffDirectory = state.adminStaffDirectory.filter((item) => item.active);
+    refreshStaffNameChoices(); renderStaff(); renderAdminStaffDirectory(); updateEditingAccess();
+    $("#adminStaffSaveStatus").textContent = "Senarai nama berjaya dikemas kini untuk semua guru.";
+  } catch (error) {
+    $("#adminStaffSaveStatus").textContent = error.message || "Senarai nama gagal disimpan.";
+  } finally { $("#adminStaffSave").disabled = false; }
 }
 
 async function saveClassProfiles() {
@@ -645,6 +709,8 @@ async function loadReport(silent = false) {
       state.dutyTeachers[item.session][Number(item.rowOrder) - 1] = item.teacherName || "";
     }
     state.meta = data.meta || {};
+    if (Array.isArray(data.staffDirectory)) state.staffDirectory = data.staffDirectory.map((item) => ({ ...item, active: Boolean(item.active) }));
+    refreshStaffNameChoices();
     state.audit = new Map((Array.isArray(data.audit) ? data.audit : []).map((item) => [auditKey(item.section, item.recordId, item.fieldName), item]));
     const restoredDraft = !silent && restoreDraft();
     renderAttendance(); renderDutyTeachers(); renderStaff(); renderMeta(); updateSessionVisibility();
@@ -826,6 +892,25 @@ $("#adminButton").addEventListener("click", async () => {
 $("#adminClose").addEventListener("click", closeAdminModal);
 $("#adminLoginForm").addEventListener("submit", verifyAdmin);
 $("#adminSave").addEventListener("click", saveClassProfiles);
+$("#adminStaffAdd").addEventListener("click", addAdminStaffRow);
+$("#adminStaffSave").addEventListener("click", saveStaffDirectory);
+$("#adminStaffBody").addEventListener("input", (event) => {
+  const input = event.target.closest("[data-admin-staff-name]");
+  if (!input) return;
+  input.value = input.value.toUpperCase();
+  const row = input.closest("tr");
+  const index = Array.from(row.parentElement.children).indexOf(row);
+  state.adminStaffDirectory[index] = { ...state.adminStaffDirectory[index], name: input.value };
+});
+$("#adminStaffBody").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-admin-staff-toggle]");
+  if (!button) return;
+  const row = button.closest("tr");
+  row.dataset.adminStaffActive = String(row.dataset.adminStaffActive !== "true");
+  const index = Array.from(row.parentElement.children).indexOf(row);
+  state.adminStaffDirectory[index] = { ...state.adminStaffDirectory[index], name: row.querySelector("[data-admin-staff-name]").value, active: row.dataset.adminStaffActive === "true" };
+  renderAdminStaffDirectory();
+});
 $("#adminModal").addEventListener("click", (event) => { if (event.target === $("#adminModal")) closeAdminModal(); });
 document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !$("#adminModal").hidden) closeAdminModal(); });
 
@@ -842,7 +927,7 @@ $("#editorName").addEventListener("input", (event) => {
   }
 });
 $("#editorName").addEventListener("change", (event) => {
-  const match = STAFF_NAMES.find((name) => name.toLocaleLowerCase("ms") === event.target.value.trim().toLocaleLowerCase("ms"));
+  const match = activeStaffNames().find((name) => name.toLocaleLowerCase("ms") === event.target.value.trim().toLocaleLowerCase("ms"));
   if (match && event.target.value !== match) {
     event.target.value = match;
     event.target.dispatchEvent(new Event("input", { bubbles: true }));
@@ -854,7 +939,7 @@ $("#reportDate").value = state.date;
 $("#monitoringDate").value = state.date;
 state.analytics.date = state.date;
 $("#analysisDate").value = state.date;
-$("#staffNames").innerHTML = STAFF_NAMES.map((name) => `<option value="${safe(name)}"></option>`).join("");
+refreshStaffNameChoices();
 try { $("#editorName").value = localStorage.getItem(EDITOR_KEY) || ""; } catch { /* abaikan */ }
 activateViewFromHash();
 loadReport();
