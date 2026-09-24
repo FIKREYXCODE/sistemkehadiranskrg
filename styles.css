@@ -85,6 +85,7 @@ body{margin:0;background:linear-gradient(135deg,#edf7ff 0%,#fff 46%,#e9f3ff 100%
 .section-heading h3{margin:0;font-size:1.05rem}
 .section-heading p{margin:0;color:var(--muted);font-size:.8rem}
 .completion-legend{display:flex;align-items:center;gap:13px;font-size:.76rem;font-weight:900}.completion-legend .complete{color:#08733d}.completion-legend .incomplete{color:#b51f35}
+.class-completion-lists{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:15px}.completion-list{padding:13px 14px;border:1px solid var(--line);border-radius:13px;background:#f9fcff}.completion-list.complete{border-color:#a9ddc3;background:#f0fbf5}.completion-list.incomplete{border-color:#f0b9c1;background:#fff5f6}.completion-list h4{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 10px;font-size:.78rem}.completion-list.complete h4{color:#08733d}.completion-list.incomplete h4{color:#a61f32}.completion-list h4 strong{display:grid;place-items:center;min-width:27px;height:27px;padding:0 7px;border-radius:999px;background:#fff;font-size:.72rem}.class-chip-list{display:flex;flex-wrap:wrap;gap:7px}.class-chip{display:inline-flex;align-items:center;padding:6px 9px;border-radius:8px;background:#fff;border:1px solid #c9d9e7;color:#34435c;font-size:.7rem;font-weight:800}.completion-list.complete .class-chip{border-color:#b7dfca}.completion-list.incomplete .class-chip{border-color:#efc2c8}.class-list-empty{margin:0;color:var(--muted);font-size:.72rem;font-style:italic}
 .table-scroll{overflow:auto;border:1px solid #bfcfe0;border-radius:11px}
 table{width:100%;border-collapse:collapse;font-size:.77rem}
 th,td{border-right:1px solid #c8d5e3;border-bottom:1px solid #c8d5e3;padding:7px 7px;text-align:center}
@@ -163,6 +164,7 @@ tfoot td{background:#dfeaf4;font-weight:900}
 .section-heading{display:block}
 .section-heading p{margin-top:8px}
 .completion-legend{margin-top:10px;justify-content:flex-start}
+.class-completion-lists{grid-template-columns:1fr}
 .signature-grid{grid-template-columns:1fr}
 .analysis-head{align-items:stretch;flex-direction:column}.analysis-controls{min-width:0}.analysis-summary{grid-template-columns:1fr}.chart-title-row{flex-direction:column}
 .brand strong{font-size:.9rem}

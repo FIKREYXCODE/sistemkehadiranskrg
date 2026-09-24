@@ -110,6 +110,21 @@ function classStatusMarkup(classId) {
   return `<span class="class-status ${complete ? "complete" : "incomplete"}" title="${complete ? "Pengisian kelas telah diterima" : "Kelas belum membuat pengisian"}">${complete ? "Selesai" : "Belum selesai"}</span>`;
 }
 
+function renderClassCompletionLists() {
+  const target = $("#classCompletionLists");
+  if (!target) return;
+  const classes = visibleClasses();
+  const renderList = (complete) => {
+    const items = classes.filter((row) => classIsCompleted(row.id) === complete);
+    const label = complete ? "Kelas selesai" : "Kelas belum selesai";
+    const chips = items.length
+      ? `<div class="class-chip-list">${items.map((row) => `<span class="class-chip">${safe(row.name)}</span>`).join("")}</div>`
+      : `<p class="class-list-empty">Tiada kelas dalam kategori ini.</p>`;
+    return `<section class="completion-list ${complete ? "complete" : "incomplete"}"><h4>${label}<strong>${items.length}</strong></h4>${chips}</section>`;
+  };
+  target.innerHTML = renderList(true) + renderList(false);
+}
+
 function updateClassCompletionStatus(classId) {
   const row = document.querySelector(`tr[data-class-id="${CSS.escape(String(classId))}"]`);
   if (!row) return;
@@ -118,6 +133,7 @@ function updateClassCompletionStatus(classId) {
   row.classList.toggle("class-incomplete", !complete);
   const cell = row.querySelector("[data-class-status]");
   if (cell) cell.innerHTML = classStatusMarkup(classId);
+  renderClassCompletionLists();
 }
 
 function applyAttendanceAudit(updates, updatedBy, updatedAt) {
@@ -523,6 +539,7 @@ function renderAttendance() {
       <td><input class="cell-input note-input${auditDetails("attendance", row.id, "note").className}" type="text" value="${safe(row.note)}" data-field="note" aria-label="Catatan ${safe(row.name)}" title="${safe(auditDetails("attendance", row.id, "note").title)}"></td>
     </tr>`;
   }).join("");
+  renderClassCompletionLists();
   renderTotals();
 }
 
