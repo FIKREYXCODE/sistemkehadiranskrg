@@ -99,6 +99,27 @@ function auditDetails(section, recordId, fieldName) {
   return { className: " has-audit", title: `Diisi oleh: ${item.updatedBy} • ${time}` };
 }
 
+function classIsCompleted(classId) {
+  const pending = state.pendingAttendance.get(classId);
+  if (pending && ["absentMale", "absentFemale", "note"].some((field) => Object.prototype.hasOwnProperty.call(pending, field))) return true;
+  return ["absentMale", "absentFemale", "note"].some((field) => state.audit.has(auditKey("attendance", classId, field)));
+}
+
+function classStatusMarkup(classId) {
+  const complete = classIsCompleted(classId);
+  return `<span class="class-status ${complete ? "complete" : "incomplete"}" title="${complete ? "Pengisian kelas telah diterima" : "Kelas belum membuat pengisian"}">${complete ? "Selesai" : "Belum selesai"}</span>`;
+}
+
+function updateClassCompletionStatus(classId) {
+  const row = document.querySelector(`tr[data-class-id="${CSS.escape(String(classId))}"]`);
+  if (!row) return;
+  const complete = classIsCompleted(classId);
+  row.classList.toggle("class-complete", complete);
+  row.classList.toggle("class-incomplete", !complete);
+  const cell = row.querySelector("[data-class-status]");
+  if (cell) cell.innerHTML = classStatusMarkup(classId);
+}
+
 function applyAttendanceAudit(updates, updatedBy, updatedAt) {
   for (const patch of updates) {
     for (const fieldName of ["absentMale", "absentFemale", "note"]) {
@@ -112,6 +133,7 @@ function applyAttendanceAudit(updates, updatedBy, updatedAt) {
       input.title = details.title;
       input.classList.toggle("has-audit", Boolean(details.title));
     }
+    updateClassCompletionStatus(patch.id);
   }
 }
 
@@ -490,8 +512,9 @@ function renderAttendance() {
   $("#sessionReportLabel").textContent = SESSION_LABELS[state.session] || SESSION_LABELS.all;
   $("#attendanceBody").innerHTML = rows.map((row, index) => {
     const f = classFigures(row);
-    return `<tr data-class-id="${safe(row.id)}">
-      <td>${index + 1}</td><td>${safe(row.teacherName || "—")}</td><td><strong>${safe(row.name)}</strong></td>
+    const complete = classIsCompleted(row.id);
+    return `<tr class="${complete ? "class-complete" : "class-incomplete"}" data-class-id="${safe(row.id)}">
+      <td>${index + 1}</td><td>${safe(row.teacherName || "—")}</td><td><strong>${safe(row.name)}</strong></td><td data-class-status>${classStatusMarkup(row.id)}</td>
       <td>${f.enrolMale}</td><td>${f.enrolFemale}</td><td><strong>${f.enrolTotal}</strong></td>
       <td>${f.presentMale}</td><td>${f.presentFemale}</td><td><strong>${f.presentTotal}</strong></td><td><strong>${percent(f.presentTotal, f.enrolTotal)}</strong></td>
       <td><input class="cell-input num-input${auditDetails("attendance", row.id, "absentMale").className}" type="number" inputmode="numeric" min="0" max="${f.enrolMale}" value="${f.absentMale}" data-field="absentMale" aria-label="Lelaki tidak hadir ${safe(row.name)}" title="${safe(auditDetails("attendance", row.id, "absentMale").title)}"></td>
@@ -510,7 +533,8 @@ function renderTotals() {
     return sum;
   }, {});
   const totalLabel = state.session === "all" ? "JUMLAH KESELURUHAN" : `JUMLAH ${SESSION_LABELS[state.session]}`;
-  $("#attendanceTotals").innerHTML = `<tr><td colspan="3">${totalLabel}</td><td>${totals.enrolMale || 0}</td><td>${totals.enrolFemale || 0}</td><td>${totals.enrolTotal || 0}</td><td>${totals.presentMale || 0}</td><td>${totals.presentFemale || 0}</td><td>${totals.presentTotal || 0}</td><td>${percent(totals.presentTotal || 0, totals.enrolTotal || 0)}</td><td>${totals.absentMale || 0}</td><td>${totals.absentFemale || 0}</td><td>${totals.absentTotal || 0}</td><td>${percent(totals.absentTotal || 0, totals.enrolTotal || 0)}</td><td></td></tr>`;
+  const completedCount = visibleClasses().filter((row) => classIsCompleted(row.id)).length;
+  $("#attendanceTotals").innerHTML = `<tr><td colspan="3">${totalLabel}</td><td><strong>${completedCount}/${visibleClasses().length}</strong></td><td>${totals.enrolMale || 0}</td><td>${totals.enrolFemale || 0}</td><td>${totals.enrolTotal || 0}</td><td>${totals.presentMale || 0}</td><td>${totals.presentFemale || 0}</td><td>${totals.presentTotal || 0}</td><td>${percent(totals.presentTotal || 0, totals.enrolTotal || 0)}</td><td>${totals.absentMale || 0}</td><td>${totals.absentFemale || 0}</td><td>${totals.absentTotal || 0}</td><td>${percent(totals.absentTotal || 0, totals.enrolTotal || 0)}</td><td></td></tr>`;
   $("#summaryEnrol").textContent = totals.enrolTotal || 0;
   $("#summaryPresent").textContent = totals.presentTotal || 0;
   $("#summaryAbsent").textContent = totals.absentTotal || 0;
@@ -800,6 +824,7 @@ $("#attendanceBody").addEventListener("input", (event) => {
   const pending = state.pendingAttendance.get(item.id) || { id: item.id };
   pending[field] = item[field];
   state.pendingAttendance.set(item.id, pending);
+  updateClassCompletionStatus(item.id);
   saveDraft();
   renderTotals(); scheduleSave();
 });

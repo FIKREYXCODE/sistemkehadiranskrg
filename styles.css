@@ -4,8 +4,8 @@ html{scroll-behavior:smooth}
 body{margin:0;background:linear-gradient(135deg,#edf7ff 0%,#fff 46%,#e9f3ff 100%);color:var(--ink);font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 .topbar{height:78px;padding:0 clamp(18px,5vw,70px);display:flex;align-items:center;justify-content:space-between;color:#fff;background:linear-gradient(110deg,#032c68,#0768ce 70%,#0aa7df);box-shadow:0 8px 30px #033a7630;position:sticky;top:0;z-index:20}
 .brand{display:flex;gap:12px;align-items:center;color:inherit;text-decoration:none}
-.brand-mark{display:grid;place-items:center;background:#ffffff18;border:1px solid #ffffff38;color:var(--blue);font-weight:900;border-radius:16px;box-shadow:0 8px 18px #002b6d30;width:48px;height:48px}
-.brand-mark img{display:block;max-width:44px;max-height:44px;width:auto;height:auto;object-fit:contain}
+.brand-mark{display:grid;place-items:center;background:#ffffff18;border:1px solid #ffffff38;color:var(--blue);font-weight:900;border-radius:16px;box-shadow:0 8px 18px #002b6d30;width:60px;height:60px}
+.brand-mark img{display:block;max-width:56px;max-height:56px;width:auto;height:auto;object-fit:contain}
 .brand span:last-child{display:flex;flex-direction:column}
 .brand small{opacity:.78;margin-top:3px}
 .top-actions{display:flex;align-items:center;gap:14px}
@@ -25,6 +25,12 @@ body{margin:0;background:linear-gradient(135deg,#edf7ff 0%,#fff 46%,#e9f3ff 100%
 .identity-bar .user-picker{width:min(360px,100%);font-size:.78rem;font-weight:900;color:var(--navy)}
 .identity-bar .user-picker input{margin-top:5px;padding:10px 12px;border:1px solid #aac7df;border-radius:9px}
 .identity-bar>div strong,.identity-bar>div small{display:block}.identity-bar>div strong{font-size:.8rem;color:var(--blue)}.identity-bar>div small{margin-top:3px;color:var(--muted);font-size:.7rem}
+.school-location{width:min(1180px,94vw);margin:12px auto 0;display:grid;grid-template-columns:minmax(300px,.82fr) minmax(420px,1.18fr);border:1px solid #b9d8ef;border-radius:20px;overflow:hidden;background:#fff;box-shadow:0 12px 34px #183b6d18}
+.school-location-info{padding:24px 26px;background:linear-gradient(145deg,#062b62,#0755b5);color:#fff}
+.school-location-info h2{margin:2px 0 7px;font-size:1.45rem}.school-location-info>p:not(.eyebrow){margin:0;opacity:.85}.school-location-info small{display:block;margin-top:13px;line-height:1.45;opacity:.76}
+.school-link-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}.school-link-actions a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:11px 15px;border-radius:11px;color:#fff;text-decoration:none;font-size:.82rem;font-weight:900;box-shadow:0 7px 16px #001b4230}.school-link-actions .map-link{background:#07865e}.school-link-actions .idme-link{background:#fff;color:var(--blue)}
+.school-link-actions a:hover{transform:translateY(-1px);filter:brightness(1.04)}
+.school-map-frame{min-height:245px;background:#dceaf6}.school-map-frame iframe{display:block;width:100%;height:100%;min-height:245px;border:0}
 .app-view[hidden]{display:none!important}
 .page-shell{width:min(1500px,95vw);margin:34px auto 50px}
 .date-panel{display:flex;justify-content:space-between;gap:30px;align-items:center;border-radius:24px;padding:30px clamp(24px,4vw,52px);color:#fff;background:linear-gradient(120deg,#032c68,#0755b5 62%,#11a7e3);box-shadow:0 20px 50px #064b9a26;position:relative;overflow:hidden}
@@ -35,11 +41,11 @@ body{margin:0;background:linear-gradient(135deg,#edf7ff 0%,#fff 46%,#e9f3ff 100%
 .date-picker{position:relative;z-index:2;min-width:245px;font-weight:800}
 .date-picker input{display:block;width:100%;margin-top:8px;padding:14px 15px;border:2px solid #ffffff50;border-radius:12px;background:#fff;color:var(--ink);font:inherit}
 .report-card{margin-top:24px;background:#fff;border:1px solid var(--line);border-radius:24px;overflow:hidden;box-shadow:0 18px 60px #183b6d18}
-.report-head{display:grid;grid-template-columns:158px 1fr auto;gap:20px;align-items:center;padding:26px 32px;border-bottom:1px solid var(--line)}
-.logo-pair{display:flex;align-items:center;justify-content:center;gap:9px;min-height:82px;padding:7px;background:linear-gradient(145deg,#e7f5ff,#fff);border:1px solid #cce7ff;border-radius:16px;box-shadow:0 8px 18px #002b6d18}
+.report-head{display:grid;grid-template-columns:220px 1fr auto;gap:22px;align-items:center;padding:26px 32px;border-bottom:1px solid var(--line)}
+.logo-pair{display:flex;align-items:center;justify-content:center;gap:12px;min-height:118px;padding:8px;background:linear-gradient(145deg,#e7f5ff,#fff);border:1px solid #cce7ff;border-radius:16px;box-shadow:0 8px 18px #002b6d18}
 .crest{display:block;max-width:100%;height:auto;object-fit:contain}
-.crest-kpm{width:84px;max-height:70px}
-.crest-school{width:54px;max-height:74px}
+.crest-kpm{width:128px;max-height:108px}
+.crest-school{width:78px;max-height:110px}
 .report-head h2{margin:2px 0 5px;font-size:clamp(1.2rem,2.2vw,1.9rem);letter-spacing:.02em}
 .report-head p{margin:0;color:var(--muted)}
 .report-kicker{font-size:.7rem!important;color:var(--blue)!important;font-weight:900;letter-spacing:.18em}
@@ -78,6 +84,7 @@ body{margin:0;background:linear-gradient(135deg,#edf7ff 0%,#fff 46%,#e9f3ff 100%
 .section-heading span{background:var(--pale);color:var(--blue);font-weight:900;padding:7px 10px;border-radius:9px}
 .section-heading h3{margin:0;font-size:1.05rem}
 .section-heading p{margin:0;color:var(--muted);font-size:.8rem}
+.completion-legend{display:flex;align-items:center;gap:13px;font-size:.76rem;font-weight:900}.completion-legend .complete{color:#08733d}.completion-legend .incomplete{color:#b51f35}
 .table-scroll{overflow:auto;border:1px solid #bfcfe0;border-radius:11px}
 table{width:100%;border-collapse:collapse;font-size:.77rem}
 th,td{border-right:1px solid #c8d5e3;border-bottom:1px solid #c8d5e3;padding:7px 7px;text-align:center}
@@ -86,6 +93,9 @@ thead th{background:var(--navy);color:#fff;font-size:.69rem;text-transform:upper
 .attendance-table{min-width:1250px}
 .attendance-table .name-col{min-width:280px;text-align:left}
 .attendance-table .note-col{min-width:150px}
+.attendance-table .status-col{min-width:96px}
+.class-status{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:86px;padding:6px 8px;border-radius:999px;font-size:.67rem;font-weight:900;white-space:nowrap}.class-status:before{content:"";width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 3px #ffffff80}.class-status.complete{background:#dff7ea;color:#08733d}.class-status.complete:before{background:#0db76f}.class-status.incomplete{background:#ffe5e8;color:#a61f32}.class-status.incomplete:before{background:#df2d46}
+.attendance-table tr.class-complete>td:first-child{box-shadow:inset 4px 0 #0db76f}.attendance-table tr.class-incomplete>td:first-child{box-shadow:inset 4px 0 #df2d46}
 .attendance-table td:nth-child(2){text-align:left;font-weight:700}
 .absent-head{background:#a51831!important}
 tbody tr:nth-child(even){background:#f5f9fd}
@@ -137,13 +147,14 @@ tfoot td{background:#dfeaf4;font-weight:900}
 .print-button{padding:10px 12px}
 .workspace-nav{grid-template-columns:1fr;margin-top:14px;gap:8px}.workspace-nav a{padding:11px 13px}.workspace-nav a>span{width:34px;height:34px}.workspace-nav small{display:none}
 .identity-bar{align-items:stretch;flex-direction:column;gap:8px;padding:13px}.identity-bar .user-picker{width:100%}.identity-bar>div{display:none}
+.school-location{grid-template-columns:1fr}.school-location-info{padding:21px 18px}.school-link-actions{display:grid;grid-template-columns:1fr}.school-map-frame,.school-map-frame iframe{min-height:260px}
 .page-shell{width:94vw;margin-top:18px}
 .date-panel{align-items:stretch;flex-direction:column;padding:25px 22px}
 .date-picker{min-width:0}
-.report-head{grid-template-columns:120px 1fr;padding:20px}
-.logo-pair{width:112px;min-height:62px;gap:5px}
-.crest-kpm{width:60px;max-height:52px}
-.crest-school{width:38px;max-height:54px}
+.report-head{grid-template-columns:158px 1fr;padding:20px 15px;gap:12px}
+.logo-pair{width:150px;min-height:86px;gap:7px}
+.crest-kpm{width:88px;max-height:76px}
+.crest-school{width:54px;max-height:78px}
 .report-date-block{grid-column:1/-1;text-align:left;padding:12px 0 0;border-left:0;border-top:1px solid var(--line)}
 .summary-grid{grid-template-columns:repeat(2,1fr);padding:15px}
 .summary-grid div{display:block}
@@ -151,6 +162,7 @@ tfoot td{background:#dfeaf4;font-weight:900}
 .table-section,.report-notes{padding-left:15px;padding-right:15px}
 .section-heading{display:block}
 .section-heading p{margin-top:8px}
+.completion-legend{margin-top:10px;justify-content:flex-start}
 .signature-grid{grid-template-columns:1fr}
 .analysis-head{align-items:stretch;flex-direction:column}.analysis-controls{min-width:0}.analysis-summary{grid-template-columns:1fr}.chart-title-row{flex-direction:column}
 .brand strong{font-size:.9rem}

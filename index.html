@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="HEM SMARTTRACK">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="manifest" href="manifest.webmanifest?v=28">
+  <link rel="manifest" href="manifest.webmanifest?v=29">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=28">
+  <link rel="stylesheet" href="styles.css?v=29">
 </head>
 <body>
   <header class="topbar no-print">
@@ -39,6 +39,22 @@
     </label>
     <div><strong>Nama ini digunakan pada setiap simpanan</strong><small>Taip beberapa huruf atau buka senarai, kemudian pilih nama guru.</small></div>
   </aside>
+
+  <section id="lokasi-sekolah" class="school-location no-print" aria-labelledby="schoolLocationTitle">
+    <div class="school-location-info">
+      <p class="eyebrow">Lokasi &amp; pautan rasmi</p>
+      <h2 id="schoolLocationTitle">Sekolah Kebangsaan Ranggu</h2>
+      <p>Peti Surat 842, 91008 Tawau, Sabah</p>
+      <div class="school-link-actions">
+        <a class="map-link" href="https://www.google.com/maps/search/?api=1&amp;query=Sekolah%20Kebangsaan%20Ranggu%2C%20Tawau%2C%20Sabah" target="_blank" rel="noopener noreferrer">📍 Buka Peta Lokasi</a>
+        <a class="idme-link" href="https://idme.moe.gov.my/login" target="_blank" rel="noopener noreferrer">🔐 Buka Portal idMe</a>
+      </div>
+      <small>Tekan butang untuk membuka lokasi sekolah atau log masuk ke Sistem Pengurusan Identiti KPM.</small>
+    </div>
+    <div class="school-map-frame">
+      <iframe title="Peta lokasi Sekolah Kebangsaan Ranggu" src="https://www.google.com/maps?q=Sekolah%20Kebangsaan%20Ranggu%2C%20Tawau%2C%20Sabah&amp;output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+    </div>
+  </section>
 
   <main id="top" class="page-shell">
     <section id="viewAttendance" class="app-view" data-view-panel="attendance" aria-label="Kehadiran harian">
@@ -100,11 +116,11 @@
       </section>
 
       <section class="table-section">
-        <div class="section-heading"><div><span>01</span><h3>Kehadiran mengikut kelas</h3></div><p>Isi bilangan murid lelaki dan perempuan yang tidak hadir.</p></div>
+        <div class="section-heading"><div><span>01</span><h3>Kehadiran mengikut kelas</h3></div><div class="completion-legend" aria-label="Petunjuk status pengisian"><span class="complete">● Selesai</span><span class="incomplete">● Belum selesai</span></div></div>
         <div class="table-scroll">
           <table class="attendance-table">
             <thead>
-              <tr><th rowspan="2">Bil</th><th rowspan="2" class="name-col">Guru kelas</th><th rowspan="2">Kelas</th><th colspan="3">Dalam daftar</th><th colspan="3">Hadir</th><th rowspan="2">% Hadir</th><th colspan="3" class="absent-head">Tidak hadir</th><th rowspan="2">% TH</th><th rowspan="2" class="note-col">Catatan</th></tr>
+              <tr><th rowspan="2">Bil</th><th rowspan="2" class="name-col">Guru kelas</th><th rowspan="2">Kelas</th><th rowspan="2" class="status-col">Status</th><th colspan="3">Dalam daftar</th><th colspan="3">Hadir</th><th rowspan="2">% Hadir</th><th colspan="3" class="absent-head">Tidak hadir</th><th rowspan="2">% TH</th><th rowspan="2" class="note-col">Catatan</th></tr>
               <tr><th>L</th><th>P</th><th>J</th><th>L</th><th>P</th><th>J</th><th class="absent-head">L</th><th class="absent-head">P</th><th class="absent-head">J</th></tr>
             </thead>
             <tbody id="attendanceBody"></tbody>
@@ -311,6 +327,6 @@
   </div>
 
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="app.js?v=28" defer></script>
+  <script src="app.js?v=29" defer></script>
 </body>
 </html>
