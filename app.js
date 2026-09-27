@@ -7,7 +7,7 @@ const state = {
   staffDirectory: [], adminStaffDirectory: [],
   analytics: { period: "week", date: "", loading: false },
   monitoring: { reports: [], loading: false, previewUrls: [] },
-  weeklyDuty: { loading: false }, completion: { loading: false }, calendar: { loading: false },
+  weeklyDuty: { loading: false }, completion: { loading: false }, calendar: { loading: false }, rmtPreviewUrls: [],
 };
 const DRAFT_PREFIX = "skrg-pending-v1:";
 const EDITOR_KEY = "skrg-editor-name-v1";
@@ -410,12 +410,40 @@ function setupRmtTemplate() {
   $("#rmtWeek").value = isoWeekNumber(rmtAnchor); $("#rmtFrom").value = dates[0]; $("#rmtTo").value = dates[4];
 }
 
-function generateRmtTemplate() {
-  const names = (target) => Array.from(document.querySelectorAll(`${target} input`)).map((input) => input.value.trim()).filter(Boolean);
-  const list = (items) => items.length ? items.map((name, index) => `${index + 1}. ${name}`).join("\n") : "Belum diisi";
-  const fmt = (value) => value ? new Intl.DateTimeFormat("ms-MY", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" }).format(dateObject(value)) : "—";
-  $("#rmtPreview").textContent = `📋 LAPORAN GURU BERTUGAS RMT\n\n📌 Minggu : ${$("#rmtWeek").value || "—"}\n📅 Tarikh : ${fmt($("#rmtFrom").value)} - ${fmt($("#rmtTo").value)}\n\n📗 PAGI :\n${list(names("#rmtMorningNames"))}\n\n📍 Guru sesi pagi isi link RMT\n\n📕 PETANG :\n${list(names("#rmtAfternoonNames"))}\n\n📌 Guru sesi petang manual\n\nJumlah murid RMT Terkini : ${count($("#rmtTotal").value)}\nPagi : ${count($("#rmtMorningCount").value)}\nPetang : ${count($("#rmtAfternoonCount").value)}\n\n🔗 Link RMT :\nhttps://appsjohor.moe.gov.my/rmt`;
-  $("#rmtStatus").textContent = "Templat telah dijana.";
+function renderRmtImagePreview(files) {
+  for (const url of state.rmtPreviewUrls) URL.revokeObjectURL(url);
+  state.rmtPreviewUrls = [];
+  const selected = Array.from(files || []);
+  const status = $("#rmtPhotoStatus");
+  const preview = $("#rmtImagePreview");
+  if (selected.length > 4) {
+    $("#rmtPhotos").value = "";
+    preview.innerHTML = "";
+    status.textContent = "Maksimum 4 gambar sahaja.";
+    return;
+  }
+  if (!selected.length) {
+    preview.innerHTML = "";
+    status.textContent = "";
+    return;
+  }
+  const invalid = selected.some((file) => !(file.type || "").startsWith("image/") && !/\.(jpe?g|png|webp|heic|heif)$/i.test(file.name));
+  if (invalid) {
+    $("#rmtPhotos").value = "";
+    preview.innerHTML = "";
+    status.textContent = "Sila pilih fail gambar sahaja.";
+    return;
+  }
+  state.rmtPreviewUrls = selected.map((file) => URL.createObjectURL(file));
+  preview.innerHTML = state.rmtPreviewUrls.map((url, index) => `<figure><img src="${safe(url)}" alt="Gambar laporan RMT ${index + 1}"><figcaption>Gambar RMT ${index + 1}</figcaption></figure>`).join("");
+  status.textContent = `${selected.length} gambar dipilih dan sedia untuk semakan.`;
+}
+
+function setSidebar(open) {
+  document.body.classList.toggle("sidebar-open", open);
+  $("#mainSidebar").setAttribute("aria-hidden", String(!open));
+  $("#menuToggle").setAttribute("aria-expanded", String(open));
+  $("#menuToggle").textContent = open ? "✕ Tutup" : "☰ Menu";
 }
 
 async function loadAnalytics() {
@@ -1045,7 +1073,7 @@ function activateViewFromHash() {
   if (requested === "duty") loadWeeklyDuty();
   if (requested === "completion") loadCompletionView();
   if (requested === "calendar") loadCalendarRecord();
-  if (requested === "rmt" && !$("#rmtPreview").textContent.trim()) generateRmtTemplate();
+  setSidebar(false);
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -1057,12 +1085,11 @@ $("#weeklyDutyRefresh").addEventListener("click", loadWeeklyDuty);
 $("#completionRefresh").addEventListener("click", loadCompletionView);
 $("#completionSession").addEventListener("change", loadCompletionView);
 $("#calendarRefresh").addEventListener("click", loadCalendarRecord);
-$("#rmtTemplateForm").addEventListener("submit", (event) => { event.preventDefault(); generateRmtTemplate(); });
-$("#rmtCopy").addEventListener("click", async () => {
-  generateRmtTemplate();
-  try { await navigator.clipboard.writeText($("#rmtPreview").textContent); $("#rmtStatus").textContent = "Templat berjaya disalin. Boleh tampal ke WhatsApp."; }
-  catch { $("#rmtStatus").textContent = "Pilih teks pratonton dan salin secara manual."; }
-});
+$("#rmtPhotos").addEventListener("change", (event) => renderRmtImagePreview(event.target.files));
+$("#menuToggle").addEventListener("click", () => setSidebar(!document.body.classList.contains("sidebar-open")));
+$("#sidebarBackdrop").addEventListener("click", () => setSidebar(false));
+document.querySelectorAll("[data-view-link]").forEach((link) => link.addEventListener("click", () => setSidebar(false)));
+document.addEventListener("keydown", (event) => { if (event.key === "Escape") setSidebar(false); });
 $("#monitoringRefresh").addEventListener("click", loadMonitoringReports);
 $("#monitoringPhotos").addEventListener("change", (event) => renderMonitoringPreview(event.target.files));
 $("#monitoringForm").addEventListener("submit", saveMonitoringReport);

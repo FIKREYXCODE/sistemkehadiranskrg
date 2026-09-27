@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="HEM SMARTTRACK">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="manifest" href="manifest.webmanifest?v=32">
+  <link rel="manifest" href="manifest.webmanifest?v=34">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=32">
+  <link rel="stylesheet" href="styles.css?v=34">
 </head>
 <body>
   <header class="topbar no-print">
@@ -20,6 +20,7 @@
       <span><strong>HEM SMARTTRACK</strong><small>Rekod harian sekolah</small></span>
     </a>
     <div class="top-actions">
+      <button id="menuToggle" class="menu-toggle" type="button" aria-controls="mainSidebar" aria-expanded="false">☰ Menu</button>
       <span id="saveStatus" class="save-status" aria-live="polite">Memuatkan data…</span>
       <button id="adminButton" class="admin-button" type="button">⚙ Tetapan sistem</button>
       <button id="printButton" class="print-button" type="button">🖨 Cetak laporan</button>
@@ -27,7 +28,7 @@
   </header>
 
   <div class="app-layout">
-  <nav class="workspace-nav no-print" aria-label="Menu utama HEM SMARTTRACK">
+  <nav id="mainSidebar" class="workspace-nav no-print" aria-label="Menu utama HEM SMARTTRACK" aria-hidden="true">
     <p class="sidebar-title">MENU UTAMA</p>
     <a href="#kehadiran" data-view-link="attendance"><span>01</span><strong>Laporan Kedatangan Harian</strong><small>Isi dan semak rekod kelas</small></a>
     <a href="#guru-bertugas" data-view-link="duty"><span>02</span><strong>Guru Bertugas Mingguan</strong><small>Senarai pagi dan petang</small></a>
@@ -35,8 +36,9 @@
     <a href="#rekod-kalendar" data-view-link="calendar"><span>04</span><strong>Rekod Ikut Kalendar</strong><small>Semak pengisian mengikut tarikh</small></a>
     <a href="#laporan-pemantauan" data-view-link="monitoring"><span>05</span><strong>Pemantauan Sekolah</strong><small>Kebersihan dan keselamatan</small></a>
     <a href="#analisis" data-view-link="analysis"><span>06</span><strong>Analisis Kehadiran</strong><small>Graf dan kelas terbaik</small></a>
-    <a href="#guru-rmt" data-view-link="rmt"><span>07</span><strong>Guru Bertugas RMT</strong><small>Templat dan portal rasmi</small></a>
+    <a href="#guru-rmt" data-view-link="rmt"><span>07</span><strong>Guru Bertugas RMT</strong><small>Senarai, gambar dan portal rasmi</small></a>
   </nav>
+  <button id="sidebarBackdrop" class="sidebar-backdrop no-print" type="button" aria-label="Tutup menu" tabindex="-1"></button>
 
   <div class="app-content">
 
@@ -310,15 +312,22 @@
 
     <section id="rmtView" class="utility-card app-view no-print" data-view-panel="rmt" hidden>
       <div class="utility-head">
-        <div><p class="eyebrow">Pengurusan RMT</p><h2>Templat Guru Bertugas RMT</h2><p>Isi senarai mingguan, kemudian salin templat untuk dikongsi. Portal rasmi RMT dibuka melalui butang berasingan.</p></div>
+        <div><p class="eyebrow">Pengurusan RMT</p><h2>Maklumat Guru Bertugas RMT</h2><p>Isi senarai mingguan dan pilih gambar laporan untuk semakan. Portal rasmi RMT dibuka melalui butang berasingan.</p></div>
         <a class="rmt-portal-button" href="https://appsjohor.moe.gov.my/rmt" target="_blank" rel="noopener noreferrer">🔗 Buka Portal RMT</a>
       </div>
-      <form id="rmtTemplateForm" class="rmt-template-form">
+      <div id="rmtTemplateForm" class="rmt-template-form">
         <div class="rmt-meta-grid"><label>Minggu<input id="rmtWeek" type="number" min="1" max="53" required></label><label>Tarikh mula<input id="rmtFrom" type="date" required></label><label>Tarikh akhir<input id="rmtTo" type="date" required></label><label>Jumlah murid RMT<input id="rmtTotal" type="number" min="0" value="261"></label><label>Murid pagi<input id="rmtMorningCount" type="number" min="0" value="142"></label><label>Murid petang<input id="rmtAfternoonCount" type="number" min="0" value="119"></label></div>
         <div class="rmt-session-grid"><fieldset><legend>📗 Guru sesi pagi</legend><div id="rmtMorningNames" class="rmt-name-list"></div></fieldset><fieldset><legend>📕 Guru sesi petang</legend><div id="rmtAfternoonNames" class="rmt-name-list"></div></fieldset></div>
-        <div class="rmt-actions"><button id="rmtGenerate" class="primary-button" type="submit">Jana templat</button><button id="rmtCopy" class="secondary-button" type="button">Salin templat</button><span id="rmtStatus" class="form-message" role="status"></span></div>
-      </form>
-      <div class="rmt-preview-wrap"><h3>Pratonton mesej</h3><pre id="rmtPreview" class="rmt-preview"></pre></div>
+      </div>
+      <section class="rmt-photo-section" aria-labelledby="rmtPhotoTitle">
+        <div><p class="eyebrow">Lampiran RMT</p><h3 id="rmtPhotoTitle">Pengisian Gambar Laporan</h3><p>Pilih gambar laporan atau bukti pengisian RMT dari telefon. Gambar akan dipaparkan di bawah untuk semakan.</p></div>
+        <label class="photo-uploader">Pilih gambar RMT
+          <input id="rmtPhotos" type="file" accept="image/*,.heic,.heif" multiple>
+          <span>Pilih sehingga 4 gambar. Tekan butang Portal RMT di atas untuk meneruskan urusan rasmi.</span>
+        </label>
+        <p id="rmtPhotoStatus" class="form-message" role="status"></p>
+        <div id="rmtImagePreview" class="monitoring-preview rmt-image-preview" aria-live="polite"></div>
+      </section>
     </section>
   </main>
   </div>
@@ -379,6 +388,6 @@
   </div>
 
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="app.js?v=32" defer></script>
+  <script src="app.js?v=34" defer></script>
 </body>
 </html>
