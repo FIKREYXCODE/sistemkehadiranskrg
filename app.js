@@ -7,6 +7,7 @@ const state = {
   staffDirectory: [], adminStaffDirectory: [],
   analytics: { period: "week", date: "", loading: false },
   monitoring: { reports: [], loading: false, previewUrls: [] },
+  weeklyDuty: { loading: false }, completion: { loading: false }, calendar: { loading: false },
 };
 const DRAFT_PREFIX = "skrg-pending-v1:";
 const EDITOR_KEY = "skrg-editor-name-v1";
@@ -259,6 +260,23 @@ function renderAnalytics(records, range) {
     const average = item.enrol ? (item.present / item.enrol) * 100 : NaN;
     return `<article class="${session}"><span>${periodLabel} — ${labels[session]}</span><strong>${analysisPercent(average)}</strong><small>${item.days.size} hari • ${item.records} rekod kelas</small></article>`;
   }).join("");
+  const ranking = new Map();
+  for (const row of records) {
+    const enrol = count(row.enrolMale, 300) + count(row.enrolFemale, 300);
+    if (!enrol) continue;
+    const absent = Math.min(count(row.absentMale, 300) + count(row.absentFemale, 300), enrol);
+    const key = String(row.id || row.classId || row.name || row.className || "");
+    if (!key) continue;
+    const className = row.name || row.className || key;
+    const rosterClass = state.classes.find((item) => String(item.id) === key || String(item.name) === String(className));
+    const current = ranking.get(key) || { name: className, teacher: row.teacherName || row.teacher || rosterClass?.teacherName || "Nama guru belum tersedia", enrol: 0, present: 0, records: 0 };
+    current.enrol += enrol; current.present += enrol - absent; current.records += 1;
+    if (row.teacherName || row.teacher) current.teacher = row.teacherName || row.teacher;
+    ranking.set(key, current);
+  }
+  const winners = [...ranking.values()].map((item) => ({ ...item, value: item.enrol ? (item.present / item.enrol) * 100 : 0 })).sort((a, b) => b.value - a.value || b.records - a.records || a.name.localeCompare(b.name, "ms")).slice(0, 3);
+  const medals = [{ icon: "🥇", label: "Emas", className: "gold" }, { icon: "🥈", label: "Perak", className: "silver" }, { icon: "🥉", label: "Gangsa", className: "bronze" }];
+  $("#attendancePodium").innerHTML = winners.length ? winners.map((item, index) => `<article class="podium-card ${medals[index].className}"><div class="podium-medal" aria-hidden="true">${medals[index].icon}</div><strong>${safe(item.name)}</strong><span>${item.value.toFixed(2)}%</span><small>${safe(item.teacher)}</small><small>${item.records} rekod • ${medals[index].label}</small></article>`).join("") : '<p class="monitoring-empty">Belum ada data kelas yang mencukupi untuk kedudukan emas, perak dan gangsa.</p>';
   const rangeFormatter = new Intl.DateTimeFormat("ms-MY", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
   $("#analysisRangeLabel").textContent = `${rangeFormatter.format(dateObject(range.from))} – ${rangeFormatter.format(dateObject(range.to))}`;
   const width = 1000, height = 350, left = 58, right = 24, top = 24, bottom = 52;
@@ -290,6 +308,114 @@ function renderAnalytics(records, range) {
   const totalRecords = records.length;
   $("#analysisStatus").className = "analysis-status";
   $("#analysisStatus").textContent = totalRecords ? `${totalRecords} rekod kelas ditemui. Analisis ini tidak mengubah data asal.` : "Belum ada rekod kehadiran tersimpan dalam tempoh ini.";
+}
+
+async function fetchSchoolDate(date) {
+  const response = await fetch(`${API_URL}?date=${encodeURIComponent(date)}`, { cache: "no-store" });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || "Rekod tidak dapat dibuka.");
+  return data;
+}
+
+function reportAuditMap(data) {
+  return new Map((Array.isArray(data.audit) ? data.audit : []).map((item) => [auditKey(item.section, item.recordId, item.fieldName), item]));
+}
+
+function reportClassCompleted(data, classId) {
+  const audits = reportAuditMap(data);
+  return ["absentMale", "absentFemale", "note"].some((field) => audits.has(auditKey("attendance", classId, field)));
+}
+
+function filterReportClasses(data, session) {
+  const classes = Array.isArray(data.classes) ? data.classes : [];
+  return session === "all" ? classes : classes.filter((row) => classSession(row) === session);
+}
+
+function schoolWeekDates(anchorValue) {
+  const anchor = dateObject(anchorValue);
+  const monday = addDays(anchor, -((anchor.getUTCDay() + 6) % 7));
+  return Array.from({ length: 5 }, (_, index) => dateValue(addDays(monday, index)));
+}
+
+async function loadWeeklyDuty() {
+  if (state.weeklyDuty.loading) return;
+  state.weeklyDuty.loading = true;
+  $("#weeklyDutyRefresh").disabled = true;
+  $("#weeklyDutyStatus").textContent = "Memuatkan senarai guru bertugas minggu ini…";
+  try {
+    const dates = schoolWeekDates($("#weeklyDutyDate").value || state.date);
+    const reports = await Promise.all(dates.map(fetchSchoolDate));
+    const formatter = new Intl.DateTimeFormat("ms-MY", { weekday: "long", day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
+    const getNames = (data, session) => (Array.isArray(data.dutyTeachers) ? data.dutyTeachers : []).filter((item) => item.session === session).sort((a, b) => Number(a.rowOrder) - Number(b.rowOrder)).map((item) => String(item.teacherName || "").trim()).filter(Boolean);
+    $("#weeklyDutyGrid").innerHTML = reports.map((data, index) => {
+      const morning = getNames(data, "morning"), afternoon = getNames(data, "afternoon");
+      const list = (names) => names.length ? `<ol>${names.map((name) => `<li>${safe(name)}</li>`).join("")}</ol>` : "<p>Belum diisi.</p>";
+      return `<article class="weekly-duty-day"><div class="weekly-duty-date"><strong>${safe(formatter.format(dateObject(dates[index])))}</strong><small>${dates[index]}</small></div><div class="weekly-duty-session"><h4>Sidang Pagi</h4>${list(morning)}</div><div class="weekly-duty-session afternoon"><h4>Sidang Petang</h4>${list(afternoon)}</div></article>`;
+    }).join("");
+    $("#weeklyDutyStatus").textContent = `Senarai ${dates[0]} hingga ${dates[4]} berjaya dimuatkan.`;
+  } catch (error) {
+    $("#weeklyDutyStatus").textContent = error.message || "Senarai mingguan tidak dapat dibuka.";
+    $("#weeklyDutyGrid").innerHTML = "";
+  } finally { state.weeklyDuty.loading = false; $("#weeklyDutyRefresh").disabled = false; }
+}
+
+async function loadCompletionView() {
+  if (state.completion.loading) return;
+  state.completion.loading = true; $("#completionRefresh").disabled = true; $("#completionStatus").textContent = "Menyemak status kelas…";
+  try {
+    const date = $("#completionDate").value || state.date;
+    const data = await fetchSchoolDate(date);
+    const classes = filterReportClasses(data, $("#completionSession").value);
+    const renderList = (complete) => {
+      const items = classes.filter((row) => reportClassCompleted(data, row.id) === complete);
+      return `<section class="completion-list ${complete ? "complete" : "incomplete"}"><h4>${complete ? "Kelas selesai" : "Kelas belum selesai"}<strong>${items.length}</strong></h4>${items.length ? `<div class="class-chip-list">${items.map((row) => `<span class="class-chip" title="${safe(row.teacherName || "Guru belum ditetapkan")}">${safe(row.name)} — ${safe(row.teacherName || "Guru belum ditetapkan")}</span>`).join("")}</div>` : '<p class="class-list-empty">Tiada kelas dalam kategori ini.</p>'}</section>`;
+    };
+    $("#completionListsView").innerHTML = renderList(true) + renderList(false);
+    $("#completionStatus").textContent = `${classes.length} kelas disemak bagi ${date}.`;
+  } catch (error) { $("#completionStatus").textContent = error.message || "Status kelas tidak dapat dibuka."; $("#completionListsView").innerHTML = ""; }
+  finally { state.completion.loading = false; $("#completionRefresh").disabled = false; }
+}
+
+async function loadCalendarRecord() {
+  if (state.calendar.loading) return;
+  state.calendar.loading = true; $("#calendarRefresh").disabled = true; $("#calendarStatus").textContent = "Membuka rekod tarikh pilihan…";
+  try {
+    const date = $("#calendarDate").value || state.date;
+    const data = await fetchSchoolDate(date), audits = Array.isArray(data.audit) ? data.audit : [];
+    const classes = Array.isArray(data.classes) ? data.classes : [];
+    $("#calendarTableBody").innerHTML = classes.map((row) => {
+      const classAudits = audits.filter((item) => item.section === "attendance" && String(item.recordId) === String(row.id)).sort((a, b) => Number(b.updatedAt) - Number(a.updatedAt));
+      const latest = classAudits[0], completed = classAudits.length > 0, figures = classFigures(row);
+      const time = latest ? new Intl.DateTimeFormat("ms-MY", { dateStyle: "medium", timeStyle: "short" }).format(new Date(Number(latest.updatedAt))) : "—";
+      return `<tr><td><strong>${safe(row.name)}</strong></td><td>${safe(row.teacherName || "—")}</td><td>${percent(figures.presentTotal, figures.enrolTotal)}</td><td>${completed ? '<span class="class-status complete">Selesai</span>' : '<span class="class-status incomplete">Belum selesai</span>'}</td><td>${safe(latest?.updatedBy || "—")}</td><td>${safe(time)}</td></tr>`;
+    }).join("");
+    $("#calendarStatus").textContent = `${classes.length} kelas dipaparkan bagi ${date}. Halakan tetikus pada data kehadiran harian untuk butiran pengisi setiap medan.`;
+  } catch (error) { $("#calendarStatus").textContent = error.message || "Rekod kalendar tidak dapat dibuka."; $("#calendarTableBody").innerHTML = ""; }
+  finally { state.calendar.loading = false; $("#calendarRefresh").disabled = false; }
+}
+
+function isoWeekNumber(value) {
+  const date = dateObject(value); const day = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  return Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+}
+
+function setupRmtTemplate() {
+  const inputs = (target, count) => { $(target).innerHTML = Array.from({ length: count }, (_, index) => `<label><span>${index + 1}.</span><input class="rmt-name-input" type="text" list="staffNames" placeholder="Pilih nama guru"></label>`).join(""); };
+  inputs("#rmtMorningNames", 4); inputs("#rmtAfternoonNames", 4);
+  const today = dateObject(state.date), day = today.getUTCDay();
+  const rmtAnchor = day === 0 ? dateValue(addDays(today, 1)) : day === 6 ? dateValue(addDays(today, 2)) : state.date;
+  const dates = schoolWeekDates(rmtAnchor);
+  $("#rmtWeek").value = isoWeekNumber(rmtAnchor); $("#rmtFrom").value = dates[0]; $("#rmtTo").value = dates[4];
+}
+
+function generateRmtTemplate() {
+  const names = (target) => Array.from(document.querySelectorAll(`${target} input`)).map((input) => input.value.trim()).filter(Boolean);
+  const list = (items) => items.length ? items.map((name, index) => `${index + 1}. ${name}`).join("\n") : "Belum diisi";
+  const fmt = (value) => value ? new Intl.DateTimeFormat("ms-MY", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" }).format(dateObject(value)) : "—";
+  $("#rmtPreview").textContent = `📋 LAPORAN GURU BERTUGAS RMT\n\n📌 Minggu : ${$("#rmtWeek").value || "—"}\n📅 Tarikh : ${fmt($("#rmtFrom").value)} - ${fmt($("#rmtTo").value)}\n\n📗 PAGI :\n${list(names("#rmtMorningNames"))}\n\n📍 Guru sesi pagi isi link RMT\n\n📕 PETANG :\n${list(names("#rmtAfternoonNames"))}\n\n📌 Guru sesi petang manual\n\nJumlah murid RMT Terkini : ${count($("#rmtTotal").value)}\nPagi : ${count($("#rmtMorningCount").value)}\nPetang : ${count($("#rmtAfternoonCount").value)}\n\n🔗 Link RMT :\nhttps://appsjohor.moe.gov.my/rmt`;
+  $("#rmtStatus").textContent = "Templat telah dijana.";
 }
 
 async function loadAnalytics() {
@@ -902,8 +1028,9 @@ $("#sessionFilter").addEventListener("change", (event) => {
   updateSessionVisibility();
   updateEditingAccess();
 });
-const VIEW_HASHES = { attendance: "kehadiran", monitoring: "laporan-bergambar", analysis: "analisis" };
+const VIEW_HASHES = { attendance: "kehadiran", duty: "guru-bertugas", completion: "status-kelas", calendar: "rekod-kalendar", monitoring: "laporan-pemantauan", analysis: "analisis", rmt: "guru-rmt" };
 const HASH_VIEWS = Object.fromEntries(Object.entries(VIEW_HASHES).map(([view, hash]) => [hash, view]));
+HASH_VIEWS["laporan-bergambar"] = "monitoring";
 
 function activateViewFromHash() {
   const requested = HASH_VIEWS[window.location.hash.replace(/^#/, "")] || "attendance";
@@ -915,6 +1042,10 @@ function activateViewFromHash() {
   $("#printButton").hidden = requested !== "attendance";
   if (requested === "analysis") loadAnalytics();
   if (requested === "monitoring") loadMonitoringReports();
+  if (requested === "duty") loadWeeklyDuty();
+  if (requested === "completion") loadCompletionView();
+  if (requested === "calendar") loadCalendarRecord();
+  if (requested === "rmt" && !$("#rmtPreview").textContent.trim()) generateRmtTemplate();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -922,6 +1053,16 @@ window.addEventListener("hashchange", activateViewFromHash);
 $("#printButton").addEventListener("click", () => window.print());
 $("#analysisRefresh").addEventListener("click", loadAnalytics);
 $("#analysisPeriod").addEventListener("change", loadAnalytics);
+$("#weeklyDutyRefresh").addEventListener("click", loadWeeklyDuty);
+$("#completionRefresh").addEventListener("click", loadCompletionView);
+$("#completionSession").addEventListener("change", loadCompletionView);
+$("#calendarRefresh").addEventListener("click", loadCalendarRecord);
+$("#rmtTemplateForm").addEventListener("submit", (event) => { event.preventDefault(); generateRmtTemplate(); });
+$("#rmtCopy").addEventListener("click", async () => {
+  generateRmtTemplate();
+  try { await navigator.clipboard.writeText($("#rmtPreview").textContent); $("#rmtStatus").textContent = "Templat berjaya disalin. Boleh tampal ke WhatsApp."; }
+  catch { $("#rmtStatus").textContent = "Pilih teks pratonton dan salin secara manual."; }
+});
 $("#monitoringRefresh").addEventListener("click", loadMonitoringReports);
 $("#monitoringPhotos").addEventListener("change", (event) => renderMonitoringPreview(event.target.files));
 $("#monitoringForm").addEventListener("submit", saveMonitoringReport);
@@ -981,6 +1122,10 @@ $("#reportDate").value = state.date;
 $("#monitoringDate").value = state.date;
 state.analytics.date = state.date;
 $("#analysisDate").value = state.date;
+$("#weeklyDutyDate").value = state.date;
+$("#completionDate").value = state.date;
+$("#calendarDate").value = state.date;
+setupRmtTemplate();
 refreshStaffNameChoices();
 try { $("#editorName").value = localStorage.getItem(EDITOR_KEY) || ""; } catch { /* abaikan */ }
 activateViewFromHash();

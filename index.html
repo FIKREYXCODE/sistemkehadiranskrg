@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="HEM SMARTTRACK">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="manifest" href="manifest.webmanifest?v=30">
+  <link rel="manifest" href="manifest.webmanifest?v=32">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=30">
+  <link rel="stylesheet" href="styles.css?v=32">
 </head>
 <body>
   <header class="topbar no-print">
@@ -26,11 +26,19 @@
     </div>
   </header>
 
+  <div class="app-layout">
   <nav class="workspace-nav no-print" aria-label="Menu utama HEM SMARTTRACK">
-    <a href="#kehadiran" data-view-link="attendance"><span>01</span><strong>Kehadiran Harian</strong><small>Isi dan semak rekod kelas</small></a>
-    <a href="#laporan-bergambar" data-view-link="monitoring"><span>02</span><strong>Laporan Bergambar</strong><small>Kebersihan dan keselamatan</small></a>
-    <a href="#analisis" data-view-link="analysis"><span>03</span><strong>Analisis Kehadiran</strong><small>Purata dan graf bar</small></a>
+    <p class="sidebar-title">MENU UTAMA</p>
+    <a href="#kehadiran" data-view-link="attendance"><span>01</span><strong>Laporan Kedatangan Harian</strong><small>Isi dan semak rekod kelas</small></a>
+    <a href="#guru-bertugas" data-view-link="duty"><span>02</span><strong>Guru Bertugas Mingguan</strong><small>Senarai pagi dan petang</small></a>
+    <a href="#status-kelas" data-view-link="completion"><span>03</span><strong>Kelas Selesai / Belum</strong><small>Status pengisian harian</small></a>
+    <a href="#rekod-kalendar" data-view-link="calendar"><span>04</span><strong>Rekod Ikut Kalendar</strong><small>Semak pengisian mengikut tarikh</small></a>
+    <a href="#laporan-pemantauan" data-view-link="monitoring"><span>05</span><strong>Pemantauan Sekolah</strong><small>Kebersihan dan keselamatan</small></a>
+    <a href="#analisis" data-view-link="analysis"><span>06</span><strong>Analisis Kehadiran</strong><small>Graf dan kelas terbaik</small></a>
+    <a href="#guru-rmt" data-view-link="rmt"><span>07</span><strong>Guru Bertugas RMT</strong><small>Templat dan portal rasmi</small></a>
   </nav>
+
+  <div class="app-content">
 
   <aside class="identity-bar no-print" aria-label="Maklumat pengguna semasa">
     <label class="user-picker">Nama pengisi
@@ -162,6 +170,33 @@
     </article>
     </section>
 
+    <section id="weeklyDutyView" class="utility-card app-view no-print" data-view-panel="duty" hidden>
+      <div class="utility-head">
+        <div><p class="eyebrow">Senarai mingguan</p><h2>Guru Bertugas Mingguan</h2><p>Paparan Isnin hingga Jumaat bagi sidang pagi dan petang berdasarkan rekod harian yang telah disimpan.</p></div>
+        <div class="utility-controls"><label>Tarikh dalam minggu<input id="weeklyDutyDate" type="date" required></label><button id="weeklyDutyRefresh" class="primary-button" type="button">Papar minggu</button></div>
+      </div>
+      <p id="weeklyDutyStatus" class="analysis-status" role="status">Pilih tarikh untuk memuatkan senarai.</p>
+      <div id="weeklyDutyGrid" class="weekly-duty-grid"></div>
+    </section>
+
+    <section id="completionView" class="utility-card app-view no-print" data-view-panel="completion" hidden>
+      <div class="utility-head">
+        <div><p class="eyebrow">Status pengisian</p><h2>Kelas Selesai &amp; Belum Selesai</h2><p>Semak kelas yang telah menghantar rekod bagi tarikh dan sidang pilihan.</p></div>
+        <div class="utility-controls"><label>Tarikh<input id="completionDate" type="date" required></label><label>Sidang<select id="completionSession"><option value="all">Keseluruhan</option><option value="morning">Pagi</option><option value="afternoon">Petang</option></select></label><button id="completionRefresh" class="primary-button" type="button">Semak</button></div>
+      </div>
+      <p id="completionStatus" class="analysis-status" role="status">Pilih tarikh untuk semakan.</p>
+      <div id="completionListsView" class="class-completion-lists large-completion"></div>
+    </section>
+
+    <section id="calendarView" class="utility-card app-view no-print" data-view-panel="calendar" hidden>
+      <div class="utility-head">
+        <div><p class="eyebrow">Rekod mengikut tarikh</p><h2>Kalendar Pengisian Kehadiran</h2><p>Pilih tarikh pada kalendar untuk melihat kelas, peratus kehadiran dan nama pengisi terakhir.</p></div>
+        <div class="utility-controls"><label>Tarikh kalendar<input id="calendarDate" type="date" required></label><button id="calendarRefresh" class="primary-button" type="button">Buka rekod</button></div>
+      </div>
+      <p id="calendarStatus" class="analysis-status" role="status">Pilih tarikh untuk membuka rekod.</p>
+      <div class="analysis-table-wrap"><table class="analysis-table calendar-table"><thead><tr><th>Kelas</th><th>Guru kelas</th><th>Peratus hadir</th><th>Status</th><th>Nama pengisi terakhir</th><th>Masa simpanan</th></tr></thead><tbody id="calendarTableBody"></tbody></table></div>
+    </section>
+
     <section id="monitoringReports" class="monitoring-card app-view no-print" data-view-panel="monitoring" aria-labelledby="monitoringTitle" hidden>
       <div class="monitoring-head">
         <div>
@@ -256,6 +291,7 @@
       </div>
       <div id="analysisStatus" class="analysis-status" role="status" aria-live="polite">Memuatkan analisis…</div>
       <div id="analysisSummary" class="analysis-summary" aria-label="Ringkasan peratus kehadiran"></div>
+      <section class="podium-section" aria-labelledby="podiumTitle"><div class="podium-heading"><p class="eyebrow">Penghargaan kehadiran</p><h3 id="podiumTitle">Kelas Terbaik — Emas, Perak &amp; Gangsa</h3><p>Kedudukan dikira daripada purata rekod dalam tempoh yang dipilih.</p></div><div id="attendancePodium" class="attendance-podium"></div></section>
       <div class="chart-shell">
         <div class="chart-title-row">
           <div><strong id="analysisRangeLabel">—</strong><small>Graf bar peratus kehadiran bagi tarikh yang mempunyai rekod</small></div>
@@ -271,7 +307,22 @@
       </div>
       <p class="analysis-note">Nota: Prasekolah dikira dalam keseluruhan sekolah sahaja. Tanda “—” bermaksud belum ada rekod disimpan bagi sidang atau tarikh tersebut.</p>
     </section>
+
+    <section id="rmtView" class="utility-card app-view no-print" data-view-panel="rmt" hidden>
+      <div class="utility-head">
+        <div><p class="eyebrow">Pengurusan RMT</p><h2>Templat Guru Bertugas RMT</h2><p>Isi senarai mingguan, kemudian salin templat untuk dikongsi. Portal rasmi RMT dibuka melalui butang berasingan.</p></div>
+        <a class="rmt-portal-button" href="https://appsjohor.moe.gov.my/rmt" target="_blank" rel="noopener noreferrer">🔗 Buka Portal RMT</a>
+      </div>
+      <form id="rmtTemplateForm" class="rmt-template-form">
+        <div class="rmt-meta-grid"><label>Minggu<input id="rmtWeek" type="number" min="1" max="53" required></label><label>Tarikh mula<input id="rmtFrom" type="date" required></label><label>Tarikh akhir<input id="rmtTo" type="date" required></label><label>Jumlah murid RMT<input id="rmtTotal" type="number" min="0" value="261"></label><label>Murid pagi<input id="rmtMorningCount" type="number" min="0" value="142"></label><label>Murid petang<input id="rmtAfternoonCount" type="number" min="0" value="119"></label></div>
+        <div class="rmt-session-grid"><fieldset><legend>📗 Guru sesi pagi</legend><div id="rmtMorningNames" class="rmt-name-list"></div></fieldset><fieldset><legend>📕 Guru sesi petang</legend><div id="rmtAfternoonNames" class="rmt-name-list"></div></fieldset></div>
+        <div class="rmt-actions"><button id="rmtGenerate" class="primary-button" type="submit">Jana templat</button><button id="rmtCopy" class="secondary-button" type="button">Salin templat</button><span id="rmtStatus" class="form-message" role="status"></span></div>
+      </form>
+      <div class="rmt-preview-wrap"><h3>Pratonton mesej</h3><pre id="rmtPreview" class="rmt-preview"></pre></div>
+    </section>
   </main>
+  </div>
+  </div>
 
   <div id="adminModal" class="modal-backdrop no-print" hidden>
     <section class="admin-modal" role="dialog" aria-modal="true" aria-labelledby="adminTitle">
@@ -328,6 +379,6 @@
   </div>
 
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="app.js?v=30" defer></script>
+  <script src="app.js?v=32" defer></script>
 </body>
 </html>
