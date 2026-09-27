@@ -676,8 +676,6 @@ function updateDateHeading() {
   const weekday = new Intl.DateTimeFormat("ms-MY", { weekday: "long" }).format(date);
   $("#dateLong").textContent = longDate;
   $("#dayLong").textContent = weekday;
-  $("#headerDateLong").textContent = longDate;
-  $("#headerDayLong").textContent = weekday;
   $("#monitoringDateLabel").textContent = longDate;
 }
 

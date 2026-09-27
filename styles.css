@@ -4,10 +4,9 @@ html{scroll-behavior:smooth}
 body{margin:0;background:linear-gradient(135deg,#edf7ff 0%,#fff 46%,#e9f3ff 100%);color:var(--ink);font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 .topbar{height:104px;padding:0 clamp(16px,3vw,44px);display:flex;align-items:center;justify-content:space-between;gap:20px;color:#fff;background:linear-gradient(110deg,#032c68,#0768ce 70%,#0aa7df);box-shadow:0 8px 30px #033a7630;position:sticky;top:0;z-index:20}
 .topbar-left{display:flex;align-items:center;gap:14px;min-width:0;flex:1}.brand{display:flex;gap:14px;align-items:center;color:inherit;text-decoration:none;min-width:0}
-.topbar-logo-pair{display:flex;align-items:center;justify-content:center;gap:7px;flex:0 0 auto;width:118px;height:76px;padding:6px 8px;background:#f7fbff;border:1px solid #ffffff80;border-radius:16px;box-shadow:0 8px 18px #002b6d30}
-.topbar-logo-pair img{display:block;width:auto;height:auto;max-height:64px;object-fit:contain}.topbar-logo-pair img:first-child{max-width:66px}.topbar-logo-pair img:last-child{max-width:42px}
+.topbar-logo-pair{display:flex;align-items:center;justify-content:center;gap:9px;flex:0 0 auto;width:128px;height:82px}
+.topbar-logo-pair img{display:block;width:auto;height:auto;max-height:74px;object-fit:contain;filter:drop-shadow(0 5px 7px #001b4566)}.topbar-logo-pair img:first-child{max-width:76px}.topbar-logo-pair img:last-child{max-width:47px}
 .topbar-school-copy{display:flex;flex-direction:column;min-width:0}.topbar-school-copy small{color:#82ddff;font-size:.64rem;font-weight:900;letter-spacing:.16em;text-transform:uppercase}.topbar-school-copy strong{margin-top:3px;font-size:clamp(.92rem,1.35vw,1.22rem);line-height:1.08;text-transform:uppercase;white-space:nowrap}.topbar-school-copy>span{margin-top:4px;color:#d7ebff;font-size:.68rem;white-space:nowrap}
-.topbar-report-date{display:flex;flex-direction:column;flex:0 0 auto;margin-left:8px;padding-left:16px;border-left:1px solid #ffffff42;text-align:right}.topbar-report-date small{color:#bce7ff;font-size:.62rem}.topbar-report-date strong{margin-top:3px;font-size:.76rem;white-space:nowrap}.topbar-report-date>span{margin-top:2px;color:#d7ebff;font-size:.64rem}
 .top-actions{display:flex;align-items:center;gap:14px}
 .save-status{font-size:.84rem;background:#ffffff1b;border:1px solid #ffffff32;padding:9px 13px;border-radius:999px}
 .save-status.saved{background:#07865e}
@@ -142,7 +141,6 @@ tfoot td{background:#dfeaf4;font-weight:900}
 .attendance-chart{min-height:330px;margin-top:12px;overflow-x:auto}.attendance-chart svg{display:block;width:100%;min-width:720px;height:auto}.chart-grid{stroke:#dbe7f4;stroke-width:1}.chart-axis-text{fill:#6b7d97;font-size:12px}.chart-bar{opacity:.9;transition:opacity .15s}.chart-bar:hover{opacity:1;stroke:#14213d;stroke-width:1}.chart-bar-value{fill:#fff;font-size:10px;font-weight:900;pointer-events:none}.chart-bar-value.outside{fill:#14213d;font-size:9px}
 .analysis-table-wrap{margin-top:16px;overflow:auto;border:1px solid var(--line);border-radius:12px}.analysis-table{min-width:680px}.analysis-table th{background:var(--navy)}.analysis-table td{font-size:.8rem}.analysis-table td:not(:first-child){font-weight:800}
 .analysis-note{margin:12px 0 0;color:var(--muted);font-size:.75rem}
-@media(max-width:1250px){.topbar-report-date{display:none}}
 @media(max-width:1050px){.topbar-school-copy>span{display:none}.topbar{padding-left:16px;padding-right:16px}.top-actions{gap:7px}.save-status{display:none}}
 @media(max-width:800px){.topbar{height:auto;min-height:86px;padding:10px 12px;gap:8px}
 .save-status{display:none}
