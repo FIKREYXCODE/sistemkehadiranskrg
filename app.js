@@ -1062,14 +1062,16 @@ HASH_VIEWS["laporan-bergambar"] = "monitoring";
 
 function activateViewFromHash() {
   const requested = HASH_VIEWS[window.location.hash.replace(/^#/, "")] || "home";
-  document.querySelectorAll("[data-view-panel]").forEach((panel) => { panel.hidden = panel.dataset.viewPanel !== requested; });
+  document.querySelectorAll("[data-view-panel]").forEach((panel) => {
+    panel.hidden = requested === "home" ? !["home", "attendance"].includes(panel.dataset.viewPanel) : panel.dataset.viewPanel !== requested;
+  });
   document.querySelectorAll("[data-view-link]").forEach((link) => {
     if (link.dataset.viewLink === requested) link.setAttribute("aria-current", "page");
     else link.removeAttribute("aria-current");
   });
-  $("#top").hidden = requested === "home";
+  $("#top").hidden = false;
   $("#identityBar").hidden = !["attendance", "monitoring"].includes(requested);
-  $("#printButton").hidden = requested !== "attendance";
+  $("#printButton").hidden = !["home", "attendance"].includes(requested);
   if (requested === "analysis") loadAnalytics();
   if (requested === "monitoring") loadMonitoringReports();
   if (requested === "duty") loadWeeklyDuty();

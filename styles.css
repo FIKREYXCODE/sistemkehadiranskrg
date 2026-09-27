@@ -352,6 +352,6 @@ body{background:#fff;color:#000}
 .sidebar-backdrop{position:fixed;z-index:40;inset:78px 0 0;border:0;background:#061b3b80;opacity:0;pointer-events:none;transition:opacity .22s ease}
 .sidebar-open .sidebar-backdrop{opacity:1;pointer-events:auto}
 .sidebar-open{overflow:hidden}
-.app-content .school-location[data-view-panel="home"]{margin-top:0}
+.app-content .school-location[data-view-panel="home"]{grid-template-columns:1fr;margin-top:18px}
 @media(max-width:800px){.menu-toggle{padding:10px 12px}.workspace-nav{top:82px}.sidebar-backdrop{inset:76px 0 0}.rmt-image-preview{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:480px){.topbar-left{gap:7px}.brand span:last-child{display:none}.brand-mark{width:50px;height:50px}.brand-mark img{max-width:47px;max-height:47px}.rmt-image-preview{grid-template-columns:1fr}}
