@@ -672,9 +672,13 @@ function setStatus(message, type = "") {
 function updateDateHeading() {
   const date = new Date(`${state.date}T12:00:00`);
   if (Number.isNaN(date.getTime())) return;
-  $("#dateLong").textContent = new Intl.DateTimeFormat("ms-MY", { day: "2-digit", month: "long", year: "numeric" }).format(date);
-  $("#dayLong").textContent = new Intl.DateTimeFormat("ms-MY", { weekday: "long" }).format(date);
-  $("#monitoringDateLabel").textContent = new Intl.DateTimeFormat("ms-MY", { day: "2-digit", month: "long", year: "numeric" }).format(date);
+  const longDate = new Intl.DateTimeFormat("ms-MY", { day: "2-digit", month: "long", year: "numeric" }).format(date);
+  const weekday = new Intl.DateTimeFormat("ms-MY", { weekday: "long" }).format(date);
+  $("#dateLong").textContent = longDate;
+  $("#dayLong").textContent = weekday;
+  $("#headerDateLong").textContent = longDate;
+  $("#headerDayLong").textContent = weekday;
+  $("#monitoringDateLabel").textContent = longDate;
 }
 
 function renderAttendance() {
