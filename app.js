@@ -676,6 +676,7 @@ function updateDateHeading() {
   const weekday = new Intl.DateTimeFormat("ms-MY", { weekday: "long" }).format(date);
   $("#dateLong").textContent = longDate;
   $("#dayLong").textContent = weekday;
+  $("#homeSummaryDate").textContent = `${longDate} • ${weekday}`;
   $("#monitoringDateLabel").textContent = longDate;
 }
 
@@ -1034,46 +1035,44 @@ for (const selector of ["#dutyMorningBody", "#dutyAfternoonBody"]) {
   });
 });
 
-$("#reportDate").addEventListener("change", async (event) => {
-  if (!event.target.value) return;
-  await flushSave();
-  state.date = event.target.value;
-  $("#monitoringDate").value = state.date;
-  state.pendingAttendance.clear(); state.staffDirty = false; state.dutyDirtySessions.clear(); state.pendingMeta = {};
-  loadReport();
-  loadMonitoringReports();
-});
-$("#monitoringDate").addEventListener("change", async (event) => {
+function syncReportDateInputs() {
+  ["#reportDate", "#staffPageDate", "#dailyDutyDate", "#monitoringDate"].forEach((selector) => { $(selector).value = state.date; });
+}
+
+async function changeReportDate(event) {
   if (!event.target.value || event.target.value === state.date) return;
   await flushSave();
   state.date = event.target.value;
-  $("#reportDate").value = state.date;
+  syncReportDateInputs();
   state.pendingAttendance.clear(); state.staffDirty = false; state.dutyDirtySessions.clear(); state.pendingMeta = {};
   loadReport();
   loadMonitoringReports();
-});
+}
+
+["#reportDate", "#staffPageDate", "#dailyDutyDate", "#monitoringDate"].forEach((selector) => $(selector).addEventListener("change", changeReportDate));
 $("#sessionFilter").addEventListener("change", (event) => {
   state.session = event.target.value;
   renderAttendance();
   updateSessionVisibility();
   updateEditingAccess();
 });
-const VIEW_HASHES = { home: "utama", attendance: "kehadiran", duty: "guru-bertugas", completion: "status-kelas", calendar: "rekod-kalendar", monitoring: "laporan-pemantauan", analysis: "analisis", rmt: "guru-rmt" };
+const VIEW_HASHES = { home: "utama", attendance: "rekod-pengisian-kelas", staff: "keberadaan-guru-akp", dailyDuty: "guru-bertugas-harian", duty: "guru-bertugas", completion: "status-kelas", calendar: "rekod-kalendar", monitoring: "laporan-pemantauan", analysis: "analisis", rmt: "guru-rmt" };
 const HASH_VIEWS = Object.fromEntries(Object.entries(VIEW_HASHES).map(([view, hash]) => [hash, view]));
 HASH_VIEWS["laporan-bergambar"] = "monitoring";
+HASH_VIEWS.kehadiran = "attendance";
 
 function activateViewFromHash() {
   const requested = HASH_VIEWS[window.location.hash.replace(/^#/, "")] || "home";
   document.querySelectorAll("[data-view-panel]").forEach((panel) => {
-    panel.hidden = requested === "home" ? !["home", "attendance"].includes(panel.dataset.viewPanel) : panel.dataset.viewPanel !== requested;
+    panel.hidden = panel.dataset.viewPanel !== requested;
   });
   document.querySelectorAll("[data-view-link]").forEach((link) => {
     if (link.dataset.viewLink === requested) link.setAttribute("aria-current", "page");
     else link.removeAttribute("aria-current");
   });
   $("#top").hidden = false;
-  $("#identityBar").hidden = !["attendance", "monitoring"].includes(requested);
-  $("#printButton").hidden = !["home", "attendance"].includes(requested);
+  $("#identityBar").hidden = !["attendance", "staff", "dailyDuty", "monitoring"].includes(requested);
+  $("#printButton").hidden = requested !== "attendance";
   if (requested === "analysis") loadAnalytics();
   if (requested === "monitoring") loadMonitoringReports();
   if (requested === "duty") loadWeeklyDuty();
@@ -1151,8 +1150,7 @@ $("#editorName").addEventListener("change", (event) => {
 });
 
 state.date = localDateValue();
-$("#reportDate").value = state.date;
-$("#monitoringDate").value = state.date;
+syncReportDateInputs();
 state.analytics.date = state.date;
 $("#analysisDate").value = state.date;
 $("#weeklyDutyDate").value = state.date;

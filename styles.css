@@ -352,7 +352,10 @@ body{background:#fff;color:#000}
 .sidebar-backdrop{position:fixed;z-index:40;inset:104px 0 0;border:0;background:#061b3b80;opacity:0;pointer-events:none;transition:opacity .22s ease}
 .sidebar-open .sidebar-backdrop{opacity:1;pointer-events:auto}
 .sidebar-open{overflow:hidden}
-.app-content .school-location[data-view-panel="home"]{grid-template-columns:1fr;margin-top:18px}
+.home-view .school-location{grid-template-columns:1fr;margin:0;width:100%}
+.home-summary-card{margin-top:20px;overflow:hidden;border:1px solid var(--line);border-radius:22px;background:#fff;box-shadow:0 14px 42px #183b6d16}.home-summary-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px 32px 13px}.home-summary-heading h2{margin:2px 0 0;font-size:clamp(1.25rem,2vw,1.75rem)}.home-summary-heading time{color:var(--muted);font-size:.78rem;font-weight:800}.home-summary-card .summary-grid{padding-top:12px}
+.standalone-table-wrap,.standalone-duty-grid{margin-top:22px}.standalone-report-notes{margin-top:22px;padding:22px 0 0;border-top:1px solid var(--line)}
 @media(max-width:800px){.menu-toggle{padding:10px 11px;font-size:.72rem}.workspace-nav{top:96px}.sidebar-backdrop{inset:86px 0 0}.rmt-image-preview{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:800px){.home-summary-heading{align-items:flex-start;flex-direction:column;padding:18px 16px 8px}.home-summary-heading time{font-size:.7rem}}
 @media(max-width:620px){.topbar-school-copy small,.topbar-school-copy>span{display:none}.topbar-school-copy strong{font-size:.7rem;max-width:130px}.topbar-logo-pair{width:72px}.topbar-logo-pair img:first-child{max-width:41px}.topbar-logo-pair img:last-child{max-width:26px}.print-button{font-size:0;padding:10px}.print-button:first-letter{font-size:1rem}}
 @media(max-width:480px){.topbar-left{gap:6px}.topbar{padding-left:7px;padding-right:7px}.brand{gap:6px}.topbar-school-copy{display:none}.topbar-logo-pair{width:66px;height:56px}.topbar-logo-pair img{max-height:45px}.topbar-logo-pair img:first-child{max-width:38px}.topbar-logo-pair img:last-child{max-width:24px}.rmt-image-preview{grid-template-columns:1fr}}

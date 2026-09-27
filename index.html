@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="HEM SMARTTRACK">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="manifest" href="manifest.webmanifest?v=42">
+  <link rel="manifest" href="manifest.webmanifest?v=43">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=42">
+  <link rel="stylesheet" href="styles.css?v=43">
 </head>
 <body>
   <header class="topbar no-print">
@@ -39,14 +39,16 @@
   <div class="app-layout">
   <nav id="mainSidebar" class="workspace-nav no-print" aria-label="Menu utama HEM SMARTTRACK" aria-hidden="true">
     <p class="sidebar-title">MENU UTAMA</p>
-    <a href="#utama" data-view-link="home"><span>⌂</span><strong>Paparan Utama</strong><small>Kehadiran, lokasi dan pautan rasmi</small></a>
-    <a href="#guru-bertugas" data-view-link="duty"><span>01</span><strong>Guru Bertugas Mingguan</strong><small>Senarai pagi dan petang</small></a>
-    <a href="#guru-rmt" data-view-link="rmt"><span>02</span><strong>Guru Bertugas RMT</strong><small>Sidang pagi dan petang</small></a>
-    <a href="#kehadiran" data-view-link="attendance"><span>03</span><strong>Pengisian Kehadiran</strong><small>Isi dan semak rekod kelas</small></a>
-    <a href="#status-kelas" data-view-link="completion"><span>04</span><strong>Kelas Selesai / Belum</strong><small>Status pengisian harian</small></a>
-    <a href="#rekod-kalendar" data-view-link="calendar"><span>05</span><strong>Rekod Ikut Kalendar</strong><small>Semak pengisian mengikut tarikh</small></a>
-    <a href="#laporan-pemantauan" data-view-link="monitoring"><span>06</span><strong>Pemantauan Sekolah</strong><small>Kebersihan dan keselamatan</small></a>
-    <a href="#analisis" data-view-link="analysis"><span>07</span><strong>Analisis Kehadiran</strong><small>Graf dan kelas terbaik</small></a>
+    <a href="#utama" data-view-link="home"><span>⌂</span><strong>Laman Utama</strong><small>Lokasi, pautan dan ringkasan</small></a>
+    <a href="#rekod-pengisian-kelas" data-view-link="attendance"><span>01</span><strong>Rekod Pengisian Kelas</strong><small>Isi kehadiran mengikut kelas</small></a>
+    <a href="#keberadaan-guru-akp" data-view-link="staff"><span>02</span><strong>Keberadaan Guru &amp; AKP</strong><small>Rekod pegawai tiada di sekolah</small></a>
+    <a href="#guru-bertugas-harian" data-view-link="dailyDuty"><span>03</span><strong>Guru Bertugas Harian</strong><small>Senarai, catatan dan pengesahan</small></a>
+    <a href="#guru-bertugas" data-view-link="duty"><span>04</span><strong>Guru Bertugas Mingguan</strong><small>Senarai pagi dan petang</small></a>
+    <a href="#guru-rmt" data-view-link="rmt"><span>05</span><strong>Guru Bertugas RMT</strong><small>Sidang pagi dan petang</small></a>
+    <a href="#status-kelas" data-view-link="completion"><span>06</span><strong>Kelas Selesai / Belum</strong><small>Status pengisian harian</small></a>
+    <a href="#rekod-kalendar" data-view-link="calendar"><span>07</span><strong>Rekod Ikut Kalendar</strong><small>Semak pengisian mengikut tarikh</small></a>
+    <a href="#laporan-pemantauan" data-view-link="monitoring"><span>08</span><strong>Pemantauan Sekolah</strong><small>Kebersihan dan keselamatan</small></a>
+    <a href="#analisis" data-view-link="analysis"><span>09</span><strong>Analisis Kehadiran</strong><small>Graf dan kelas terbaik</small></a>
   </nav>
   <button id="sidebarBackdrop" class="sidebar-backdrop no-print" type="button" aria-label="Tutup menu" tabindex="-1"></button>
 
@@ -61,6 +63,33 @@
   </aside>
 
   <main id="top" class="page-shell">
+    <section id="homeView" class="app-view home-view" data-view-panel="home" aria-label="Laman utama">
+      <section id="lokasi-sekolah" class="school-location no-print" aria-labelledby="schoolLocationTitle">
+        <div class="school-location-info">
+          <p class="eyebrow">Lokasi &amp; pautan rasmi</p>
+          <h2 id="schoolLocationTitle">Sekolah Kebangsaan Ranggu</h2>
+          <p>Peti Surat 842, 91008 Tawau, Sabah</p>
+          <div class="school-link-actions">
+            <a class="map-link" href="https://www.google.com/maps/search/?api=1&amp;query=Sekolah%20Kebangsaan%20Ranggu%2C%20Tawau%2C%20Sabah" target="_blank" rel="noopener noreferrer">📍 Buka Peta Lokasi</a>
+            <a class="idme-link" href="https://idme.moe.gov.my/login" target="_blank" rel="noopener noreferrer">🔐 Buka Portal idMe</a>
+          </div>
+          <small>Tekan butang untuk membuka lokasi sekolah atau log masuk ke Sistem Pengurusan Identiti KPM.</small>
+        </div>
+        <div class="school-map-frame">
+          <iframe title="Peta lokasi Sekolah Kebangsaan Ranggu" src="https://www.google.com/maps?q=Sekolah%20Kebangsaan%20Ranggu%2C%20Tawau%2C%20Sabah&amp;output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
+        </div>
+      </section>
+      <section class="home-summary-card" aria-labelledby="homeSummaryTitle">
+        <div class="home-summary-heading"><div><p class="eyebrow">Ringkasan kehadiran</p><h2 id="homeSummaryTitle">Ringkasan Kehadiran</h2></div><time id="homeSummaryDate">—</time></div>
+        <div class="summary-grid" aria-label="Ringkasan kehadiran">
+          <div><span>Jumlah murid</span><strong id="summaryEnrol">0</strong></div>
+          <div><span>Hadir</span><strong id="summaryPresent">0</strong></div>
+          <div class="danger"><span>Tidak hadir</span><strong id="summaryAbsent">0</strong></div>
+          <div class="success"><span>Peratus hadir</span><strong id="summaryPercent">0%</strong></div>
+        </div>
+      </section>
+    </section>
+
     <section id="viewAttendance" class="app-view" data-view-panel="attendance" aria-label="Kehadiran harian">
     <section class="date-panel no-print" aria-labelledby="dateTitle">
       <div>
@@ -98,29 +127,8 @@
         <div class="report-date-block"><span>Tarikh</span><strong id="dateLong">—</strong><small id="dayLong">—</small></div>
       </header>
 
-      <section class="summary-grid" aria-label="Ringkasan kehadiran">
-        <div><span>Jumlah murid</span><strong id="summaryEnrol">0</strong></div>
-        <div><span>Hadir</span><strong id="summaryPresent">0</strong></div>
-        <div class="danger"><span>Tidak hadir</span><strong id="summaryAbsent">0</strong></div>
-        <div class="success"><span>Peratus hadir</span><strong id="summaryPercent">0%</strong></div>
-      </section>
-
-      <section class="duty-section">
-        <div class="section-heading"><div><h3>Senarai Guru Bertugas Harian</h3></div><p>Setiap sidang mempunyai senarai sendiri dan disimpan mengikut tarikh.</p></div>
-        <div class="duty-session-grid">
-          <div class="duty-session-card morning-card" data-report-session="morning">
-            <h4>Sidang Pagi</h4>
-            <table class="duty-table"><thead><tr><th>Bil</th><th>Nama guru bertugas</th></tr></thead><tbody id="dutyMorningBody"></tbody></table>
-          </div>
-          <div class="duty-session-card afternoon-card" data-report-session="afternoon">
-            <h4>Sidang Petang</h4>
-            <table class="duty-table"><thead><tr><th>Bil</th><th>Nama guru bertugas</th></tr></thead><tbody id="dutyAfternoonBody"></tbody></table>
-          </div>
-        </div>
-      </section>
-
       <section class="table-section">
-        <div class="section-heading"><div><span>01</span><h3>Kehadiran mengikut kelas</h3></div><div class="completion-legend" aria-label="Petunjuk status pengisian"><span class="complete">● Selesai</span><span class="incomplete">● Belum selesai</span></div></div>
+        <div class="section-heading"><div><span>01</span><h3>Rekod Pengisian Kelas</h3></div><div class="completion-legend" aria-label="Petunjuk status pengisian"><span class="complete">● Selesai</span><span class="incomplete">● Belum selesai</span></div></div>
         <div id="classCompletionLists" class="class-completion-lists" aria-live="polite"></div>
         <div class="table-scroll">
           <table class="attendance-table">
@@ -134,26 +142,47 @@
         </div>
       </section>
 
-      <section class="table-section staff-section">
-        <div class="section-heading"><div><span>02</span><h3>Keberadaan guru dan AKP</h3></div><p>Catat pegawai yang tidak berada di sekolah pada tarikh ini.</p></div>
-        <div class="table-scroll">
-          <table class="staff-table">
-            <thead><tr><th>Bil</th><th>Nama guru / AKP</th><th>Subjek / jawatan</th><th>Sebab tidak hadir / tiada di sekolah</th></tr></thead>
-            <tbody id="staffBody"></tbody>
-          </table>
-        </div>
-      </section>
+    </article>
+    </section>
 
-      <section class="report-notes">
+    <section id="staffView" class="utility-card app-view no-print" data-view-panel="staff" hidden>
+      <div class="utility-head">
+        <div><p class="eyebrow">Rekod 02</p><h2>Keberadaan Guru dan AKP</h2><p>Catat pegawai yang tidak berada di sekolah pada tarikh pilihan.</p></div>
+        <div class="utility-controls"><label>Tarikh rekod<input id="staffPageDate" type="date" required></label></div>
+      </div>
+      <div class="table-scroll standalone-table-wrap">
+        <table class="staff-table">
+          <thead><tr><th>Bil</th><th>Nama guru / AKP</th><th>Subjek / jawatan</th><th>Sebab tidak hadir / tiada di sekolah</th></tr></thead>
+          <tbody id="staffBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="dailyDutyView" class="utility-card app-view no-print" data-view-panel="dailyDuty" hidden>
+      <div class="utility-head">
+        <div><p class="eyebrow">Rekod 03</p><h2>Senarai Guru Bertugas Harian</h2><p>Senarai, catatan laporan dan pengesahan diasingkan bagi sidang pagi dan petang.</p></div>
+        <div class="utility-controls"><label>Tarikh rekod<input id="dailyDutyDate" type="date" required></label></div>
+      </div>
+      <div class="duty-session-grid standalone-duty-grid">
+        <div class="duty-session-card morning-card">
+          <h4>Sidang Pagi</h4>
+          <table class="duty-table"><thead><tr><th>Bil</th><th>Nama guru bertugas</th></tr></thead><tbody id="dutyMorningBody"></tbody></table>
+        </div>
+        <div class="duty-session-card afternoon-card">
+          <h4>Sidang Petang</h4>
+          <table class="duty-table"><thead><tr><th>Bil</th><th>Nama guru bertugas</th></tr></thead><tbody id="dutyAfternoonBody"></tbody></table>
+        </div>
+      </div>
+      <section class="report-notes standalone-report-notes">
         <div class="session-notes-grid">
-          <div class="session-note-card morning-card" data-report-session="morning">
+          <div class="session-note-card morning-card">
             <h4>Sidang Pagi</h4>
             <label>Catatan laporan<textarea id="reportNoteMorning" rows="3" placeholder="Catatan laporan sidang pagi"></textarea></label>
             <label>Disediakan oleh<input id="preparedByMorning" type="text" placeholder="Nama guru bertugas sidang pagi"></label>
             <label>Disahkan oleh<input id="approvedByMorning" type="text" placeholder="Nama pegawai pengesah sidang pagi"></label>
             <label>Jawatan pegawai pengesah<input id="approvedTitleMorning" type="text" placeholder="Contoh: Guru Besar"></label>
           </div>
-          <div class="session-note-card afternoon-card" data-report-session="afternoon">
+          <div class="session-note-card afternoon-card">
             <h4>Sidang Petang</h4>
             <label>Catatan laporan<textarea id="reportNoteAfternoon" rows="3" placeholder="Catatan laporan sidang petang"></textarea></label>
             <label>Disediakan oleh<input id="preparedByAfternoon" type="text" placeholder="Nama guru bertugas sidang petang"></label>
@@ -163,7 +192,6 @@
         </div>
         <p class="legacy-approval-note" id="legacyApprovalNote" hidden>Rekod pengesahan lama (belum diasingkan mengikut sidang): <span id="legacyApprovalValue"></span></p>
       </section>
-    </article>
     </section>
 
     <section id="weeklyDutyView" class="utility-card app-view no-print" data-view-panel="duty" hidden>
@@ -324,21 +352,6 @@
       </section>
     </section>
   </main>
-  <section id="lokasi-sekolah" class="school-location app-view no-print" data-view-panel="home" aria-labelledby="schoolLocationTitle">
-    <div class="school-location-info">
-      <p class="eyebrow">Lokasi &amp; pautan rasmi</p>
-      <h2 id="schoolLocationTitle">Sekolah Kebangsaan Ranggu</h2>
-      <p>Peti Surat 842, 91008 Tawau, Sabah</p>
-      <div class="school-link-actions">
-        <a class="map-link" href="https://www.google.com/maps/search/?api=1&amp;query=Sekolah%20Kebangsaan%20Ranggu%2C%20Tawau%2C%20Sabah" target="_blank" rel="noopener noreferrer">📍 Buka Peta Lokasi</a>
-        <a class="idme-link" href="https://idme.moe.gov.my/login" target="_blank" rel="noopener noreferrer">🔐 Buka Portal idMe</a>
-      </div>
-      <small>Tekan butang untuk membuka lokasi sekolah atau log masuk ke Sistem Pengurusan Identiti KPM.</small>
-    </div>
-    <div class="school-map-frame">
-      <iframe title="Peta lokasi Sekolah Kebangsaan Ranggu" src="https://www.google.com/maps?q=Sekolah%20Kebangsaan%20Ranggu%2C%20Tawau%2C%20Sabah&amp;output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>
-    </div>
-  </section>
   </div>
   </div>
 
@@ -397,6 +410,6 @@
   </div>
 
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="app.js?v=42" defer></script>
+  <script src="app.js?v=43" defer></script>
 </body>
 </html>
