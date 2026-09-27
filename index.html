@@ -8,16 +8,16 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="HEM SMARTTRACK">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="manifest" href="manifest.webmanifest?v=36">
+  <link rel="manifest" href="manifest.webmanifest?v=38">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=36">
+  <link rel="stylesheet" href="styles.css?v=38">
 </head>
 <body>
   <header class="topbar no-print">
     <div class="topbar-left">
       <button id="menuToggle" class="menu-toggle" type="button" aria-controls="mainSidebar" aria-expanded="false">☰ Menu</button>
-      <a class="brand" href="#kehadiran" aria-label="Laman utama">
+      <a class="brand" href="#utama" aria-label="Laman utama">
         <span class="brand-mark"><img src="logo-skrg-cutout.png" alt="Logo SK Ranggu"></span>
         <span><strong>HEM SMARTTRACK</strong><small>Rekod harian sekolah</small></span>
       </a>
@@ -32,6 +32,7 @@
   <div class="app-layout">
   <nav id="mainSidebar" class="workspace-nav no-print" aria-label="Menu utama HEM SMARTTRACK" aria-hidden="true">
     <p class="sidebar-title">MENU UTAMA</p>
+    <a href="#utama" data-view-link="home"><span>⌂</span><strong>Paparan Utama</strong><small>Lokasi dan pautan rasmi</small></a>
     <a href="#kehadiran" data-view-link="attendance"><span>01</span><strong>Laporan Kedatangan Harian</strong><small>Isi dan semak rekod kelas</small></a>
     <a href="#guru-bertugas" data-view-link="duty"><span>02</span><strong>Guru Bertugas Mingguan</strong><small>Senarai pagi dan petang</small></a>
     <a href="#status-kelas" data-view-link="completion"><span>03</span><strong>Kelas Selesai / Belum</strong><small>Status pengisian harian</small></a>
@@ -44,7 +45,7 @@
 
   <div class="app-content">
 
-  <aside class="identity-bar no-print" aria-label="Maklumat pengguna semasa">
+  <aside id="identityBar" class="identity-bar no-print" aria-label="Maklumat pengguna semasa" hidden>
     <label class="user-picker">Nama pengisi
       <input id="editorName" type="text" list="staffNames" maxlength="140" autocomplete="off" placeholder="Cari atau pilih nama" required>
       <datalist id="staffNames"></datalist>
@@ -52,7 +53,7 @@
     <div><strong>Nama ini digunakan pada setiap simpanan</strong><small>Taip beberapa huruf atau buka senarai, kemudian pilih nama guru.</small></div>
   </aside>
 
-  <section id="lokasi-sekolah" class="school-location no-print" aria-labelledby="schoolLocationTitle">
+  <section id="lokasi-sekolah" class="school-location app-view no-print" data-view-panel="home" aria-labelledby="schoolLocationTitle">
     <div class="school-location-info">
       <p class="eyebrow">Lokasi &amp; pautan rasmi</p>
       <h2 id="schoolLocationTitle">Sekolah Kebangsaan Ranggu</h2>
@@ -390,6 +391,6 @@
   </div>
 
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="app.js?v=36" defer></script>
+  <script src="app.js?v=38" defer></script>
 </body>
 </html>

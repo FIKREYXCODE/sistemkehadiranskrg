@@ -1056,17 +1056,19 @@ $("#sessionFilter").addEventListener("change", (event) => {
   updateSessionVisibility();
   updateEditingAccess();
 });
-const VIEW_HASHES = { attendance: "kehadiran", duty: "guru-bertugas", completion: "status-kelas", calendar: "rekod-kalendar", monitoring: "laporan-pemantauan", analysis: "analisis", rmt: "guru-rmt" };
+const VIEW_HASHES = { home: "utama", attendance: "kehadiran", duty: "guru-bertugas", completion: "status-kelas", calendar: "rekod-kalendar", monitoring: "laporan-pemantauan", analysis: "analisis", rmt: "guru-rmt" };
 const HASH_VIEWS = Object.fromEntries(Object.entries(VIEW_HASHES).map(([view, hash]) => [hash, view]));
 HASH_VIEWS["laporan-bergambar"] = "monitoring";
 
 function activateViewFromHash() {
-  const requested = HASH_VIEWS[window.location.hash.replace(/^#/, "")] || "attendance";
+  const requested = HASH_VIEWS[window.location.hash.replace(/^#/, "")] || "home";
   document.querySelectorAll("[data-view-panel]").forEach((panel) => { panel.hidden = panel.dataset.viewPanel !== requested; });
   document.querySelectorAll("[data-view-link]").forEach((link) => {
     if (link.dataset.viewLink === requested) link.setAttribute("aria-current", "page");
     else link.removeAttribute("aria-current");
   });
+  $("#top").hidden = requested === "home";
+  $("#identityBar").hidden = !["attendance", "monitoring"].includes(requested);
   $("#printButton").hidden = requested !== "attendance";
   if (requested === "analysis") loadAnalytics();
   if (requested === "monitoring") loadMonitoringReports();
