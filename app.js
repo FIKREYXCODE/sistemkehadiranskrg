@@ -7,7 +7,7 @@ const state = {
   staffDirectory: [], adminStaffDirectory: [],
   analytics: { period: "week", date: "", loading: false },
   monitoring: { reports: [], loading: false, previewUrls: [] },
-  weeklyDuty: { loading: false }, completion: { loading: false }, calendar: { loading: false }, rmtPreviewUrls: [],
+  weeklyDuty: { loading: false }, completion: { loading: false }, calendar: { loading: false }, rmtPreviewUrls: [], rmtReports: [], rmtLoading: false,
 };
 const DRAFT_PREFIX = "skrg-pending-v1:";
 const EDITOR_KEY = "skrg-editor-name-v1";
@@ -160,6 +160,7 @@ function updateEditingAccess() {
   document.querySelectorAll("#staffBody select").forEach((element) => { element.disabled = !allowed; });
   $("#editorName").classList.toggle("invalid", !allowed);
   $("#monitoringSave").disabled = !allowed;
+  $("#rmtPhotoSave").disabled = !allowed;
   if (!allowed && !state.loading) setStatus("Isi nama pengisi untuk mula");
 }
 
@@ -368,7 +369,7 @@ async function loadCompletionView() {
     const classes = filterReportClasses(data, $("#completionSession").value);
     const renderList = (complete) => {
       const items = classes.filter((row) => reportClassCompleted(data, row.id) === complete);
-      return `<section class="completion-list ${complete ? "complete" : "incomplete"}"><h4>${complete ? "Kelas selesai" : "Kelas belum selesai"}<strong>${items.length}</strong></h4>${items.length ? `<div class="class-chip-list">${items.map((row) => `<span class="class-chip" title="${safe(row.teacherName || "Guru belum ditetapkan")}">${safe(row.name)} — ${safe(row.teacherName || "Guru belum ditetapkan")}</span>`).join("")}</div>` : '<p class="class-list-empty">Tiada kelas dalam kategori ini.</p>'}</section>`;
+      return `<section class="completion-list ${complete ? "complete" : "incomplete"}"><h4>${complete ? "Kelas selesai" : "Kelas belum selesai"}<strong>${items.length}</strong></h4>${items.length ? `<div class="class-chip-list">${items.map((row) => `<span class="class-chip">${safe(row.name)}</span>`).join("")}</div>` : '<p class="class-list-empty">Tiada kelas dalam kategori ini.</p>'}</section>`;
     };
     $("#completionListsView").innerHTML = renderList(true) + renderList(false);
     $("#completionStatus").textContent = `${classes.length} kelas disemak bagi ${date}.`;
@@ -408,6 +409,11 @@ function setupRmtTemplate() {
   const rmtAnchor = day === 0 ? dateValue(addDays(today, 1)) : day === 6 ? dateValue(addDays(today, 2)) : state.date;
   const dates = schoolWeekDates(rmtAnchor);
   $("#rmtWeek").value = isoWeekNumber(rmtAnchor); $("#rmtFrom").value = dates[0]; $("#rmtTo").value = dates[4];
+  updateRmtTotal();
+}
+
+function updateRmtTotal() {
+  $("#rmtComputedTotal").textContent = count($("#rmtMorningCount").value) + count($("#rmtAfternoonCount").value);
 }
 
 function renderRmtImagePreview(files) {
@@ -437,6 +443,85 @@ function renderRmtImagePreview(files) {
   state.rmtPreviewUrls = selected.map((file) => URL.createObjectURL(file));
   preview.innerHTML = state.rmtPreviewUrls.map((url, index) => `<figure><img src="${safe(url)}" alt="Gambar laporan RMT ${index + 1}"><figcaption>Gambar RMT ${index + 1}</figcaption></figure>`).join("");
   status.textContent = `${selected.length} gambar dipilih dan sedia untuk semakan.`;
+}
+
+function clearRmtPreview() {
+  for (const url of state.rmtPreviewUrls) URL.revokeObjectURL(url);
+  state.rmtPreviewUrls = [];
+  $("#rmtPhotos").value = "";
+  $("#rmtImagePreview").innerHTML = "";
+}
+
+function isRmtReport(report) {
+  return String(report?.location || "").startsWith("RMT •");
+}
+
+function renderRmtReports() {
+  const sessionLabel = (value) => value === "afternoon" ? "Sidang Petang" : "Sidang Pagi";
+  $("#rmtSharedGallery").innerHTML = state.rmtReports.map((report) => {
+    const created = new Intl.DateTimeFormat("ms-MY", { dateStyle: "medium", timeStyle: "short" }).format(new Date(Number(report.createdAt)));
+    const photos = (Array.isArray(report.photos) ? report.photos : []).map((photo, index) => `<a href="${safe(photo.url)}" target="_blank" rel="noopener"><img src="${safe(photo.url)}" loading="lazy" alt="Gambar RMT ${safe(report.location)} ${index + 1}"></a>`).join("");
+    return `<article class="rmt-shared-report"><div class="monitoring-photo-grid">${photos}</div><div><span class="category-badge">${sessionLabel(report.session)}</span><h4>${safe(report.location)}</h4><p>Diisi oleh <strong>${safe(report.updatedBy || "—")}</strong></p><small>${safe(created)}</small><p>${safe(report.action || "")}</p></div></article>`;
+  }).join("");
+  $("#rmtSharedStatus").textContent = state.rmtReports.length ? `${state.rmtReports.length} laporan gambar RMT ditemui.` : "Belum ada gambar RMT tersimpan bagi minggu ini.";
+}
+
+async function loadRmtReports() {
+  if (state.rmtLoading) return;
+  state.rmtLoading = true;
+  $("#rmtSharedStatus").textContent = "Memuatkan gambar RMT…";
+  try {
+    const date = $("#rmtFrom").value || state.date;
+    const response = await fetch(`${SAFETY_API_URL}?date=${encodeURIComponent(date)}`, { cache: "no-store" });
+    const data = await responseJson(response, "Gambar RMT tidak dapat dibuka.");
+    if (!response.ok) throw new Error(data.error || "Gambar RMT tidak dapat dibuka.");
+    state.rmtReports = (Array.isArray(data.reports) ? data.reports : []).filter(isRmtReport);
+    renderRmtReports();
+  } catch (error) {
+    console.error(error);
+    state.rmtReports = [];
+    $("#rmtSharedGallery").innerHTML = "";
+    $("#rmtSharedStatus").textContent = error.message || "Gambar RMT tidak dapat dibuka.";
+  } finally { state.rmtLoading = false; }
+}
+
+async function saveRmtPhotos() {
+  if (!editorName()) {
+    $("#rmtPhotoStatus").textContent = "Pilih nama pengisi di bahagian atas dahulu.";
+    $("#editorName").focus();
+    return;
+  }
+  let files;
+  try { files = validateMonitoringFiles($("#rmtPhotos").files); }
+  catch (error) { $("#rmtPhotoStatus").textContent = error.message; return; }
+  $("#rmtPhotoSave").disabled = true;
+  $("#rmtPhotoStatus").textContent = "Mengecilkan dan memuat naik gambar RMT…";
+  try {
+    const photos = await Promise.all(files.map(prepareMonitoringPhoto));
+    const week = count($("#rmtWeek").value, 53);
+    const morning = count($("#rmtMorningCount").value), afternoon = count($("#rmtAfternoonCount").value);
+    const payload = {
+      date: $("#rmtFrom").value || state.date,
+      updatedBy: editorName(),
+      category: "both",
+      session: $("#rmtPhotoSession").value,
+      location: `RMT • Minggu ${week}`,
+      routeStatus: "not_applicable",
+      parkingStatus: "not_applicable",
+      issue: `Bukti laporan Guru Bertugas RMT ${$("#rmtPhotoSession").value === "afternoon" ? "Sidang Petang" : "Sidang Pagi"}`,
+      action: `Jumlah murid RMT — Pagi: ${morning} • Petang: ${afternoon} • Tempoh: ${$("#rmtFrom").value} hingga ${$("#rmtTo").value}`,
+      photos,
+    };
+    const response = await fetch(SAFETY_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    const result = await responseJson(response, "Gambar RMT gagal disimpan.");
+    if (!response.ok) throw new Error(result.error || "Gambar RMT gagal disimpan.");
+    clearRmtPreview();
+    $("#rmtPhotoStatus").textContent = "Gambar RMT berjaya disimpan dan boleh dilihat oleh guru lain.";
+    await loadRmtReports();
+  } catch (error) {
+    console.error(error);
+    $("#rmtPhotoStatus").textContent = error.message || "Gambar RMT gagal disimpan.";
+  } finally { updateEditingAccess(); }
 }
 
 function setSidebar(open) {
@@ -557,7 +642,7 @@ function monitoringStatusClass(value) {
 }
 
 function renderMonitoringReports() {
-  const reports = state.monitoring.reports;
+  const reports = state.monitoring.reports.filter((report) => !isRmtReport(report));
   const renderReport = (report) => {
     const created = new Intl.DateTimeFormat("ms-MY", { dateStyle: "medium", timeStyle: "short" }).format(new Date(Number(report.createdAt)));
     const photos = (Array.isArray(report.photos) ? report.photos : []).map((photo, index) =>
@@ -1071,13 +1156,14 @@ function activateViewFromHash() {
     else link.removeAttribute("aria-current");
   });
   $("#top").hidden = false;
-  $("#identityBar").hidden = !["attendance", "staff", "dailyDuty", "monitoring"].includes(requested);
+  $("#identityBar").hidden = !["attendance", "staff", "dailyDuty", "rmt", "monitoring"].includes(requested);
   $("#printButton").hidden = requested !== "attendance";
   if (requested === "analysis") loadAnalytics();
   if (requested === "monitoring") loadMonitoringReports();
   if (requested === "duty") loadWeeklyDuty();
   if (requested === "completion") loadCompletionView();
   if (requested === "calendar") loadCalendarRecord();
+  if (requested === "rmt") loadRmtReports();
   setSidebar(false);
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -1091,6 +1177,11 @@ $("#completionRefresh").addEventListener("click", loadCompletionView);
 $("#completionSession").addEventListener("change", loadCompletionView);
 $("#calendarRefresh").addEventListener("click", loadCalendarRecord);
 $("#rmtPhotos").addEventListener("change", (event) => renderRmtImagePreview(event.target.files));
+$("#rmtMorningCount").addEventListener("input", updateRmtTotal);
+$("#rmtAfternoonCount").addEventListener("input", updateRmtTotal);
+$("#rmtPhotoSave").addEventListener("click", saveRmtPhotos);
+$("#rmtPhotoRefresh").addEventListener("click", loadRmtReports);
+$("#rmtFrom").addEventListener("change", loadRmtReports);
 $("#menuToggle").addEventListener("click", () => setSidebar(!document.body.classList.contains("sidebar-open")));
 $("#sidebarBackdrop").addEventListener("click", () => setSidebar(false));
 document.querySelectorAll("[data-view-link]").forEach((link) => link.addEventListener("click", () => setSidebar(false)));

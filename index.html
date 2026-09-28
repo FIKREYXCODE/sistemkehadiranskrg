@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="HEM SMARTTRACK">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="manifest" href="manifest.webmanifest?v=43">
+  <link rel="manifest" href="manifest.webmanifest?v=44">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=43">
+  <link rel="stylesheet" href="styles.css?v=44">
 </head>
 <body>
   <header class="topbar no-print">
@@ -23,9 +23,9 @@
           <img src="logo-skrg-cutout.png" alt="">
         </span>
         <span class="topbar-school-copy">
-          <small>Laporan Kedatangan Harian</small>
-          <strong>Sekolah Kebangsaan Ranggu</strong>
-          <span>Peti Surat 842, 91008 Tawau, Sabah • Sesi 2026</span>
+          <small>HEM SMARTTRACK</small>
+          <strong>Bahagian Pengurusan Unit HEM SK Ranggu</strong>
+          <span>Sekolah Kebangsaan Ranggu • Tawau, Sabah</span>
         </span>
       </a>
     </div>
@@ -338,17 +338,25 @@
         <a class="rmt-portal-button" href="https://appsjohor.moe.gov.my/rmt" target="_blank" rel="noopener noreferrer">🔗 Buka Portal RMT</a>
       </div>
       <div id="rmtTemplateForm" class="rmt-template-form">
-        <div class="rmt-meta-grid"><label>Minggu<input id="rmtWeek" type="number" min="1" max="53" required></label><label>Tarikh mula<input id="rmtFrom" type="date" required></label><label>Tarikh akhir<input id="rmtTo" type="date" required></label><label>Jumlah murid RMT<input id="rmtTotal" type="number" min="0" value="261"></label><label>Murid pagi<input id="rmtMorningCount" type="number" min="0" value="142"></label><label>Murid petang<input id="rmtAfternoonCount" type="number" min="0" value="119"></label></div>
+        <div class="rmt-meta-grid"><label>Minggu<input id="rmtWeek" type="number" min="1" max="53" required></label><label>Tarikh mula<input id="rmtFrom" type="date" required></label><label>Tarikh akhir<input id="rmtTo" type="date" required></label></div>
+        <div class="rmt-count-grid"><label>Jumlah Murid RMT Pagi<input id="rmtMorningCount" type="number" min="0" value="142"></label><label>Jumlah Murid RMT Petang<input id="rmtAfternoonCount" type="number" min="0" value="119"></label><div class="rmt-total-display"><span>Jumlah keseluruhan RMT</span><strong id="rmtComputedTotal">261</strong><small>Dikira secara automatik</small></div></div>
         <div class="rmt-session-grid"><fieldset><legend>📗 Guru sesi pagi</legend><div id="rmtMorningNames" class="rmt-name-list"></div></fieldset><fieldset><legend>📕 Guru sesi petang</legend><div id="rmtAfternoonNames" class="rmt-name-list"></div></fieldset></div>
       </div>
       <section class="rmt-photo-section" aria-labelledby="rmtPhotoTitle">
-        <div><p class="eyebrow">Lampiran RMT</p><h3 id="rmtPhotoTitle">Pengisian Gambar Laporan</h3><p>Pilih gambar laporan atau bukti pengisian RMT dari telefon. Gambar akan dipaparkan di bawah untuk semakan.</p></div>
+        <div><p class="eyebrow">Lampiran RMT bersama</p><h3 id="rmtPhotoTitle">Pengisian Gambar Laporan</h3><p>Gambar disimpan bersama dan boleh dilihat oleh guru lain pada pelbagai peranti.</p></div>
+        <label class="rmt-session-select">Sidang laporan
+          <select id="rmtPhotoSession" required><option value="morning">Sidang Pagi</option><option value="afternoon">Sidang Petang</option></select>
+        </label>
         <label class="photo-uploader">Pilih gambar RMT
           <input id="rmtPhotos" type="file" accept="image/*,.heic,.heif" multiple>
-          <span>Pilih sehingga 4 gambar. Tekan butang Portal RMT di atas untuk meneruskan urusan rasmi.</span>
+          <span>Pilih sehingga 4 gambar bagi satu simpanan.</span>
         </label>
+        <button id="rmtPhotoSave" class="primary-button" type="button">Simpan gambar untuk semua guru</button>
         <p id="rmtPhotoStatus" class="form-message" role="status"></p>
         <div id="rmtImagePreview" class="monitoring-preview rmt-image-preview" aria-live="polite"></div>
+        <div class="rmt-shared-heading"><h3>Gambar RMT Tersimpan</h3><button id="rmtPhotoRefresh" class="secondary-button" type="button">Muat semula</button></div>
+        <p id="rmtSharedStatus" class="monitoring-list-status" role="status">Memuatkan gambar RMT…</p>
+        <div id="rmtSharedGallery" class="rmt-shared-gallery" aria-live="polite"></div>
       </section>
     </section>
   </main>
@@ -410,6 +418,6 @@
   </div>
 
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="app.js?v=43" defer></script>
+  <script src="app.js?v=44" defer></script>
 </body>
 </html>
