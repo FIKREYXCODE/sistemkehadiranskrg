@@ -2,12 +2,13 @@ const API_URL = "https://portal-kelas-sekolah-biru.afiqzkablemo.chatgpt.site/api
 const SAFETY_API_URL = API_URL.replace(/\/school$/, "/safety");
 const $ = (selector) => document.querySelector(selector);
 const state = {
-  date: "", classes: [], staffAbsences: [], dutyTeachers: { morning: [], afternoon: [] }, meta: {}, loading: false, saveTimer: null,
+  date: "", classes: [], staffAbsences: { morning: [], afternoon: [] }, dutyTeachers: { morning: [], afternoon: [] }, meta: {}, loading: false, saveTimer: null,
   savePromise: null, pendingAttendance: new Map(), staffDirty: false, dutyDirtySessions: new Set(), pendingMeta: {}, audit: new Map(), adminPin: "", session: "all",
   staffDirectory: [], adminStaffDirectory: [],
   analytics: { period: "week", date: "", loading: false },
   monitoring: { reports: [], loading: false, previewUrls: [] },
   weeklyDuty: { loading: false }, completion: { loading: false }, calendar: { loading: false }, rmtPreviewUrls: [], rmtReports: [], rmtLoading: false,
+  opr: { reports: [], loading: false, previewUrls: [] },
 };
 const DRAFT_PREFIX = "skrg-pending-v1:";
 const EDITOR_KEY = "skrg-editor-name-v1";
@@ -56,7 +57,12 @@ function restoreDraft() {
       }
       state.pendingAttendance.set(patch.id, pending);
     }
-    if (Array.isArray(draft.staffAbsences)) { state.staffAbsences = draft.staffAbsences; state.staffDirty = true; }
+    if (draft.staffAbsences && typeof draft.staffAbsences === "object") {
+      state.staffAbsences = Array.isArray(draft.staffAbsences)
+        ? { morning: draft.staffAbsences, afternoon: [] }
+        : { morning: Array.isArray(draft.staffAbsences.morning) ? draft.staffAbsences.morning : [], afternoon: Array.isArray(draft.staffAbsences.afternoon) ? draft.staffAbsences.afternoon : [] };
+      state.staffDirty = true;
+    }
     for (const update of Array.isArray(draft.dutyTeacherUpdates) ? draft.dutyTeacherUpdates : []) {
       if (!["morning", "afternoon"].includes(update.session) || !Array.isArray(update.teachers)) continue;
       state.dutyTeachers[update.session] = update.teachers.slice(0, 5);
@@ -86,7 +92,22 @@ function activeStaffNames() {
 }
 
 function refreshStaffNameChoices() {
-  $("#staffNames").innerHTML = activeStaffNames().map((name) => `<option value="${safe(name)}"></option>`).join("");
+  const names = activeStaffNames();
+  $("#staffNames").innerHTML = names.map((name) => `<option value="${safe(name)}"></option>`).join("");
+  const fillSelect = (element, placeholder) => {
+    if (!element) return;
+    const current = element.value;
+    const choices = current && !names.includes(current) ? [current, ...names] : names;
+    element.innerHTML = `<option value="">${safe(placeholder)}</option>${choices.map((name) => `<option value="${safe(name)}"${name === current ? " selected" : ""}>${safe(name)}</option>`).join("")}`;
+  };
+  fillSelect($("#editorName"), "Pilih nama guru / AKP");
+  for (const selector of ["#preparedByMorning", "#preparedByAfternoon", "#approvedByMorning", "#approvedByAfternoon", "#oprPreparedBy"]) fillSelect($(selector), "Pilih nama guru / AKP");
+}
+
+function staffSelectOptions(selected = "", placeholder = "Pilih nama guru / AKP") {
+  const names = activeStaffNames();
+  const choices = selected && !names.includes(selected) ? [selected, ...names] : names;
+  return `<option value="">${safe(placeholder)}</option>${choices.map((name) => `<option value="${safe(name)}"${name === selected ? " selected" : ""}>${safe(name)}</option>`).join("")}`;
 }
 
 function editorName() { return $("#editorName").value.trim(); }
@@ -156,8 +177,8 @@ function applyAttendanceAudit(updates, updatedBy, updatedAt) {
 
 function updateEditingAccess() {
   const allowed = Boolean(editorName());
-  document.querySelectorAll("#attendanceBody input,#dutyMorningBody input,#dutyAfternoonBody input,#staffBody input,.report-notes input,.report-notes textarea").forEach((element) => { element.readOnly = !allowed; });
-  document.querySelectorAll("#staffBody select").forEach((element) => { element.disabled = !allowed; });
+  document.querySelectorAll("#attendanceBody input,#staffMorningBody input,#staffAfternoonBody input,.report-notes input,.report-notes textarea").forEach((element) => { element.readOnly = false; });
+  document.querySelectorAll("#dutyMorningBody select,#dutyAfternoonBody select,#staffMorningBody select,#staffAfternoonBody select,.report-notes select").forEach((element) => { element.disabled = false; });
   $("#editorName").classList.toggle("invalid", !allowed);
   $("#monitoringSave").disabled = !allowed;
   $("#rmtPhotoSave").disabled = !allowed;
@@ -642,7 +663,7 @@ function monitoringStatusClass(value) {
 }
 
 function renderMonitoringReports() {
-  const reports = state.monitoring.reports.filter((report) => !isRmtReport(report));
+  const reports = state.monitoring.reports.filter((report) => !isRmtReport(report) && report.category !== "opr");
   const renderReport = (report) => {
     const created = new Intl.DateTimeFormat("ms-MY", { dateStyle: "medium", timeStyle: "short" }).format(new Date(Number(report.createdAt)));
     const photos = (Array.isArray(report.photos) ? report.photos : []).map((photo, index) =>
@@ -738,6 +759,78 @@ async function saveMonitoringReport(event) {
   } finally { updateEditingAccess(); }
 }
 
+function clearOprPreview() {
+  for (const url of state.opr.previewUrls) URL.revokeObjectURL(url);
+  state.opr.previewUrls = [];
+  $("#oprPreview").innerHTML = "";
+}
+
+function renderOprPreview(files) {
+  clearOprPreview();
+  try {
+    const selected = validateMonitoringFiles(files);
+    state.opr.previewUrls = selected.map((file) => URL.createObjectURL(file));
+    $("#oprPreview").innerHTML = state.opr.previewUrls.map((url, index) => `<figure><img src="${safe(url)}" alt="Pratonton gambar OPR ${index + 1}"><figcaption>Gambar program ${index + 1}</figcaption></figure>`).join("");
+    $("#oprFormStatus").textContent = `${selected.length} gambar dipilih.`;
+  } catch (error) {
+    $("#oprPhotos").value = "";
+    $("#oprFormStatus").textContent = error.message;
+  }
+}
+
+function renderOprReports() {
+  $("#oprGallery").innerHTML = state.opr.reports.map((report) => {
+    const created = new Intl.DateTimeFormat("ms-MY", { dateStyle: "medium", timeStyle: "short" }).format(new Date(Number(report.createdAt)));
+    const photos = (Array.isArray(report.photos) ? report.photos : []).map((photo, index) => `<a href="${safe(photo.url)}" target="_blank" rel="noopener"><img src="${safe(photo.url)}" loading="lazy" alt="${safe(report.location)} gambar ${index + 1}"></a>`).join("");
+    return `<article class="monitoring-report"><div class="monitoring-photo-grid">${photos}</div><div class="monitoring-report-body"><div class="monitoring-report-top"><span class="category-badge">OPR HEM</span><time>${safe(created)}</time></div><h3>${safe(report.location)}</h3><p class="monitoring-by">Disediakan oleh <strong>${safe(report.updatedBy || "—")}</strong></p><dl><div><dt>Tarikh program</dt><dd>${safe(report.reportDate || "—")}</dd></div></dl></div></article>`;
+  }).join("");
+  $("#oprListStatus").textContent = state.opr.reports.length ? `${state.opr.reports.length} OPR HEM ditemui pada tarikh ini.` : "Belum ada OPR HEM pada tarikh dipilih.";
+}
+
+async function loadOprReports() {
+  if (state.opr.loading) return;
+  state.opr.loading = true;
+  $("#oprListStatus").textContent = "Memuatkan OPR HEM…";
+  try {
+    const response = await fetch(`${SAFETY_API_URL}?category=opr&limit=4`, { cache: "no-store" });
+    const data = await responseJson(response, "OPR HEM tidak dapat dibuka.");
+    if (!response.ok) throw new Error(data.error || "OPR HEM tidak dapat dibuka.");
+    state.opr.reports = (Array.isArray(data.reports) ? data.reports : []).filter((report) => report.category === "opr").slice(0, 4);
+    renderOprReports();
+  } catch (error) {
+    state.opr.reports = [];
+    $("#oprGallery").innerHTML = "";
+    $("#oprListStatus").textContent = error.message || "OPR HEM tidak dapat dibuka.";
+  } finally { state.opr.loading = false; }
+}
+
+async function saveOprReport(event) {
+  event.preventDefault();
+  const preparedBy = $("#oprPreparedBy").value.trim();
+  if (!preparedBy) { $("#oprFormStatus").textContent = "Sila pilih nama guru pada ruangan Disediakan oleh."; return; }
+  let files;
+  try { files = validateMonitoringFiles($("#oprPhotos").files); }
+  catch (error) { $("#oprFormStatus").textContent = error.message; return; }
+  $("#oprSave").disabled = true;
+  $("#oprFormStatus").textContent = "Mengecilkan dan memuat naik gambar OPR HEM…";
+  try {
+    const photos = await Promise.all(files.map(prepareMonitoringPhoto));
+    const program = $("#oprProgram").value.trim();
+    const date = $("#oprDate").value || state.date;
+    const payload = { date, updatedBy: preparedBy, category: "opr", session: "morning", location: program, routeStatus: "not_applicable", parkingStatus: "not_applicable", issue: `One Page Report HEM: ${program}`, action: `Disediakan oleh ${preparedBy}`, photos };
+    const response = await fetch(SAFETY_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    const result = await responseJson(response, "OPR HEM gagal disimpan.");
+    if (!response.ok) throw new Error(result.error || "OPR HEM gagal disimpan.");
+    $("#oprProgram").value = "";
+    $("#oprPhotos").value = "";
+    clearOprPreview();
+    $("#oprFormStatus").textContent = "OPR HEM berjaya disimpan dan boleh dilihat oleh guru lain.";
+    await loadOprReports();
+  } catch (error) {
+    $("#oprFormStatus").textContent = error.message || "OPR HEM gagal disimpan.";
+  } finally { $("#oprSave").disabled = false; }
+}
+
 function visibleClasses() {
   return state.session === "all" ? state.classes : state.classes.filter((row) => classSession(row) === state.session);
 }
@@ -808,24 +901,25 @@ function renderDutyTeachers() {
     target.innerHTML = state.dutyTeachers[session].map((teacherName, index) => {
       const recordId = `${session}:${index + 1}`;
       const details = auditDetails("duty", recordId, "teacherName");
-      return `<tr data-duty-session="${session}" data-duty-index="${index}"><td>${index + 1}</td><td><input class="cell-input${details.className}" data-field="teacherName" value="${safe(teacherName)}" aria-label="Guru bertugas ${SESSION_LABELS[session]} ${index + 1}" title="${safe(details.title)}"></td></tr>`;
+      return `<tr data-duty-session="${session}" data-duty-index="${index}"><td>${index + 1}</td><td><select class="cell-input staff-name-select${details.className}" data-field="teacherName" aria-label="Guru bertugas ${SESSION_LABELS[session]} ${index + 1}" title="${safe(details.title)}">${staffSelectOptions(teacherName, "Pilih nama guru")}</select></td></tr>`;
     }).join("");
   }
   updateEditingAccess();
 }
 
 function renderStaff() {
-  while (state.staffAbsences.length < 11) state.staffAbsences.push({ staffName: "", subject: "", reason: "" });
-  state.staffAbsences = state.staffAbsences.slice(0, 11);
-  const sortedNames = activeStaffNames();
-  $("#staffBody").innerHTML = state.staffAbsences.map((row, index) => {
-    const staffAudit = auditDetails("staff", String(index + 1), "staffName");
-    const savedName = String(row.staffName || "");
-    const knownName = sortedNames.includes(savedName);
-    const names = knownName || !savedName ? sortedNames : [savedName, ...sortedNames];
-    const options = names.map((name) => `<option value="${safe(name)}"${name === savedName ? " selected" : ""}>${safe(name)}</option>`).join("");
-    return `<tr data-staff-index="${index}"><td>${index + 1}</td><td><select class="cell-input staff-name-select${staffAudit.className}" data-field="staffName" aria-label="Nama guru atau AKP ${index + 1}" title="${safe(staffAudit.title)}"><option value="">Pilih nama guru / AKP</option>${options}</select></td><td><input class="cell-input${auditDetails("staff", String(index + 1), "subject").className}" data-field="subject" value="${safe(row.subject)}" aria-label="Subjek atau jawatan ${index + 1}" title="${safe(auditDetails("staff", String(index + 1), "subject").title)}"></td><td><input class="cell-input${auditDetails("staff", String(index + 1), "reason").className}" data-field="reason" value="${safe(row.reason)}" aria-label="Sebab ${index + 1}" title="${safe(auditDetails("staff", String(index + 1), "reason").title)}"></td></tr>`;
-  }).join("");
+  for (const session of ["morning", "afternoon"]) {
+    const rows = Array.isArray(state.staffAbsences[session]) ? state.staffAbsences[session] : [];
+    while (rows.length < 8) rows.push({ staffName: "", reason: "" });
+    state.staffAbsences[session] = rows.slice(0, 8);
+    const target = session === "morning" ? $("#staffMorningBody") : $("#staffAfternoonBody");
+    target.innerHTML = state.staffAbsences[session].map((row, index) => {
+      const recordId = `${session}:${index + 1}`;
+      const staffAudit = auditDetails("staff", recordId, "staffName");
+      const savedName = String(row.staffName || "");
+      return `<tr data-staff-session="${session}" data-staff-index="${index}"><td>${index + 1}</td><td><select class="cell-input staff-name-select${staffAudit.className}" data-field="staffName" aria-label="Nama guru atau AKP ${SESSION_LABELS[session]} ${index + 1}" title="${safe(staffAudit.title)}">${staffSelectOptions(savedName)}</select></td><td><input class="cell-input${auditDetails("staff", recordId, "reason").className}" data-field="reason" value="${safe(row.reason || "")}" aria-label="Sebab ${SESSION_LABELS[session]} ${index + 1}" title="${safe(auditDetails("staff", recordId, "reason").title)}"></td></tr>`;
+    }).join("");
+  }
   updateEditingAccess();
 }
 
@@ -985,7 +1079,11 @@ async function loadReport(silent = false) {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Data tidak dapat dibuka");
     state.classes = Array.isArray(data.classes) ? data.classes : [];
-    state.staffAbsences = Array.isArray(data.staffAbsences) ? data.staffAbsences : [];
+    state.staffAbsences = { morning: [], afternoon: [] };
+    for (const item of Array.isArray(data.staffAbsences) ? data.staffAbsences : []) {
+      const session = item.session === "afternoon" ? "afternoon" : "morning";
+      state.staffAbsences[session].push({ staffName: item.staffName || "", reason: item.reason || "" });
+    }
     state.dutyTeachers = { morning: [], afternoon: [] };
     for (const item of Array.isArray(data.dutyTeachers) ? data.dutyTeachers : []) {
       if (!["morning", "afternoon"].includes(item.session)) continue;
@@ -1029,7 +1127,7 @@ async function flushSave() {
   const snapshot = {
     date: state.date,
     attendanceUpdates: Array.from(state.pendingAttendance.values()).map((item) => ({ ...item })),
-    staffAbsences: state.staffDirty ? state.staffAbsences.map((item) => ({ ...item })) : null,
+    staffAbsences: state.staffDirty ? ["morning", "afternoon"].flatMap((session) => state.staffAbsences[session].map((item) => ({ ...item, session }))) : null,
     dutyTeacherUpdates: Array.from(state.dutyDirtySessions).map((session) => ({ session, teachers: [...state.dutyTeachers[session]] })),
     metaUpdates: { ...state.pendingMeta },
     updatedBy: editorName(),
@@ -1091,37 +1189,43 @@ $("#attendanceBody").addEventListener("input", (event) => {
 function updateStaffRow(event) {
   const input = event.target.closest("input[data-field],select[data-field]");
   if (!input) return;
-  const index = Number(input.closest("tr").dataset.staffIndex);
-  state.staffAbsences[index][input.dataset.field] = input.value;
+  const row = input.closest("tr");
+  const index = Number(row.dataset.staffIndex);
+  const session = row.dataset.staffSession;
+  state.staffAbsences[session][index][input.dataset.field] = input.value;
   state.staffDirty = true;
   saveDraft();
   scheduleSave();
 }
-$("#staffBody").addEventListener("input", (event) => { if (event.target.matches("input[data-field]")) updateStaffRow(event); });
-$("#staffBody").addEventListener("change", (event) => { if (event.target.matches("select[data-field]")) updateStaffRow(event); });
+for (const selector of ["#staffMorningBody", "#staffAfternoonBody"]) {
+  $(selector).addEventListener("input", (event) => { if (event.target.matches("input[data-field]")) updateStaffRow(event); });
+  $(selector).addEventListener("change", (event) => { if (event.target.matches("select[data-field]")) updateStaffRow(event); });
+}
 
 for (const selector of ["#dutyMorningBody", "#dutyAfternoonBody"]) {
-  $(selector).addEventListener("input", (event) => {
-    const input = event.target.closest("input[data-field]");
+  const updateDutyTeacher = (event) => {
+    const input = event.target.closest("select[data-field]");
     if (!input) return;
     const row = input.closest("tr[data-duty-session]");
     const session = row.dataset.dutySession;
     state.dutyTeachers[session][Number(row.dataset.dutyIndex)] = input.value;
     state.dutyDirtySessions.add(session);
     saveDraft(); scheduleSave();
-  });
+  };
+  $(selector).addEventListener("change", updateDutyTeacher);
 }
 
 [["#reportNoteMorning", "noteMorning"], ["#preparedByMorning", "preparedByMorning"], ["#reportNoteAfternoon", "noteAfternoon"], ["#preparedByAfternoon", "preparedByAfternoon"], ["#approvedByMorning", "approvedByMorning"], ["#approvedTitleMorning", "approvedTitleMorning"], ["#approvedByAfternoon", "approvedByAfternoon"], ["#approvedTitleAfternoon", "approvedTitleAfternoon"]].forEach(([selector, field]) => {
-  $(selector).addEventListener("input", (event) => {
+  const updateMeta = (event) => {
     state.meta[field] = event.target.value;
     state.pendingMeta[field] = event.target.value;
     saveDraft(); scheduleSave();
-  });
+  };
+  $(selector).addEventListener($(selector).tagName === "SELECT" ? "change" : "input", updateMeta);
 });
 
 function syncReportDateInputs() {
-  ["#reportDate", "#staffPageDate", "#dailyDutyDate", "#monitoringDate"].forEach((selector) => { $(selector).value = state.date; });
+  ["#reportDate", "#staffPageDate", "#dailyDutyDate", "#monitoringDate", "#oprDate"].forEach((selector) => { $(selector).value = state.date; });
 }
 
 async function changeReportDate(event) {
@@ -1141,7 +1245,7 @@ $("#sessionFilter").addEventListener("change", (event) => {
   updateSessionVisibility();
   updateEditingAccess();
 });
-const VIEW_HASHES = { home: "utama", attendance: "rekod-pengisian-kelas", staff: "keberadaan-guru-akp", dailyDuty: "guru-bertugas-harian", duty: "guru-bertugas", completion: "status-kelas", calendar: "rekod-kalendar", monitoring: "laporan-pemantauan", analysis: "analisis", rmt: "guru-rmt" };
+const VIEW_HASHES = { home: "utama", attendance: "rekod-pengisian-kelas", staff: "keberadaan-guru-akp", dailyDuty: "guru-bertugas-harian", duty: "guru-bertugas", completion: "status-kelas", calendar: "rekod-kalendar", monitoring: "laporan-pemantauan", analysis: "analisis", rmt: "guru-rmt", opr: "template-opr-hem" };
 const HASH_VIEWS = Object.fromEntries(Object.entries(VIEW_HASHES).map(([view, hash]) => [hash, view]));
 HASH_VIEWS["laporan-bergambar"] = "monitoring";
 HASH_VIEWS.kehadiran = "attendance";
@@ -1164,6 +1268,7 @@ function activateViewFromHash() {
   if (requested === "completion") loadCompletionView();
   if (requested === "calendar") loadCalendarRecord();
   if (requested === "rmt") loadRmtReports();
+  if (requested === "opr") loadOprReports();
   setSidebar(false);
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -1189,6 +1294,10 @@ document.addEventListener("keydown", (event) => { if (event.key === "Escape") se
 $("#monitoringRefresh").addEventListener("click", loadMonitoringReports);
 $("#monitoringPhotos").addEventListener("change", (event) => renderMonitoringPreview(event.target.files));
 $("#monitoringForm").addEventListener("submit", saveMonitoringReport);
+$("#oprPhotos").addEventListener("change", (event) => renderOprPreview(event.target.files));
+$("#oprForm").addEventListener("submit", saveOprReport);
+$("#oprRefresh").addEventListener("click", loadOprReports);
+$("#oprDate").addEventListener("change", loadOprReports);
 $("#adminButton").addEventListener("click", async () => {
   await flushSave();
   $("#adminModal").hidden = false;
@@ -1256,7 +1365,7 @@ loadAnalytics();
 loadMonitoringReports();
 
 setInterval(() => {
-  const editing = ["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName || "");
+  const editing = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName || "");
   if (document.visibilityState === "visible" && !editing && !state.loading && !state.savePromise && !hasPendingChanges()) loadReport(true);
 }, 15000);
 

@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="HEM SMARTTRACK">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="manifest" href="manifest.webmanifest?v=45">
+  <link rel="manifest" href="manifest.webmanifest?v=47">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=45">
+  <link rel="stylesheet" href="styles.css?v=47">
 </head>
 <body>
   <header class="topbar no-print">
@@ -49,6 +49,7 @@
     <a href="#rekod-kalendar" data-view-link="calendar"><span>07</span><strong>Rekod Ikut Kalendar</strong><small>Semak pengisian mengikut tarikh</small></a>
     <a href="#laporan-pemantauan" data-view-link="monitoring"><span>08</span><strong>Pemantauan Sekolah</strong><small>Kebersihan dan keselamatan</small></a>
     <a href="#analisis" data-view-link="analysis"><span>09</span><strong>Analisis Kehadiran</strong><small>Graf dan kelas terbaik</small></a>
+    <a href="#template-opr-hem" data-view-link="opr"><span>10</span><strong>Template OPR HEM</strong><small>Program, gambar dan penyedia</small></a>
   </nav>
   <button id="sidebarBackdrop" class="sidebar-backdrop no-print" type="button" aria-label="Tutup menu" tabindex="-1"></button>
 
@@ -56,7 +57,7 @@
 
   <aside id="identityBar" class="identity-bar no-print" aria-label="Maklumat pengguna semasa" hidden>
     <label class="user-picker">Nama pengisi
-      <input id="editorName" type="text" list="staffNames" maxlength="140" autocomplete="off" placeholder="Cari atau pilih nama" required>
+      <select id="editorName" required><option value="">Pilih nama guru / AKP</option></select>
       <datalist id="staffNames"></datalist>
     </label>
     <div><strong>Nama ini digunakan pada setiap simpanan</strong><small>Taip beberapa huruf atau buka senarai, kemudian pilih nama guru.</small></div>
@@ -150,11 +151,9 @@
         <div><p class="eyebrow">Rekod 02</p><h2>Keberadaan Guru dan AKP</h2><p>Catat pegawai yang tidak berada di sekolah pada tarikh pilihan.</p></div>
         <div class="utility-controls"><label>Tarikh rekod<input id="staffPageDate" type="date" required></label></div>
       </div>
-      <div class="table-scroll standalone-table-wrap">
-        <table class="staff-table">
-          <thead><tr><th>Bil</th><th>Nama guru / AKP</th><th>Subjek / jawatan</th><th>Sebab tidak hadir / tiada di sekolah</th></tr></thead>
-          <tbody id="staffBody"></tbody>
-        </table>
+      <div class="staff-session-grid standalone-table-wrap">
+        <section class="staff-session-card morning-card"><h3>Sidang Pagi</h3><div class="table-scroll"><table class="staff-table"><thead><tr><th>Bil</th><th>Nama guru / AKP</th><th>Sebab tidak hadir / tiada di sekolah</th></tr></thead><tbody id="staffMorningBody"></tbody></table></div></section>
+        <section class="staff-session-card afternoon-card"><h3>Sidang Petang</h3><div class="table-scroll"><table class="staff-table"><thead><tr><th>Bil</th><th>Nama guru / AKP</th><th>Sebab tidak hadir / tiada di sekolah</th></tr></thead><tbody id="staffAfternoonBody"></tbody></table></div></section>
       </div>
     </section>
 
@@ -178,15 +177,15 @@
           <div class="session-note-card morning-card">
             <h4>Sidang Pagi</h4>
             <label>Catatan laporan<textarea id="reportNoteMorning" rows="3" placeholder="Catatan laporan sidang pagi"></textarea></label>
-            <label>Disediakan oleh<input id="preparedByMorning" type="text" placeholder="Nama guru bertugas sidang pagi"></label>
-            <label>Disahkan oleh<input id="approvedByMorning" type="text" placeholder="Nama pegawai pengesah sidang pagi"></label>
+            <label>Disediakan oleh<select id="preparedByMorning" class="staff-choice"><option value="">Pilih nama guru</option></select></label>
+            <label>Disahkan oleh<select id="approvedByMorning" class="staff-choice"><option value="">Pilih nama pegawai</option></select></label>
             <label>Jawatan pegawai pengesah<input id="approvedTitleMorning" type="text" placeholder="Contoh: Guru Besar"></label>
           </div>
           <div class="session-note-card afternoon-card">
             <h4>Sidang Petang</h4>
             <label>Catatan laporan<textarea id="reportNoteAfternoon" rows="3" placeholder="Catatan laporan sidang petang"></textarea></label>
-            <label>Disediakan oleh<input id="preparedByAfternoon" type="text" placeholder="Nama guru bertugas sidang petang"></label>
-            <label>Disahkan oleh<input id="approvedByAfternoon" type="text" placeholder="Nama pegawai pengesah sidang petang"></label>
+            <label>Disediakan oleh<select id="preparedByAfternoon" class="staff-choice"><option value="">Pilih nama guru</option></select></label>
+            <label>Disahkan oleh<select id="approvedByAfternoon" class="staff-choice"><option value="">Pilih nama pegawai</option></select></label>
             <label>Jawatan pegawai pengesah<input id="approvedTitleAfternoon" type="text" placeholder="Contoh: Guru Besar"></label>
           </div>
         </div>
@@ -296,6 +295,26 @@
       </div>
       <div id="monitoringListStatus" class="monitoring-list-status" role="status" aria-live="polite">Memuatkan laporan…</div>
       <div id="monitoringGallery" class="monitoring-gallery"></div>
+    </section>
+
+    <section id="oprView" class="monitoring-card app-view no-print" data-view-panel="opr" aria-labelledby="oprTitle" hidden>
+      <div class="monitoring-head">
+        <div><p class="eyebrow">One Page Report</p><h2 id="oprTitle">Template OPR HEM</h2><p>Rekod program HEM bersama gambar, tarikh dan nama penyedia. Semua laporan yang disimpan boleh dilihat pada pelbagai peranti.</p></div>
+        <span class="opr-badge">OPR HEM</span>
+      </div>
+      <form id="oprForm" class="monitoring-form opr-form">
+        <div class="monitoring-grid">
+          <label>Nama program<input id="oprProgram" type="text" maxlength="180" placeholder="Taip nama program" required></label>
+          <label>Tarikh program<input id="oprDate" type="date" required></label>
+          <label>Disediakan oleh<select id="oprPreparedBy" class="staff-choice" required><option value="">Pilih nama guru</option></select></label>
+        </div>
+        <label class="photo-uploader">Gambar program<input id="oprPhotos" type="file" accept="image/*,.heic,.heif" multiple required><span>Pilih 1 hingga 4 gambar. Gambar akan dikecilkan secara automatik sebelum disimpan.</span></label>
+        <div id="oprPreview" class="monitoring-preview" aria-live="polite"></div>
+        <div class="monitoring-submit-row"><button id="oprSave" class="primary-button" type="submit">Simpan OPR HEM</button><p id="oprFormStatus" class="form-message" role="status"></p></div>
+      </form>
+      <div class="monitoring-gallery-head"><div><h3>4 OPR HEM terkini</h3><p>Empat laporan terkini dipaparkan di sini. Arkib penuh disimpan dalam Google Drive.</p></div><div class="opr-gallery-actions"><a class="secondary-button" href="https://drive.google.com/drive/folders/1YP8_ko7EgwcPCGuU2xKYvmtH0ogCm2IQ" target="_blank" rel="noopener">Buka Arkib Drive ↗</a><button id="oprRefresh" class="secondary-button" type="button">Muat semula</button></div></div>
+      <div id="oprListStatus" class="monitoring-list-status" role="status">Memuatkan OPR HEM…</div>
+      <div id="oprGallery" class="monitoring-gallery opr-gallery"></div>
     </section>
 
     <section id="attendanceAnalysis" class="analysis-card app-view no-print" data-view-panel="analysis" aria-labelledby="analysisTitle" hidden>
@@ -423,6 +442,6 @@
   </div>
 
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="app.js?v=45" defer></script>
+  <script src="app.js?v=47" defer></script>
 </body>
 </html>

@@ -22,7 +22,7 @@ body{margin:0;background:linear-gradient(135deg,#edf7ff 0%,#fff 46%,#e9f3ff 100%
 .workspace-nav a[aria-current="page"]>span{background:var(--blue);color:#fff}
 .identity-bar{width:min(1180px,94vw);margin:12px auto 0;display:flex;align-items:center;gap:20px;padding:13px 18px;border:1px solid #cbdced;border-radius:16px;background:#f8fcff}.identity-bar[hidden]{display:none!important}
 .identity-bar .user-picker{width:min(360px,100%);font-size:.78rem;font-weight:900;color:var(--navy)}
-.identity-bar .user-picker input{margin-top:5px;padding:10px 12px;border:1px solid #aac7df;border-radius:9px}
+.identity-bar .user-picker input,.identity-bar .user-picker select{width:100%;margin-top:5px;padding:10px 12px;border:1px solid #aac7df;border-radius:9px;background:#fff;color:var(--ink);font:inherit}
 .identity-bar>div strong,.identity-bar>div small{display:block}.identity-bar>div strong{font-size:.8rem;color:var(--blue)}.identity-bar>div small{margin-top:3px;color:var(--muted);font-size:.7rem}
 .school-location{width:min(1180px,94vw);margin:12px auto 0;display:grid;grid-template-columns:minmax(300px,.82fr) minmax(420px,1.18fr);border:1px solid #b9d8ef;border-radius:20px;overflow:hidden;background:#fff;box-shadow:0 12px 34px #183b6d18}
 .school-location-info{padding:24px 26px;background:linear-gradient(145deg,#062b62,#0755b5);color:#fff}
@@ -105,15 +105,15 @@ tfoot td{background:#dfeaf4;font-weight:900}
 .num-input{font-weight:900;color:var(--red);background:#fff8d7}
 .note-input{text-align:left;min-width:140px}
 .staff-section{padding-top:30px}
-.staff-table{min-width:760px}
+.staff-session-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.staff-session-card{min-width:0;padding:18px;border:1px solid var(--line);border-radius:16px;background:#f8fbff}.staff-session-card h3{margin:0 0 12px;color:var(--blue);font-size:1rem}.staff-table{min-width:560px}
 .staff-table th:nth-child(1){width:58px}
 .staff-table th:nth-child(2){width:32%}
-.staff-table th:nth-child(3){width:24%}
+.staff-table th:nth-child(3){width:52%}
 .staff-table .cell-input{text-align:left;min-width:160px}
 .staff-table .staff-name-select{min-width:220px;cursor:pointer;background:#fff;color:var(--ink)}
 .report-notes{padding:27px 32px 34px;display:grid;gap:22px}
 .report-notes label{display:block;font-size:.82rem;font-weight:800}
-.report-notes textarea,.report-notes input{width:100%;margin-top:7px;border:1px solid #bfcde0;border-radius:10px;padding:11px;font:inherit;color:var(--ink)}
+.report-notes textarea,.report-notes input,.report-notes select{width:100%;margin-top:7px;border:1px solid #bfcde0;border-radius:10px;padding:11px;background:#fff;font:inherit;color:var(--ink)}
 .signature-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
 .site-footer{padding:27px;text-align:center;color:#fff;background:var(--navy);display:flex;flex-direction:column;gap:5px}
 .site-footer span{opacity:.72;font-size:.8rem}
@@ -202,9 +202,9 @@ body{background:#fff;color:#000}
 
 .entry-controls{position:relative;z-index:2;display:grid;grid-template-columns:215px 220px;gap:14px;align-items:start}
 .entry-controls .date-picker,.user-picker,.session-picker{min-width:0;font-weight:800}
-.entry-controls .date-picker input,.user-picker input,.session-picker select{display:block;width:100%;margin-top:8px;padding:14px 15px;border:2px solid #ffffff50;border-radius:12px;background:#fff;color:var(--ink);font:inherit}
+.entry-controls .date-picker input,.user-picker input,.user-picker select,.session-picker select{display:block;width:100%;margin-top:8px;padding:14px 15px;border:2px solid #ffffff50;border-radius:12px;background:#fff;color:var(--ink);font:inherit}
 .user-picker small,.session-picker small{display:block;margin-top:6px;font-size:.69rem;font-weight:600;opacity:.8}
-.user-picker input.invalid{border-color:#ffd05b;box-shadow:0 0 0 3px #ffd05b35}
+.user-picker input.invalid,.user-picker select.invalid{border-color:#ffd05b;box-shadow:0 0 0 3px #ffd05b35}
 .session-report-label{display:inline-block;margin-top:9px;padding:5px 9px;border-radius:7px;background:var(--pale);color:var(--blue);font-size:.72rem;letter-spacing:.08em}
 .has-audit{border-bottom:3px solid var(--sky)!important;cursor:help}
 .cell-input[readonly],.report-notes input[readonly],.report-notes textarea[readonly]{opacity:.62;cursor:not-allowed;background:#edf3f9}
@@ -341,11 +341,13 @@ body{background:#fff;color:#000}
 .monitoring-report dl div{padding-top:11px;border-top:1px solid var(--line)}
 .monitoring-report dt{color:var(--blue);font-size:.72rem;font-weight:900;text-transform:uppercase;letter-spacing:.035em}
 .monitoring-report dd{margin:5px 0 0;white-space:pre-wrap;line-height:1.5;color:#34435c;font-size:.84rem}
+.opr-badge{display:inline-flex;align-items:center;justify-content:center;min-width:120px;padding:13px 18px;border-radius:14px;background:linear-gradient(135deg,#073876,#0b8ed1);color:#fff;font-weight:900;letter-spacing:.08em;box-shadow:0 12px 28px #0755b52b}.opr-form{background:linear-gradient(145deg,#f4faff,#fff)}.opr-form .monitoring-grid{grid-template-columns:2fr 1fr 1.4fr}.opr-gallery .monitoring-report-body h3{margin-top:6px}.opr-gallery .category-badge{background:#e9f7ff;color:#0755b5}.staff-choice{cursor:pointer}.opr-gallery-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.opr-gallery-actions a{text-decoration:none}
 
 @media(max-width:800px){
 .monitoring-card{padding:24px 16px}.monitoring-head,.monitoring-gallery-head{align-items:stretch;flex-direction:column}.monitoring-date-tools{align-items:stretch;flex-direction:column}.monitoring-date-tools input{width:100%}.monitoring-date-label{align-self:flex-start}
-.monitoring-grid,.monitoring-text-grid{grid-template-columns:1fr}.monitoring-form{padding:16px}.monitoring-preview{grid-template-columns:repeat(2,minmax(0,1fr))}
+.monitoring-grid,.monitoring-text-grid,.opr-form .monitoring-grid{grid-template-columns:1fr}.monitoring-form{padding:16px}.monitoring-preview{grid-template-columns:repeat(2,minmax(0,1fr))}
 .monitoring-preview img{height:120px}.monitoring-submit-row{align-items:flex-start;flex-direction:column}.monitoring-report{grid-template-columns:1fr}.monitoring-photo-grid{min-height:210px}
+.staff-session-grid{grid-template-columns:1fr}
 }
 
 /* Menu utama tersembunyi secara automatik dan dibuka melalui butang Menu. */
