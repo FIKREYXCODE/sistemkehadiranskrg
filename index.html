@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="HEM SMARTTRACK">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="manifest" href="manifest.webmanifest?v=53">
+  <link rel="manifest" href="manifest.webmanifest?v=54">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=53">
+  <link rel="stylesheet" href="styles.css?v=54">
 </head>
 <body>
   <header class="topbar no-print">
@@ -94,8 +94,14 @@
       <section class="home-session-panel" aria-labelledby="homeSessionTitle">
         <div class="home-summary-heading"><div><p class="eyebrow">Pembahagian operasi</p><h2 id="homeSessionTitle">Sidang Sekolah</h2></div></div>
         <div class="home-session-grid">
-          <article class="morning"><span aria-hidden="true">🌅</span><div><strong>SIDANG PAGI</strong><small>Tahun 4, Tahun 5 dan Tahun 6</small></div></article>
-          <article class="afternoon"><span aria-hidden="true">🌇</span><div><strong>SIDANG PETANG</strong><small>Tahun 1, Tahun 2 dan Tahun 3</small></div></article>
+          <article class="afternoon">
+            <div class="home-session-head"><span aria-hidden="true">🌇</span><div><strong>SIDANG PETANG</strong><small>Tahun 1, Tahun 2 dan Tahun 3</small></div></div>
+            <div id="homeAfternoonClasses" class="home-class-totals" aria-label="Jumlah murid setiap kelas sidang petang"><p>Memuatkan jumlah kelas…</p></div>
+          </article>
+          <article class="morning">
+            <div class="home-session-head"><span aria-hidden="true">🌅</span><div><strong>SIDANG PAGI</strong><small>Tahun 4, Tahun 5 dan Tahun 6</small></div></div>
+            <div id="homeMorningClasses" class="home-class-totals" aria-label="Jumlah murid setiap kelas sidang pagi"><p>Memuatkan jumlah kelas…</p></div>
+          </article>
         </div>
       </section>
       <section class="community-stats" aria-labelledby="communityStatsTitle">
@@ -420,6 +426,6 @@
   </div>
 
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="app.js?v=53" defer></script>
+  <script src="app.js?v=54" defer></script>
 </body>
 </html>

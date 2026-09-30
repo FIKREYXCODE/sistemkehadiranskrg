@@ -966,6 +966,27 @@ function renderAttendance() {
   renderTotals();
 }
 
+function renderHomeClassTotals() {
+  const groups = [
+    { selector: "#homeAfternoonClasses", years: [1, 2, 3] },
+    { selector: "#homeMorningClasses", years: [4, 5, 6] },
+  ];
+  for (const group of groups) {
+    const target = $(group.selector);
+    if (!target) continue;
+    const rows = state.classes.filter((row) => {
+      const match = String(row.id || "").match(/^tahun-([1-6])-/);
+      return match && group.years.includes(Number(match[1]));
+    });
+    target.innerHTML = rows.length
+      ? rows.map((row) => {
+        const total = classFigures(row).enrolTotal;
+        return `<div class="home-class-total" title="${safe(row.name)}: ${total} murid"><span>${safe(row.name)}</span><b aria-label="${total} murid">${total}</b></div>`;
+      }).join("")
+      : "<p>Tiada maklumat kelas.</p>";
+  }
+}
+
 function renderTotals() {
   const totals = visibleClasses().reduce((sum, row) => {
     const f = classFigures(row);
@@ -979,6 +1000,7 @@ function renderTotals() {
   $("#summaryPresent").textContent = totals.presentTotal || 0;
   $("#summaryAbsent").textContent = totals.absentTotal || 0;
   $("#summaryPercent").textContent = percent(totals.presentTotal || 0, totals.enrolTotal || 0);
+  renderHomeClassTotals();
 }
 
 function renderDutyTeachers() {
@@ -1554,7 +1576,7 @@ window.addEventListener("beforeunload", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=53", { scope: "./", updateViaCache: "none" })
+    navigator.serviceWorker.register("./service-worker.js?v=54", { scope: "./", updateViaCache: "none" })
       .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
   });
 }
