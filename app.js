@@ -1062,22 +1062,51 @@ async function saveOprReport(event) {
   } finally { $("#oprSave").disabled = false; }
 }
 
-function tickerMarkup(messages) {
-  const text = messages.map((item) => String(item.message || "").trim()).filter(Boolean).join(" • ");
-  if (!text) return "";
-  return `<span class="ticker-sequence">${safe(text)}</span><span class="ticker-sequence" aria-hidden="true">${safe(text)}</span>`;
+const TICKER_SPEED_PX_PER_SECOND = 85;
+
+function tickerText(messages) {
+  return messages.map((item) => String(item.message || "").trim()).filter(Boolean).join(" • ");
+}
+
+function tickerUnit(text) {
+  return `<span class="ticker-sequence">${safe(text)}<span class="ticker-divider" aria-hidden="true">•</span></span>`;
+}
+
+function renderSeamlessTicker(track, messages, speed = TICKER_SPEED_PX_PER_SECOND) {
+  const text = tickerText(messages);
+  if (!text) {
+    track.innerHTML = "";
+    track.classList.remove("is-running");
+    track.style.removeProperty("--ticker-duration");
+    return false;
+  }
+
+  const unit = tickerUnit(text);
+  track.classList.remove("is-running");
+  track.innerHTML = `<span class="ticker-group">${unit}</span><span class="ticker-group" aria-hidden="true">${unit}</span>`;
+
+  requestAnimationFrame(() => {
+    const groups = track.querySelectorAll(".ticker-group");
+    if (groups.length !== 2) return;
+    const viewportWidth = track.parentElement?.clientWidth || window.innerWidth;
+    const unitWidth = Math.max(1, groups[0].scrollWidth);
+    const repeats = Math.max(1, Math.ceil((viewportWidth + unitWidth) / unitWidth));
+    const continuousContent = unit.repeat(repeats);
+    groups[0].innerHTML = continuousContent;
+    groups[1].innerHTML = continuousContent;
+    const distance = Math.max(1, groups[0].scrollWidth);
+    track.style.setProperty("--ticker-duration", `${Math.max(6, distance / speed).toFixed(2)}s`);
+    void track.offsetWidth;
+    track.classList.add("is-running");
+  });
+  return true;
 }
 
 function renderTicker() {
   const ticker = $("#globalNewsTicker"), track = $("#newsTickerTrack");
-  const markup = tickerMarkup(state.content.announcements);
-  track.innerHTML = markup;
-  ticker.hidden = !markup;
-  document.body.classList.toggle("ticker-visible", Boolean(markup));
-  if (markup) {
-    const characterCount = state.content.announcements.reduce((sum, item) => sum + String(item.message || "").length, 0);
-    track.style.setProperty("--ticker-duration", `${Math.min(40, Math.max(16, characterCount * .105))}s`);
-  }
+  const hasMessages = renderSeamlessTicker(track, state.content.announcements);
+  ticker.hidden = !hasMessages;
+  document.body.classList.toggle("ticker-visible", hasMessages);
 }
 
 function formatLetterDate(value) {
@@ -1148,7 +1177,8 @@ function syncAdminAnnouncements() {
 
 function renderAdminTickerPreview() {
   const active = state.content.adminAnnouncements.filter((item) => item.active !== false && String(item.message || "").trim());
-  $("#adminTickerPreviewTrack").innerHTML = tickerMarkup(active) || '<span class="ticker-sequence">Pratonton makluman akan muncul di sini.</span>';
+  const track = $("#adminTickerPreviewTrack");
+  if (!renderSeamlessTicker(track, active, 78)) track.innerHTML = '<span class="ticker-empty">Pratonton makluman akan muncul di sini.</span>';
 }
 
 function renderAdminLetters() {
@@ -2034,6 +2064,14 @@ setInterval(() => {
 }, 60000);
 
 window.addEventListener("online", () => { if (hasPendingChanges()) scheduleSave(); });
+let tickerResizeTimer;
+window.addEventListener("resize", () => {
+  clearTimeout(tickerResizeTimer);
+  tickerResizeTimer = setTimeout(() => {
+    renderTicker();
+    if (!$("#adminModal").hidden) renderAdminTickerPreview();
+  }, 180);
+});
 window.addEventListener("beforeunload", (event) => {
   if (!hasPendingChanges() && !state.savePromise) return;
   event.preventDefault(); event.returnValue = "";
@@ -2041,7 +2079,7 @@ window.addEventListener("beforeunload", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=60", { scope: "./", updateViaCache: "none" })
+    navigator.serviceWorker.register("./service-worker.js?v=61", { scope: "./", updateViaCache: "none" })
       .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
   });
 }
