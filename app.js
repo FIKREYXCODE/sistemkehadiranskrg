@@ -1074,7 +1074,10 @@ function renderTicker() {
   track.innerHTML = markup;
   ticker.hidden = !markup;
   document.body.classList.toggle("ticker-visible", Boolean(markup));
-  if (markup) track.style.setProperty("--ticker-duration", `${Math.max(24, state.content.announcements.reduce((sum, item) => sum + String(item.message || "").length, 0) * .16)}s`);
+  if (markup) {
+    const characterCount = state.content.announcements.reduce((sum, item) => sum + String(item.message || "").length, 0);
+    track.style.setProperty("--ticker-duration", `${Math.min(40, Math.max(16, characterCount * .105))}s`);
+  }
 }
 
 function formatLetterDate(value) {
@@ -2038,7 +2041,7 @@ window.addEventListener("beforeunload", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=58", { scope: "./", updateViaCache: "none" })
+    navigator.serviceWorker.register("./service-worker.js?v=60", { scope: "./", updateViaCache: "none" })
       .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
   });
 }
