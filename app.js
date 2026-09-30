@@ -40,7 +40,7 @@ const ADMIN_APPROVERS = {
   "TUAN HAJI EMRAN": "Penyelia Petang",
 };
 const ABSENCE_REASONS = ["Kursus / Bengkel", "Mesyuarat / Taklimat", "Urusan Rasmi", "Program / Aktiviti Rasmi", "Tugas Rasmi di Luar Sekolah", "Cuti Sakit / MC", "Cuti Rehat Khas / CRK", "Cuti Tanpa Rekod / CTR", "Cuti Bersalin", "Cuti Kuarantin", "Cuti / Kebenaran Khas", "Lain-lain"];
-const KPI_TARGET = 95;
+const KPI_TARGET = 96;
 const MONITORING_LOCATIONS = ["Kawasan Perhimpunan", "Bilik Darjah", "Koridor", "Tangga", "Padang", "Dewan", "Tandas Murid Lelaki", "Tandas Murid Perempuan", "Tandas Guru", "Surau / Bilik Solat", "Kantin", "Kawasan RMT", "Penyediaan Makanan RMT", "Pengendalian Makanan RMT", "Pintu Pagar", "Laluan Keluar / Masuk", "Kawasan Letak Kenderaan", "Laluan Pejalan Kaki", "Kawasan Sekitar Sekolah", "Longkang & Saliran", "Tempat Pembuangan Sampah", "Landskap / Kawasan Hijau", "Bilik UBK", "Makmal Komputer", "Pusat Sumber", "Bilik Sains", "Bilik Muzik", "Stor", "Bilik khas lain", "Lain-lain"];
 
 function draftKey(date = state.date) { return `${DRAFT_PREFIX}${date}`; }
@@ -2079,7 +2079,7 @@ window.addEventListener("beforeunload", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=61", { scope: "./", updateViaCache: "none" })
+    navigator.serviceWorker.register("./service-worker.js?v=62", { scope: "./", updateViaCache: "none" })
       .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
   });
 }
