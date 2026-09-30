@@ -4,7 +4,7 @@ const $ = (selector) => document.querySelector(selector);
 const state = {
   date: "", classes: [], staffAbsences: { morning: [], afternoon: [] }, dutyTeachers: { morning: [], afternoon: [] }, meta: {}, loading: false, saveTimer: null,
   savePromise: null, pendingAttendance: new Map(), staffDirty: false, dutyDirtySessions: new Set(), pendingMeta: {}, audit: new Map(), adminPin: "", session: "all",
-  staffDirectory: [], adminStaffDirectory: [],
+  staffDirectory: [], adminStaffDirectory: [], schoolStats: { teachers: 58, akp: 3 },
   analytics: { period: "week", date: "", loading: false },
   monitoring: { reports: [], loading: false, previewUrls: [] },
   weeklyDuty: { loading: false }, completion: { loading: false }, calendar: { loading: false }, rmtPreviewUrls: [], rmtReports: [], rmtLoading: false,
@@ -28,6 +28,15 @@ const DEFAULT_STAFF_NAMES = [
 ];
 const MONITORING_CATEGORY_LABELS = { cleanliness: "Kebersihan", safety: "Keselamatan", both: "Kebersihan dan keselamatan" };
 const MONITORING_STATUS_LABELS = { controlled: "Terkawal", attention: "Perlu perhatian", not_applicable: "Tidak berkaitan" };
+const ADMIN_APPROVERS = {
+  "YUNUS PATARAI": "Guru Besar",
+  "PUAN HAJAH RAHMATIAH BINTI MOJUDA": "Penolong Kanan Pentadbiran",
+  "PUAN KOMALA JOSEPH": "Penolong Kanan HEM",
+  "PUAN WARNAH": "Penolong Kanan Kokurikulum",
+  "TUAN HAJI EMRAN": "Penyelia Petang",
+};
+const ABSENCE_REASONS = ["Kursus / Bengkel", "Mesyuarat / Taklimat", "Urusan Rasmi", "Program / Aktiviti Rasmi", "Tugas Rasmi di Luar Sekolah", "Cuti Sakit / MC", "Cuti Rehat Khas / CRK", "Cuti Tanpa Rekod / CTR", "Cuti Bersalin", "Cuti Kuarantin", "Cuti / Kebenaran Khas", "Lain-lain"];
+const MONITORING_LOCATIONS = ["Kawasan Perhimpunan", "Bilik Darjah", "Koridor", "Tangga", "Padang", "Dewan", "Tandas Murid Lelaki", "Tandas Murid Perempuan", "Tandas Guru", "Surau / Bilik Solat", "Kantin", "Kawasan RMT", "Penyediaan Makanan RMT", "Pengendalian Makanan RMT", "Pintu Pagar", "Laluan Keluar / Masuk", "Kawasan Letak Kenderaan", "Laluan Pejalan Kaki", "Kawasan Sekitar Sekolah", "Longkang & Saliran", "Tempat Pembuangan Sampah", "Landskap / Kawasan Hijau", "Bilik UBK", "Makmal Komputer", "Pusat Sumber", "Bilik Sains", "Bilik Muzik", "Stor", "Bilik khas lain", "Lain-lain"];
 
 function draftKey(date = state.date) { return `${DRAFT_PREFIX}${date}`; }
 
@@ -101,7 +110,12 @@ function refreshStaffNameChoices() {
     element.innerHTML = `<option value="">${safe(placeholder)}</option>${choices.map((name) => `<option value="${safe(name)}"${name === current ? " selected" : ""}>${safe(name)}</option>`).join("")}`;
   };
   fillSelect($("#editorName"), "Pilih nama guru / AKP");
-  for (const selector of ["#preparedByMorning", "#preparedByAfternoon", "#approvedByMorning", "#approvedByAfternoon", "#oprPreparedBy"]) fillSelect($(selector), "Pilih nama guru / AKP");
+  for (const selector of ["#preparedByMorning", "#preparedByAfternoon", "#oprPreparedBy"]) fillSelect($(selector), "Pilih nama guru / AKP");
+  for (const selector of ["#approvedByMorning", "#approvedByAfternoon"]) {
+    const element = $(selector); if (!element) continue;
+    const current = element.value;
+    element.innerHTML = `<option value="">Pilih pentadbir sekolah</option>${Object.keys(ADMIN_APPROVERS).map((name) => `<option value="${safe(name)}"${name === current ? " selected" : ""}>${safe(name)}</option>`).join("")}`;
+  }
 }
 
 function staffSelectOptions(selected = "", placeholder = "Pilih nama guru / AKP") {
@@ -177,7 +191,7 @@ function applyAttendanceAudit(updates, updatedBy, updatedAt) {
 
 function updateEditingAccess() {
   const allowed = Boolean(editorName());
-  document.querySelectorAll("#attendanceBody input,#staffMorningBody input,#staffAfternoonBody input,.report-notes input,.report-notes textarea").forEach((element) => { element.readOnly = false; });
+  document.querySelectorAll("#attendanceBody input,#staffMorningBody input,#staffAfternoonBody input,.report-notes input:not([readonly]),.report-notes textarea").forEach((element) => { element.readOnly = false; });
   document.querySelectorAll("#dutyMorningBody select,#dutyAfternoonBody select,#staffMorningBody select,#staffAfternoonBody select,.report-notes select").forEach((element) => { element.disabled = false; });
   $("#editorName").classList.toggle("invalid", !allowed);
   $("#monitoringSave").disabled = !allowed;
@@ -332,6 +346,50 @@ function renderAnalytics(records, range) {
   $("#analysisStatus").textContent = totalRecords ? `${totalRecords} rekod kelas ditemui. Analisis ini tidak mengubah data asal.` : "Belum ada rekod kehadiran tersimpan dalam tempoh ini.";
 }
 
+function setupKpiMonths() {
+  const year = Number((state.date || localDateValue()).slice(0, 4));
+  const formatter = new Intl.DateTimeFormat("ms-MY", { month: "long" });
+  $("#kpiMonth").innerHTML = Array.from({ length: 12 }, (_, month) => {
+    const value = `${year}-${String(month + 1).padStart(2, "0")}`;
+    const label = formatter.format(new Date(Date.UTC(year, month, 1)));
+    return `<option value="${value}"${value === (state.date || "").slice(0, 7) ? " selected" : ""}>${label}</option>`;
+  }).join("");
+}
+
+function renderMonthlyKpi(records, monthValue) {
+  const classes = state.classes.filter((item) => /^tahun-[1-6]-/.test(String(item.id)));
+  const totals = new Map(); let schoolEnrol = 0; let schoolPresent = 0;
+  for (const row of records) {
+    const enrol = count(row.enrolMale, 300) + count(row.enrolFemale, 300);
+    if (!enrol) continue;
+    const present = enrol - Math.min(count(row.absentMale, 300) + count(row.absentFemale, 300), enrol);
+    schoolEnrol += enrol; schoolPresent += present;
+    if (!/^tahun-[1-6]-/.test(String(row.id))) continue;
+    const item = totals.get(String(row.id)) || { enrol: 0, present: 0 };
+    item.enrol += enrol; item.present += present; totals.set(String(row.id), item);
+  }
+  const results = classes.map((item) => { const total = totals.get(String(item.id)); return { ...item, value: total?.enrol ? total.present / total.enrol * 100 : null, year: Number(String(item.id).match(/^tahun-(\d)/)?.[1] || 0) }; });
+  const achieved = results.filter((item) => item.value !== null && item.value >= 95).sort((a, b) => b.value - a.value);
+  const below = results.filter((item) => item.value !== null && item.value < 95).sort((a, b) => a.value - b.value);
+  const noData = results.filter((item) => item.value === null);
+  const label = new Intl.DateTimeFormat("ms-MY", { month: "long", year: "numeric" }).format(new Date(`${monthValue}-01T00:00:00Z`)).toUpperCase();
+  const schoolValue = schoolEnrol ? schoolPresent / schoolEnrol * 100 : null;
+  $("#kpiSummary").innerHTML = `<h4>${safe(label)}</h4><div><span>Purata Kehadiran Sekolah<strong>${schoolValue === null ? "Tiada Data" : `${schoolValue.toFixed(2)}%`}</strong></span><span>KPI Sekolah<strong>95%</strong></span><span>Kelas Mencapai KPI<strong>${achieved.length} / ${results.length}</strong></span><span>Kelas Belum Mencapai KPI<strong>${below.length} / ${results.length}</strong></span></div><p class="${schoolValue !== null && schoolValue >= 95 ? "kpi-pass" : "kpi-alert"}">${schoolValue === null ? "Tiada data kehadiran bagi bulan ini" : schoolValue >= 95 ? "✅ KPI Kehadiran Sekolah Tercapai" : "⚠️ KPI Kehadiran Sekolah Belum Tercapai"}</p>`;
+  const rows = (items) => items.length ? items.map((item) => `<div><strong>${safe(item.name)}</strong><span>Tahun ${item.year}</span><b>${item.value.toFixed(2)}%</b></div>`).join("") : '<p class="monitoring-empty">Tiada kelas dalam kategori ini.</p>';
+  $("#kpiAchieved").innerHTML = rows(achieved); $("#kpiBelow").innerHTML = rows(below);
+  $("#kpiClusters").innerHTML = Array.from({ length: 6 }, (_, index) => { const year = index + 1; const items = results.filter((item) => item.year === year); return `<section><h4>Tahun ${year}</h4>${items.map((item) => `<div><span>${safe(item.name)}</span><strong>${item.value === null ? "Tiada Data" : `${item.value.toFixed(2)}% ${item.value >= 95 ? "✅" : "⚠️"}`}</strong></div>`).join("")}</section>`; }).join("") + (noData.length ? `<p class="analysis-note">${noData.length} kelas belum mempunyai data bagi bulan ini dan tidak dikategorikan.</p>` : "");
+}
+
+async function loadKpiAnalytics() {
+  const month = $("#kpiMonth").value || state.date.slice(0, 7);
+  const from = `${month}-01`; const anchor = dateObject(from); const to = dateValue(new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + 1, 0)));
+  try {
+    const response = await fetch(`${API_URL}?mode=analytics&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`, { cache: "no-store" });
+    const data = await response.json(); if (!response.ok) throw new Error(data.error || "KPI tidak dapat dibuka.");
+    renderMonthlyKpi(Array.isArray(data.records) ? data.records : [], month);
+  } catch (error) { $("#kpiSummary").innerHTML = `<p class="analysis-status error">${safe(error.message || "KPI tidak dapat dibuka.")}</p>`; }
+}
+
 async function fetchSchoolDate(date) {
   const response = await fetch(`${API_URL}?date=${encodeURIComponent(date)}`, { cache: "no-store" });
   const data = await response.json();
@@ -482,7 +540,10 @@ function renderRmtReports() {
   $("#rmtSharedGallery").innerHTML = state.rmtReports.map((report) => {
     const created = new Intl.DateTimeFormat("ms-MY", { dateStyle: "medium", timeStyle: "short" }).format(new Date(Number(report.createdAt)));
     const photos = (Array.isArray(report.photos) ? report.photos : []).map((photo, index) => `<a href="${safe(photo.url)}" target="_blank" rel="noopener"><img src="${safe(photo.url)}" loading="lazy" alt="Gambar RMT ${safe(report.location)} ${index + 1}"></a>`).join("");
-    return `<article class="rmt-shared-report"><div class="monitoring-photo-grid">${photos}</div><div><span class="category-badge">${sessionLabel(report.session)}</span><h4>${safe(report.location)}</h4><p>Diisi oleh <strong>${safe(report.updatedBy || "—")}</strong></p><small>${safe(created)}</small><p>${safe(report.action || "")}</p></div></article>`;
+    let details = null;
+    try { details = String(report.issue || "").startsWith("[rmt-v2]") ? JSON.parse(String(report.issue).slice(8)) : null; } catch { details = null; }
+    const content = details ? `<dl class="rmt-report-details"><div><dt>Penerima</dt><dd>${safe(details.recipients)} orang</dd></div><div><dt>Dibekalkan</dt><dd>${safe(details.supplied)} hidangan</dd></div><div><dt>Menu</dt><dd>${safe(details.menu)}</dd></div><div><dt>Penilaian</dt><dd>${safe(details.rating)}</dd></div>${details.notes ? `<div><dt>Catatan</dt><dd>${safe(details.notes)}</dd></div>` : ""}</dl>` : `<p>${safe(report.action || "")}</p>`;
+    return `<article class="rmt-shared-report"><div class="monitoring-photo-grid">${photos}</div><div><span class="category-badge">${sessionLabel(report.session)}</span><h4>${safe(report.location)}</h4><p>Diisi oleh <strong>${safe(report.updatedBy || "—")}</strong></p><small>${safe(created)}</small>${content}</div></article>`;
   }).join("");
   $("#rmtSharedStatus").textContent = state.rmtReports.length ? `${state.rmtReports.length} laporan gambar RMT ditemui.` : "Belum ada gambar RMT tersimpan bagi minggu ini.";
 }
@@ -492,7 +553,7 @@ async function loadRmtReports() {
   state.rmtLoading = true;
   $("#rmtSharedStatus").textContent = "Memuatkan gambar RMT…";
   try {
-    const date = $("#rmtFrom").value || state.date;
+    const date = state.date;
     const response = await fetch(`${SAFETY_API_URL}?date=${encodeURIComponent(date)}`, { cache: "no-store" });
     const data = await responseJson(response, "Gambar RMT tidak dapat dibuka.");
     if (!response.ok) throw new Error(data.error || "Gambar RMT tidak dapat dibuka.");
@@ -543,6 +604,29 @@ async function saveRmtPhotos() {
     console.error(error);
     $("#rmtPhotoStatus").textContent = error.message || "Gambar RMT gagal disimpan.";
   } finally { updateEditingAccess(); }
+}
+
+async function saveRmtReport(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const status = form.querySelector("[data-rmt-status]");
+  if (!editorName()) { status.textContent = "Pilih nama pengisi di bahagian atas dahulu."; $("#editorName").focus(); return; }
+  const session = form.dataset.rmtSession;
+  const value = (field) => form.querySelector(`[data-rmt-field="${field}"]`).value.trim();
+  let files;
+  try { files = validateMonitoringFiles(form.querySelector('[data-rmt-field="photos"]').files); }
+  catch (error) { status.textContent = error.message; return; }
+  const button = form.querySelector('button[type="submit"]'); button.disabled = true; status.textContent = "Memproses dan menyimpan laporan RMT…";
+  try {
+    const details = { recipients: count(value("recipients")), supplied: count(value("supplied")), menu: value("menu"), rating: value("rating"), notes: value("notes") };
+    const photos = await Promise.all(files.map(prepareMonitoringPhoto));
+    const payload = { date: state.date, updatedBy: editorName(), category: "both", session, location: `RMT • ${session === "morning" ? "Sidang Pagi" : "Sidang Petang"} • ${state.date}`, routeStatus: "not_applicable", parkingStatus: "not_applicable", issue: `[rmt-v2]${JSON.stringify(details)}`, action: details.notes || "Laporan RMT lengkap", photos };
+    const response = await fetch(SAFETY_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    const result = await responseJson(response, "Laporan RMT gagal disimpan.");
+    if (!response.ok) throw new Error(result.error || "Laporan RMT gagal disimpan.");
+    form.reset(); form.querySelector("[data-rmt-preview]").innerHTML = ""; status.textContent = "Laporan RMT berjaya disimpan dan tersedia pada semua peranti."; await loadRmtReports();
+  } catch (error) { status.textContent = error.message || "Laporan RMT gagal disimpan."; }
+  finally { button.disabled = false; }
 }
 
 function setSidebar(open) {
@@ -662,6 +746,20 @@ function monitoringStatusClass(value) {
   return value === "controlled" ? "controlled" : value === "attention" ? "attention" : "neutral";
 }
 
+function monitoringLocationOptions(selected = "") {
+  return `<option value="">Pilih kawasan / kategori</option>${MONITORING_LOCATIONS.map((location) => `<option value="${safe(location)}"${location === selected ? " selected" : ""}>${safe(location)}</option>`).join("")}`;
+}
+
+function addMonitoringItem() {
+  const container = $("#monitoringItems");
+  container.querySelector(".monitoring-empty")?.remove();
+  const index = container.querySelectorAll(".monitoring-item-card").length + 1;
+  const card = document.createElement("article");
+  card.className = "monitoring-item-card";
+  card.innerHTML = `<div class="monitoring-item-heading"><h4>Pemantauan ${index}</h4><button class="monitoring-remove" type="button" aria-label="Buang pemantauan ${index}">Buang</button></div><div class="monitoring-item-grid"><label>Kategori / lokasi<select data-monitoring-field="location" required>${monitoringLocationOptions()}</select></label><label class="other-location" hidden>Nama lokasi lain<input data-monitoring-field="otherLocation" maxlength="180"></label><label>Status<select data-monitoring-field="status" required><option value="controlled">Baik</option><option value="not_applicable">Memuaskan</option><option value="attention">Perlu Tindakan</option></select></label></div><label>Gambar<input data-monitoring-field="photos" type="file" accept="image/*,.heic,.heif" multiple required></label><label>Laporan ringkas / catatan — Pilihan<textarea data-monitoring-field="note" rows="3" maxlength="1500"></textarea></label><label class="follow-up" hidden>Tindakan susulan / cadangan tindakan<textarea data-monitoring-field="action" rows="3" maxlength="1500"></textarea></label><div class="monitoring-preview" data-monitoring-preview></div>`;
+  container.appendChild(card);
+}
+
 function renderMonitoringReports() {
   const reports = state.monitoring.reports.filter((report) => !isRmtReport(report) && report.category !== "opr");
   const renderReport = (report) => {
@@ -675,11 +773,8 @@ function renderMonitoringReports() {
         <div class="monitoring-report-top"><span class="category-badge">${safe(MONITORING_CATEGORY_LABELS[report.category] || report.category)}</span><time>${safe(created)}</time></div>
         <h3>${safe(report.location)}</h3>
         <p class="monitoring-by">Diisi oleh <strong>${safe(report.updatedBy)}</strong></p>
-        <div class="monitoring-statuses">
-          <span class="${monitoringStatusClass(report.routeStatus)}">Laluan murid: <strong>${safe(MONITORING_STATUS_LABELS[report.routeStatus] || report.routeStatus)}</strong></span>
-          <span class="${monitoringStatusClass(report.parkingStatus)}">Parkir: <strong>${safe(MONITORING_STATUS_LABELS[report.parkingStatus] || report.parkingStatus)}</strong></span>
-        </div>
-        <dl><div><dt>Ringkasan pemantauan</dt><dd>${safe(report.issue)}</dd></div><div><dt>Maklum balas atau cadangan tindakan</dt><dd>${safe(report.action)}</dd></div></dl>
+        <div class="monitoring-statuses"><span class="${monitoringStatusClass(report.routeStatus)}">Status: <strong>${report.routeStatus === "controlled" ? "Baik" : report.routeStatus === "attention" ? "Perlu Tindakan" : "Memuaskan"}</strong></span></div>
+        <dl><div><dt>Laporan ringkas / catatan</dt><dd>${safe(report.issue || "Tiada catatan tambahan")}</dd></div>${report.routeStatus === "attention" ? `<div><dt>Tindakan susulan</dt><dd>${safe(report.action)}</dd></div>` : ""}</dl>
       </div>
     </article>`;
   };
@@ -720,38 +815,30 @@ async function saveMonitoringReport(event) {
     $("#editorName").focus();
     return;
   }
-  let files;
-  try { files = validateMonitoringFiles($("#monitoringPhotos").files); }
-  catch (error) { $("#monitoringFormStatus").textContent = error.message; return; }
+  const session = $("#monitoringSession").value;
+  const cards = Array.from(document.querySelectorAll("#monitoringItems .monitoring-item-card"));
+  if (!session) { $("#monitoringFormStatus").textContent = "Sila pilih sidang laporan."; return; }
+  if (!cards.length) { $("#monitoringFormStatus").textContent = "Tambah sekurang-kurangnya satu pemantauan."; return; }
   $("#monitoringSave").disabled = true;
-  $("#monitoringFormStatus").textContent = "Mengecilkan gambar supaya mudah dimuat naik…";
+  $("#monitoringFormStatus").textContent = `Menyimpan ${cards.length} pemantauan…`;
   try {
-    const photos = await Promise.all(files.map(prepareMonitoringPhoto));
-    $("#monitoringFormStatus").textContent = "Memuat naik gambar dan menyimpan laporan…";
-    const payload = {
-      date: state.date,
-      updatedBy: editorName(),
-      category: $("#monitoringCategory").value,
-      session: $("#monitoringSession").value,
-      location: $("#monitoringLocation").value.trim(),
-      routeStatus: $("#routeStatus").value,
-      parkingStatus: $("#parkingStatus").value,
-      issue: $("#monitoringIssue").value.trim(),
-      action: $("#monitoringAction").value.trim(),
-      photos,
-    };
-    const response = await fetch(SAFETY_API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    const result = await responseJson(response, "Laporan gagal disimpan.");
-    if (!response.ok) throw new Error(result.error || "Laporan gagal disimpan.");
-    const savedSession = payload.session;
-    $("#monitoringForm").reset();
-    $("#monitoringSession").value = savedSession;
-    clearMonitoringPreview();
-    $("#monitoringFormStatus").textContent = "Laporan bergambar berjaya disimpan dan boleh dilihat oleh guru lain.";
+    for (const card of cards) {
+      const field = (name) => card.querySelector(`[data-monitoring-field="${name}"]`);
+      const locationChoice = field("location").value;
+      const location = locationChoice === "Lain-lain" ? field("otherLocation").value.trim() : locationChoice;
+      const status = field("status").value;
+      const action = field("action").value.trim();
+      if (!location) throw new Error("Sila pilih atau nyatakan lokasi pemantauan.");
+      if (status === "attention" && !action) throw new Error("Sila nyatakan tindakan susulan bagi status Perlu Tindakan.");
+      const files = validateMonitoringFiles(field("photos").files);
+      const photos = await Promise.all(files.map(prepareMonitoringPhoto));
+      const payload = { date: state.date, updatedBy: editorName(), category: "both", session, location, routeStatus: status, parkingStatus: "not_applicable", issue: field("note").value.trim() || (status === "controlled" ? "Kawasan dalam keadaan baik." : status === "not_applicable" ? "Kawasan dalam keadaan memuaskan." : "Pemantauan memerlukan tindakan."), action: action || "Tiada tindakan susulan diperlukan.", photos };
+      const response = await fetch(SAFETY_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      const result = await responseJson(response, "Laporan gagal disimpan.");
+      if (!response.ok) throw new Error(result.error || "Laporan gagal disimpan.");
+    }
+    $("#monitoringItems").innerHTML = '<p class="monitoring-empty">Tekan “+ Tambah Kategori Pemantauan” dan pilih kawasan yang dipantau.</p>';
+    $("#monitoringFormStatus").textContent = `${cards.length} pemantauan berjaya disimpan dan boleh dilihat oleh semua guru.`;
     await loadMonitoringReports();
   } catch (error) {
     console.error(error);
@@ -907,17 +994,36 @@ function renderDutyTeachers() {
   updateEditingAccess();
 }
 
+function decodeAbsenceReason(value) {
+  const text = String(value || "");
+  if (text.startsWith("[v2]")) {
+    const [reason = "", ...noteParts] = text.slice(4).split("|||");
+    return { reasonCategory: reason, reasonNote: noteParts.join("|||") };
+  }
+  const known = ABSENCE_REASONS.find((item) => text === item || text.startsWith(`${item} — `));
+  return known ? { reasonCategory: known, reasonNote: text.slice(known.length).replace(/^\s*—\s*/, "") } : { reasonCategory: text ? "Lain-lain" : "", reasonNote: text };
+}
+
+function encodeAbsenceReason(row) {
+  const reason = String(row.reasonCategory || "").trim();
+  const note = String(row.reasonNote || "").trim();
+  return reason || note ? `[v2]${reason}|||${note}` : "";
+}
+
 function renderStaff() {
   for (const session of ["morning", "afternoon"]) {
     const rows = Array.isArray(state.staffAbsences[session]) ? state.staffAbsences[session] : [];
-    while (rows.length < 8) rows.push({ staffName: "", reason: "" });
+    while (rows.length < 8) rows.push({ staffName: "", reason: "", reasonCategory: "", reasonNote: "" });
     state.staffAbsences[session] = rows.slice(0, 8);
     const target = session === "morning" ? $("#staffMorningBody") : $("#staffAfternoonBody");
     target.innerHTML = state.staffAbsences[session].map((row, index) => {
       const recordId = `${session}:${index + 1}`;
       const staffAudit = auditDetails("staff", recordId, "staffName");
       const savedName = String(row.staffName || "");
-      return `<tr data-staff-session="${session}" data-staff-index="${index}"><td>${index + 1}</td><td><select class="cell-input staff-name-select${staffAudit.className}" data-field="staffName" aria-label="Nama guru atau AKP ${SESSION_LABELS[session]} ${index + 1}" title="${safe(staffAudit.title)}">${staffSelectOptions(savedName)}</select></td><td><input class="cell-input${auditDetails("staff", recordId, "reason").className}" data-field="reason" value="${safe(row.reason || "")}" aria-label="Sebab ${SESSION_LABELS[session]} ${index + 1}" title="${safe(auditDetails("staff", recordId, "reason").title)}"></td></tr>`;
+      const decoded = row.reasonCategory !== undefined ? row : decodeAbsenceReason(row.reason);
+      row.reasonCategory = decoded.reasonCategory || ""; row.reasonNote = decoded.reasonNote || "";
+      const required = row.reasonCategory === "Lain-lain" ? " required" : "";
+      return `<tr data-staff-session="${session}" data-staff-index="${index}"><td>${index + 1}</td><td><select class="cell-input staff-name-select${staffAudit.className}" data-field="staffName" aria-label="Nama guru atau AKP ${SESSION_LABELS[session]} ${index + 1}" title="${safe(staffAudit.title)}">${staffSelectOptions(savedName)}</select></td><td><input class="cell-input absence-reason" data-field="reasonCategory" list="absenceReasons" value="${safe(row.reasonCategory)}" placeholder="Pilih atau taip sebab" aria-label="Sebab ${SESSION_LABELS[session]} ${index + 1}"></td><td><input class="cell-input" data-field="reasonNote" value="${safe(row.reasonNote || "")}" placeholder="${row.reasonCategory === "Lain-lain" ? "Nyatakan sebab (wajib)" : "Pilihan"}"${required}></td></tr>`;
     }).join("");
   }
   updateEditingAccess();
@@ -962,6 +1068,13 @@ function renderAdminStaffDirectory() {
   }).join("");
 }
 
+function renderSchoolStats() {
+  $("#teacherStat").textContent = count(state.schoolStats.teachers, 500);
+  $("#akpStat").textContent = count(state.schoolStats.akp, 100);
+  if ($("#adminTeacherCount")) $("#adminTeacherCount").value = count(state.schoolStats.teachers, 500);
+  if ($("#adminAkpCount")) $("#adminAkpCount").value = count(state.schoolStats.akp, 100);
+}
+
 function addAdminStaffRow() {
   syncAdminStaffDirectoryFromRows();
   state.adminStaffDirectory.push({ id: null, name: "", active: true });
@@ -1003,17 +1116,29 @@ async function verifyAdmin(event) {
     if (!response.ok) throw new Error(data.error || "Kod admin tidak sah.");
     state.adminPin = pin;
     state.adminStaffDirectory = Array.isArray(data.staffDirectory) ? data.staffDirectory.map((item) => ({ ...item, active: Boolean(item.active) })) : [];
+    if (data.settings) state.schoolStats = { teachers: count(data.settings.teachers, 500), akp: count(data.settings.akp, 100) };
     $("#adminPin").value = "";
     $("#adminLoginView").hidden = true;
     $("#adminSettingsView").hidden = false;
     $("#profileEffectiveDate").value = state.date || localDateValue();
     $("#adminSaveStatus").textContent = "";
-    renderAdminClasses();
+    renderAdminClasses(); renderSchoolStats();
     renderAdminStaffDirectory();
   } catch (error) {
     state.adminPin = "";
     $("#adminError").textContent = error.message || "Kod admin tidak sah.";
   }
+}
+
+async function saveSchoolStats() {
+  const teachers = count($("#adminTeacherCount").value, 500), akp = count($("#adminAkpCount").value, 100);
+  $("#adminStatsSave").disabled = true; $("#adminStatsStatus").textContent = "Menyimpan…";
+  try {
+    const response = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "updateSchoolStats", adminPin: state.adminPin, teachers, akp }) });
+    const data = await response.json(); if (!response.ok) throw new Error(data.error || "Statistik gagal disimpan.");
+    state.schoolStats = { teachers, akp }; renderSchoolStats(); $("#adminStatsStatus").textContent = "Statistik warga berjaya dikemas kini.";
+  } catch (error) { $("#adminStatsStatus").textContent = error.message || "Statistik gagal disimpan."; }
+  finally { $("#adminStatsSave").disabled = false; }
 }
 
 async function saveStaffDirectory() {
@@ -1082,7 +1207,7 @@ async function loadReport(silent = false) {
     state.staffAbsences = { morning: [], afternoon: [] };
     for (const item of Array.isArray(data.staffAbsences) ? data.staffAbsences : []) {
       const session = item.session === "afternoon" ? "afternoon" : "morning";
-      state.staffAbsences[session].push({ staffName: item.staffName || "", reason: item.reason || "" });
+      state.staffAbsences[session].push({ staffName: item.staffName || "", reason: item.reason || "", ...decodeAbsenceReason(item.reason) });
     }
     state.dutyTeachers = { morning: [], afternoon: [] };
     for (const item of Array.isArray(data.dutyTeachers) ? data.dutyTeachers : []) {
@@ -1091,6 +1216,7 @@ async function loadReport(silent = false) {
     }
     state.meta = data.meta || {};
     if (Array.isArray(data.staffDirectory)) state.staffDirectory = data.staffDirectory.map((item) => ({ ...item, active: Boolean(item.active) }));
+    if (data.settings) { state.schoolStats = { teachers: count(data.settings.teachers, 500), akp: count(data.settings.akp, 100) }; renderSchoolStats(); }
     refreshStaffNameChoices();
     state.audit = new Map((Array.isArray(data.audit) ? data.audit : []).map((item) => [auditKey(item.section, item.recordId, item.fieldName), item]));
     const restoredDraft = !silent && restoreDraft();
@@ -1118,6 +1244,8 @@ function scheduleSave() {
 
 async function flushSave() {
   clearTimeout(state.saveTimer);
+  const incompleteOther = ["morning", "afternoon"].flatMap((session) => state.staffAbsences[session] || []).some((item) => item.reasonCategory === "Lain-lain" && !String(item.reasonNote || "").trim());
+  if (incompleteOther) { setStatus("Sila nyatakan sebab ketiadaan.", "error"); return; }
   if (state.savePromise) {
     await state.savePromise;
     if (hasPendingChanges()) return flushSave();
@@ -1193,13 +1321,25 @@ function updateStaffRow(event) {
   const index = Number(row.dataset.staffIndex);
   const session = row.dataset.staffSession;
   state.staffAbsences[session][index][input.dataset.field] = input.value;
+  const item = state.staffAbsences[session][index];
+  if (input.dataset.field === "reasonCategory" && item.reasonCategory && !ABSENCE_REASONS.includes(item.reasonCategory)) {
+    item.reasonNote = item.reasonCategory;
+    item.reasonCategory = "Lain-lain";
+  }
+  item.reason = encodeAbsenceReason(item);
   state.staffDirty = true;
   saveDraft();
+  if (item.reasonCategory === "Lain-lain" && !String(item.reasonNote || "").trim()) {
+    setStatus("Sila nyatakan sebab ketiadaan.", "error");
+    if (input.dataset.field === "reasonCategory") renderStaff();
+    return;
+  }
+  if (input.dataset.field === "reasonCategory") renderStaff();
   scheduleSave();
 }
 for (const selector of ["#staffMorningBody", "#staffAfternoonBody"]) {
-  $(selector).addEventListener("input", (event) => { if (event.target.matches("input[data-field]")) updateStaffRow(event); });
-  $(selector).addEventListener("change", (event) => { if (event.target.matches("select[data-field]")) updateStaffRow(event); });
+  $(selector).addEventListener("input", (event) => { if (event.target.matches('input[data-field="reasonNote"]')) updateStaffRow(event); });
+  $(selector).addEventListener("change", (event) => { if (event.target.matches("select[data-field],input[data-field]")) updateStaffRow(event); });
 }
 
 for (const selector of ["#dutyMorningBody", "#dutyAfternoonBody"]) {
@@ -1245,10 +1385,12 @@ $("#sessionFilter").addEventListener("change", (event) => {
   updateSessionVisibility();
   updateEditingAccess();
 });
-const VIEW_HASHES = { home: "utama", attendance: "rekod-pengisian-kelas", staff: "keberadaan-guru-akp", dailyDuty: "guru-bertugas-harian", duty: "guru-bertugas", completion: "status-kelas", calendar: "rekod-kalendar", monitoring: "laporan-pemantauan", analysis: "analisis", rmt: "guru-rmt", opr: "template-opr-hem" };
+const VIEW_HASHES = { home: "utama", attendance: "e-jkm", staff: "keberadaan-guru-akp", dailyDuty: "guru-bertugas-harian", duty: "guru-bertugas", calendar: "rekod-kalendar", monitoring: "laporan-pemantauan", analysis: "analisis", rmt: "guru-rmt", opr: "template-opr-hem" };
 const HASH_VIEWS = Object.fromEntries(Object.entries(VIEW_HASHES).map(([view, hash]) => [hash, view]));
 HASH_VIEWS["laporan-bergambar"] = "monitoring";
 HASH_VIEWS.kehadiran = "attendance";
+HASH_VIEWS["rekod-pengisian-kelas"] = "attendance";
+HASH_VIEWS["status-kelas"] = "attendance";
 
 function activateViewFromHash() {
   const requested = HASH_VIEWS[window.location.hash.replace(/^#/, "")] || "home";
@@ -1262,7 +1404,7 @@ function activateViewFromHash() {
   $("#top").hidden = false;
   $("#identityBar").hidden = !["attendance", "staff", "dailyDuty", "rmt", "monitoring"].includes(requested);
   $("#printButton").hidden = requested !== "attendance";
-  if (requested === "analysis") loadAnalytics();
+  if (requested === "analysis") { loadAnalytics(); loadKpiAnalytics(); }
   if (requested === "monitoring") loadMonitoringReports();
   if (requested === "duty") loadWeeklyDuty();
   if (requested === "completion") loadCompletionView();
@@ -1277,6 +1419,7 @@ window.addEventListener("hashchange", activateViewFromHash);
 $("#printButton").addEventListener("click", () => window.print());
 $("#analysisRefresh").addEventListener("click", loadAnalytics);
 $("#analysisPeriod").addEventListener("change", loadAnalytics);
+$("#kpiMonth").addEventListener("change", loadKpiAnalytics);
 $("#weeklyDutyRefresh").addEventListener("click", loadWeeklyDuty);
 $("#completionRefresh").addEventListener("click", loadCompletionView);
 $("#completionSession").addEventListener("change", loadCompletionView);
@@ -1294,6 +1437,14 @@ document.addEventListener("keydown", (event) => { if (event.key === "Escape") se
 $("#monitoringRefresh").addEventListener("click", loadMonitoringReports);
 $("#monitoringPhotos").addEventListener("change", (event) => renderMonitoringPreview(event.target.files));
 $("#monitoringForm").addEventListener("submit", saveMonitoringReport);
+$("#addMonitoringItem").addEventListener("click", addMonitoringItem);
+$("#monitoringItems").addEventListener("click", (event) => { const button = event.target.closest(".monitoring-remove"); if (!button) return; button.closest(".monitoring-item-card").remove(); if (!$("#monitoringItems").children.length) $("#monitoringItems").innerHTML = '<p class="monitoring-empty">Tekan “+ Tambah Kategori Pemantauan” dan pilih kawasan yang dipantau.</p>'; });
+$("#monitoringItems").addEventListener("change", (event) => {
+  const card = event.target.closest(".monitoring-item-card"); if (!card) return;
+  if (event.target.matches('[data-monitoring-field="location"]')) card.querySelector(".other-location").hidden = event.target.value !== "Lain-lain";
+  if (event.target.matches('[data-monitoring-field="status"]')) { const follow = card.querySelector(".follow-up"); follow.hidden = event.target.value !== "attention"; follow.querySelector("textarea").required = event.target.value === "attention"; }
+  if (event.target.matches('[data-monitoring-field="photos"]')) { const preview = card.querySelector("[data-monitoring-preview]"); try { const files = validateMonitoringFiles(event.target.files); preview.innerHTML = files.map((file, index) => `<figure><img src="${URL.createObjectURL(file)}" alt="Pratonton ${index + 1}"><figcaption>Gambar ${index + 1}</figcaption></figure>`).join(""); } catch (error) { event.target.value = ""; preview.textContent = error.message; } }
+});
 $("#oprPhotos").addEventListener("change", (event) => renderOprPreview(event.target.files));
 $("#oprForm").addEventListener("submit", saveOprReport);
 $("#oprRefresh").addEventListener("click", loadOprReports);
@@ -1309,6 +1460,7 @@ $("#adminLoginForm").addEventListener("submit", verifyAdmin);
 $("#adminSave").addEventListener("click", saveClassProfiles);
 $("#adminStaffAdd").addEventListener("click", addAdminStaffRow);
 $("#adminStaffSave").addEventListener("click", saveStaffDirectory);
+$("#adminStatsSave").addEventListener("click", saveSchoolStats);
 $("#adminStaffBody").addEventListener("input", (event) => {
   const input = event.target.closest("[data-admin-staff-name]");
   if (!input) return;
@@ -1328,6 +1480,23 @@ $("#adminStaffBody").addEventListener("click", (event) => {
 });
 $("#adminModal").addEventListener("click", (event) => { if (event.target === $("#adminModal")) closeAdminModal(); });
 document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !$("#adminModal").hidden) closeAdminModal(); });
+
+for (const session of ["Morning", "Afternoon"]) {
+  $("#approvedBy" + session).addEventListener("change", (event) => {
+    const title = ADMIN_APPROVERS[event.target.value] || "";
+    const titleField = "approvedTitle" + session;
+    $("#" + titleField).value = title; state.meta[titleField] = title; state.pendingMeta[titleField] = title; saveDraft(); scheduleSave();
+  });
+}
+
+document.querySelectorAll("[data-rmt-session]").forEach((form) => {
+  form.addEventListener("submit", saveRmtReport);
+  form.querySelector('[data-rmt-field="photos"]').addEventListener("change", (event) => {
+    const preview = form.querySelector("[data-rmt-preview]");
+    try { const files = validateMonitoringFiles(event.target.files); preview.innerHTML = files.map((file, index) => `<figure><img src="${URL.createObjectURL(file)}" alt="Pratonton RMT ${index + 1}"><figcaption>Gambar ${index + 1}</figcaption></figure>`).join(""); }
+    catch (error) { event.target.value = ""; preview.textContent = error.message; }
+  });
+});
 
 $("#editorName").addEventListener("input", (event) => {
   const name = event.target.value.trim();
@@ -1357,6 +1526,7 @@ $("#weeklyDutyDate").value = state.date;
 $("#completionDate").value = state.date;
 $("#calendarDate").value = state.date;
 setupRmtTemplate();
+setupKpiMonths();
 refreshStaffNameChoices();
 try { $("#editorName").value = localStorage.getItem(EDITOR_KEY) || ""; } catch { /* abaikan */ }
 activateViewFromHash();
@@ -1382,7 +1552,7 @@ window.addEventListener("beforeunload", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=49", { scope: "./", updateViaCache: "none" })
+    navigator.serviceWorker.register("./service-worker.js?v=50", { scope: "./", updateViaCache: "none" })
       .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
   });
 }
