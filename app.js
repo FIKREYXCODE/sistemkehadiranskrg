@@ -6,7 +6,7 @@ const state = {
   date: "", classes: [], staffAbsences: { morning: [], afternoon: [] }, dutyTeachers: { morning: [], afternoon: [] }, meta: {}, loading: false, saveTimer: null,
   savePromise: null, pendingAttendance: new Map(), staffDirty: false, dutyDirtySessions: new Set(), pendingMeta: {}, audit: new Map(), adminPin: "", session: "all",
   staffDirectory: [], adminStaffDirectory: [], schoolStats: { teachers: 58, akp: 3 },
-  analytics: { period: "week", date: "", loading: false },
+  analytics: { period: "week", date: "", loading: false, filtersReady: false, filterPromise: null, annualLoadingYear: "", annualCache: new Map() },
   monitoring: { reports: [], loading: false, previewUrls: [] },
   weeklyDuty: { loading: false }, completion: { loading: false }, calendar: { loading: false }, rmtPreviewUrls: [], rmtReports: [], rmtLoading: false,
   opr: { reports: [], loading: false, previewUrls: [] },
@@ -38,7 +38,7 @@ const ADMIN_APPROVERS = {
   "TUAN HAJI EMRAN": "Penyelia Petang",
 };
 const ABSENCE_REASONS = ["Kursus / Bengkel", "Mesyuarat / Taklimat", "Urusan Rasmi", "Program / Aktiviti Rasmi", "Tugas Rasmi di Luar Sekolah", "Cuti Sakit / MC", "Cuti Rehat Khas / CRK", "Cuti Tanpa Rekod / CTR", "Cuti Bersalin", "Cuti Kuarantin", "Cuti / Kebenaran Khas", "Lain-lain"];
-const KPI_TARGET = 96;
+const KPI_TARGET = 95;
 const MONITORING_LOCATIONS = ["Kawasan Perhimpunan", "Bilik Darjah", "Koridor", "Tangga", "Padang", "Dewan", "Tandas Murid Lelaki", "Tandas Murid Perempuan", "Tandas Guru", "Surau / Bilik Solat", "Kantin", "Kawasan RMT", "Penyediaan Makanan RMT", "Pengendalian Makanan RMT", "Pintu Pagar", "Laluan Keluar / Masuk", "Kawasan Letak Kenderaan", "Laluan Pejalan Kaki", "Kawasan Sekitar Sekolah", "Longkang & Saliran", "Tempat Pembuangan Sampah", "Landskap / Kawasan Hijau", "Bilik UBK", "Makmal Komputer", "Pusat Sumber", "Bilik Sains", "Bilik Muzik", "Stor", "Bilik khas lain", "Lain-lain"];
 
 function draftKey(date = state.date) { return `${DRAFT_PREFIX}${date}`; }
@@ -399,14 +399,47 @@ function renderAnalytics(records, range) {
   $("#analysisStatus").textContent = totalRecords ? `${totalRecords} rekod kelas ditemui. Analisis ini tidak mengubah data asal.` : "Belum ada rekod kehadiran tersimpan dalam tempoh ini.";
 }
 
-function setupKpiMonths() {
-  const year = Number((state.date || localDateValue()).slice(0, 4));
-  const formatter = new Intl.DateTimeFormat("ms-MY", { month: "long" });
-  $("#kpiMonth").innerHTML = Array.from({ length: 12 }, (_, month) => {
-    const value = `${year}-${String(month + 1).padStart(2, "0")}`;
-    const label = formatter.format(new Date(Date.UTC(year, month, 1)));
-    return `<option value="${value}"${value === (state.date || "").slice(0, 7) ? " selected" : ""}>${label}</option>`;
-  }).join("");
+const MONTH_NAMES = Array.from({ length: 12 }, (_, month) => new Intl.DateTimeFormat("ms-MY", { month: "long", timeZone: "UTC" }).format(new Date(Date.UTC(2026, month, 1))));
+
+async function setupKpiFilters() {
+  if (state.analytics.filtersReady) return;
+  if (state.analytics.filterPromise) return state.analytics.filterPromise;
+  state.analytics.filterPromise = (async () => {
+    const currentYear = Number((state.date || localDateValue()).slice(0, 4));
+    const currentMonth = (state.date || localDateValue()).slice(5, 7);
+    $("#kpiMonth").innerHTML = MONTH_NAMES.map((label, month) => {
+      const value = String(month + 1).padStart(2, "0");
+      return `<option value="${value}"${value === currentMonth ? " selected" : ""}>${safe(label)}</option>`;
+    }).join("");
+    let years = [];
+    try {
+      const response = await fetch(`${API_URL}?mode=analytics-years`, { cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Senarai tahun tidak dapat dibuka.");
+      years = (Array.isArray(data.years) ? data.years : []).map(Number).filter((year) => year >= 2000 && year <= 2100);
+    } catch (error) { console.error(error); }
+    if (!years.length) years = [currentYear];
+    const selectedYear = years.includes(currentYear) ? currentYear : years[0];
+    $("#kpiYear").innerHTML = years.map((year) => `<option value="${year}"${year === selectedYear ? " selected" : ""}>${year}</option>`).join("");
+    state.analytics.filtersReady = true;
+  })();
+  try { await state.analytics.filterPromise; }
+  finally { state.analytics.filterPromise = null; }
+}
+
+function monthlyClassRanking(records) {
+  const totals = new Map();
+  for (const row of records) {
+    const key = String(row.id || row.classId || "");
+    if (!/^tahun-[1-6]-/.test(key)) continue;
+    const enrol = count(row.enrolMale, 300) + count(row.enrolFemale, 300);
+    if (!enrol) continue;
+    const absent = Math.min(count(row.absentMale, 300) + count(row.absentFemale, 300), enrol);
+    const rosterClass = state.classes.find((item) => String(item.id) === key);
+    const item = totals.get(key) || { id: key, name: row.name || row.className || rosterClass?.name || key, enrol: 0, present: 0, year: Number(key.match(/^tahun-(\d)/)?.[1] || 0) };
+    item.enrol += enrol; item.present += enrol - absent; totals.set(key, item);
+  }
+  return [...totals.values()].map((item) => ({ ...item, value: item.enrol ? item.present / item.enrol * 100 : null }));
 }
 
 function renderMonthlyKpi(records, monthValue) {
@@ -434,13 +467,69 @@ function renderMonthlyKpi(records, monthValue) {
 }
 
 async function loadKpiAnalytics() {
-  const month = $("#kpiMonth").value || state.date.slice(0, 7);
+  await setupKpiFilters();
+  const year = $("#kpiYear").value || state.date.slice(0, 4);
+  const monthNumber = $("#kpiMonth").value || state.date.slice(5, 7);
+  const month = `${year}-${monthNumber}`;
   const from = `${month}-01`; const anchor = dateObject(from); const to = dateValue(new Date(Date.UTC(anchor.getUTCFullYear(), anchor.getUTCMonth() + 1, 0)));
   try {
     const response = await fetch(`${API_URL}?mode=analytics&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`, { cache: "no-store" });
     const data = await response.json(); if (!response.ok) throw new Error(data.error || "KPI tidak dapat dibuka.");
     renderMonthlyKpi(Array.isArray(data.records) ? data.records : [], month);
   } catch (error) { $("#kpiSummary").innerHTML = `<p class="analysis-status error">${safe(error.message || "KPI tidak dapat dibuka.")}</p>`; }
+}
+
+function annualMonthWinner(records) {
+  const ranked = monthlyClassRanking(records).filter((item) => item.value !== null);
+  if (!ranked.length) return [];
+  const highest = Math.max(...ranked.map((item) => Number(item.value.toFixed(2))));
+  return ranked.filter((item) => Number(item.value.toFixed(2)) === highest).sort((a, b) => a.name.localeCompare(b.name, "ms"));
+}
+
+function renderAnnualWinners(year, months) {
+  $("#annualWinnersYear").textContent = String(year);
+  const monthsWithData = months.filter((item) => item.winners.length).length;
+  $("#annualWinnersStatus").className = "analysis-status";
+  $("#annualWinnersStatus").textContent = monthsWithData ? `${monthsWithData} daripada 12 bulan mempunyai data kehadiran bagi ${year}.` : `Belum ada data kehadiran kelas bagi ${year}.`;
+  $("#annualWinnersGrid").innerHTML = months.map((item) => {
+    const winners = item.winners.length ? item.winners.map((winner) => `<div class="annual-winner"><strong>🥇 ${safe(winner.name)}</strong><span>Tahun ${winner.year}</span><b>Purata Kehadiran: ${winner.value.toFixed(2)}%</b></div>`).join("") : '<p class="annual-no-data">Belum Ada Data</p>';
+    const shared = item.winners.length > 1 ? '<span class="annual-shared-badge">Emas Bersama</span>' : "";
+    return `<button class="annual-month-card${item.winners.length ? " has-data" : ""}" type="button" data-annual-month="${item.month}" aria-label="Buka analisis ${safe(item.label)} ${year}"><span class="annual-month-name">${safe(item.label)}</span>${shared}${winners}<small>Klik untuk lihat analisis bulanan</small></button>`;
+  }).join("");
+}
+
+async function loadAnnualWinners(force = false) {
+  await setupKpiFilters();
+  const year = $("#kpiYear").value || state.date.slice(0, 4);
+  if (!force && state.analytics.annualCache.has(year)) { renderAnnualWinners(year, state.analytics.annualCache.get(year)); return; }
+  if (state.analytics.annualLoadingYear === year) return;
+  state.analytics.annualLoadingYear = year;
+  $("#annualWinnersYear").textContent = year;
+  $("#annualWinnersStatus").className = "analysis-status";
+  $("#annualWinnersStatus").textContent = `Mengira pemenang Januari hingga Disember ${year}…`;
+  try {
+    const responses = await Promise.all(Array.from({ length: 12 }, async (_, monthIndex) => {
+      const month = String(monthIndex + 1).padStart(2, "0");
+      const from = `${year}-${month}-01`;
+      const to = dateValue(new Date(Date.UTC(Number(year), monthIndex + 1, 0)));
+      const response = await fetch(`${API_URL}?mode=analytics&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`, { cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || `${MONTH_NAMES[monthIndex]} tidak dapat dianalisis.`);
+      return { month, label: MONTH_NAMES[monthIndex], winners: annualMonthWinner(Array.isArray(data.records) ? data.records : []) };
+    }));
+    state.analytics.annualCache.set(year, responses);
+    renderAnnualWinners(year, responses);
+  } catch (error) {
+    console.error(error);
+    $("#annualWinnersStatus").className = "analysis-status error";
+    $("#annualWinnersStatus").textContent = error.message || "Pencapaian tahunan tidak dapat dibuka.";
+  } finally { if (state.analytics.annualLoadingYear === year) state.analytics.annualLoadingYear = ""; }
+}
+
+async function loadKpiDashboard() {
+  if (!state.classes.length) return;
+  await setupKpiFilters();
+  await Promise.all([loadKpiAnalytics(), loadAnnualWinners()]);
 }
 
 async function fetchSchoolDate(date) {
@@ -1400,7 +1489,7 @@ async function loadReport(silent = false) {
     state.audit = new Map((Array.isArray(data.audit) ? data.audit : []).map((item) => [auditKey(item.section, item.recordId, item.fieldName), item]));
     const restoredDraft = !silent && restoreDraft();
     renderAttendance(); renderDutyTeachers(); renderStaff(); renderMeta(); updateSessionVisibility();
-    if (HASH_VIEWS[window.location.hash.replace(/^#/, "")] === "analysis") await loadKpiAnalytics();
+    if (HASH_VIEWS[window.location.hash.replace(/^#/, "")] === "analysis") await loadKpiDashboard();
     if (!silent) {
       setStatus(restoredDraft ? "Menyambung simpanan tertangguh…" : "Data bersama sedia", restoredDraft ? "" : "saved");
       if (restoredDraft) scheduleSave();
@@ -1584,7 +1673,7 @@ function activateViewFromHash() {
   $("#top").hidden = false;
   $("#identityBar").hidden = !["attendance", "staff", "dailyDuty", "rmt", "monitoring"].includes(requested);
   $("#printButton").hidden = requested !== "attendance";
-  if (requested === "analysis") { loadAnalytics(); if (state.classes.length) loadKpiAnalytics(); }
+  if (requested === "analysis") { loadAnalytics(); if (state.classes.length) loadKpiDashboard(); }
   if (requested === "monitoring") loadMonitoringReports();
   if (requested === "duty") loadWeeklyDuty();
   if (requested === "completion") loadCompletionView();
@@ -1600,6 +1689,17 @@ $("#printButton").addEventListener("click", () => window.print());
 $("#analysisRefresh").addEventListener("click", loadAnalytics);
 $("#analysisPeriod").addEventListener("change", loadAnalytics);
 $("#kpiMonth").addEventListener("change", loadKpiAnalytics);
+$("#kpiYear").addEventListener("change", () => {
+  loadKpiAnalytics();
+  loadAnnualWinners();
+});
+$("#annualWinnersGrid").addEventListener("click", (event) => {
+  const card = event.target.closest("[data-annual-month]");
+  if (!card) return;
+  $("#kpiMonth").value = card.dataset.annualMonth;
+  loadKpiAnalytics();
+  document.querySelector(".kpi-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+});
 $("#weeklyDutyRefresh").addEventListener("click", loadWeeklyDuty);
 $("#completionRefresh").addEventListener("click", loadCompletionView);
 $("#completionSession").addEventListener("change", loadCompletionView);
@@ -1739,7 +1839,7 @@ $("#weeklyDutyDate").value = state.date;
 $("#completionDate").value = state.date;
 $("#calendarDate").value = state.date;
 setupRmtTemplate();
-setupKpiMonths();
+setupKpiFilters();
 refreshStaffNameChoices();
 try { $("#editorName").value = localStorage.getItem(EDITOR_KEY) || ""; } catch { /* abaikan */ }
 activateViewFromHash();
@@ -1770,7 +1870,7 @@ window.addEventListener("beforeunload", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=56", { scope: "./", updateViaCache: "none" })
+    navigator.serviceWorker.register("./service-worker.js?v=57", { scope: "./", updateViaCache: "none" })
       .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
   });
 }

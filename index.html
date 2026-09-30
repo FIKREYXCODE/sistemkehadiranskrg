@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="HEM SMARTTRACK">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="manifest" href="manifest.webmanifest?v=56">
+  <link rel="manifest" href="manifest.webmanifest?v=57">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=56">
+  <link rel="stylesheet" href="styles.css?v=57">
 </head>
 <body>
   <header class="topbar no-print">
@@ -327,10 +327,15 @@
       <div id="analysisStatus" class="analysis-status" role="status" aria-live="polite">Memuatkan analisis…</div>
       <div id="analysisSummary" class="analysis-summary" aria-label="Ringkasan peratus kehadiran"></div>
       <section class="kpi-panel" aria-labelledby="kpiTitle">
-        <div class="kpi-heading"><div><p class="eyebrow">KPI 96%</p><h3 id="kpiTitle">Prestasi KPI Kehadiran Bulanan</h3></div><label>Pilih bulan<select id="kpiMonth"></select></label></div>
+        <div class="kpi-heading"><div><p class="eyebrow">KPI 95%</p><h3 id="kpiTitle">Prestasi KPI Kehadiran Bulanan</h3></div><div class="kpi-filter-group"><label>Tahun<select id="kpiYear" aria-label="Pilih tahun analisis"></select></label><label>Bulan<select id="kpiMonth" aria-label="Pilih bulan analisis"></select></label></div></div>
         <div id="kpiSummary" class="kpi-summary"></div>
-        <div class="kpi-columns"><section><h4>✅ Mencapai KPI 96%</h4><div id="kpiAchieved"></div></section><section><h4>⚠️ Belum Mencapai KPI 96%</h4><div id="kpiBelow"></div></section></div>
+        <div class="kpi-columns"><section><h4>✅ Mencapai KPI 95%</h4><div id="kpiAchieved"></div></section><section><h4>⚠️ Belum Mencapai KPI 95%</h4><div id="kpiBelow"></div></section></div>
         <div id="kpiClusters" class="kpi-clusters"></div>
+      </section>
+      <section class="annual-winners-section" aria-labelledby="annualWinnersTitle">
+        <div class="annual-winners-heading"><div><p class="eyebrow">Pencapaian Kehadiran Terbaik Tahunan</p><h3 id="annualWinnersTitle">🏆 Kelas Kehadiran Emas <span id="annualWinnersYear">—</span></h3><p>Pemenang setiap bulan ditentukan daripada purata keseluruhan rekod kelas bagi bulan tersebut.</p></div></div>
+        <p id="annualWinnersStatus" class="analysis-status" role="status" aria-live="polite">Memuatkan pencapaian tahunan…</p>
+        <div id="annualWinnersGrid" class="annual-winners-grid"></div>
       </section>
       <section class="podium-section" aria-labelledby="podiumTitle"><div class="podium-heading"><p class="eyebrow">Penghargaan kehadiran</p><h3 id="podiumTitle">Kelas Terbaik — Emas, Perak &amp; Gangsa</h3><p>Kedudukan dikira daripada purata rekod dalam tempoh yang dipilih.</p></div><div id="attendancePodium" class="attendance-podium"></div></section>
       <div class="chart-shell">
@@ -450,6 +455,6 @@
   </div>
 
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="app.js?v=56" defer></script>
+  <script src="app.js?v=57" defer></script>
 </body>
 </html>

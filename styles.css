@@ -385,3 +385,24 @@ body{background:#fff;color:#000}
 @media(max-width:620px){.topbar-school-copy>span{display:none}.topbar-school-copy small{display:block;font-size:.5rem;letter-spacing:.1em}.topbar-school-copy strong{font-size:.64rem;line-height:1.12;white-space:normal;max-width:150px}.topbar-logo-pair{width:64px}.topbar-logo-pair img:first-child{max-width:37px}.topbar-logo-pair img:last-child{max-width:23px}.print-button{font-size:0;padding:10px}.print-button:first-letter{font-size:1rem}}
 @media(max-width:480px){.topbar-left{gap:4px}.topbar{padding-left:6px;padding-right:6px}.brand{gap:5px}.topbar-school-copy{display:flex;max-width:128px}.topbar-school-copy small{font-size:.46rem}.topbar-school-copy strong{font-size:.56rem;max-width:128px}.topbar-logo-pair{width:52px;height:54px;gap:3px}.topbar-logo-pair img{max-height:43px}.topbar-logo-pair img:first-child{max-width:30px}.topbar-logo-pair img:last-child{max-width:19px}.rmt-image-preview{grid-template-columns:1fr}}
 .monitoring-item-card [hidden]{display:none!important}
+
+/* v57: penapis tahun sebenar dan pemenang purata bulanan. */
+.kpi-filter-group{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.kpi-filter-group label{display:grid;gap:6px;color:var(--muted);font-size:.72rem;font-weight:900}
+.kpi-filter-group select{min-width:150px;border:1px solid #bfcde0;border-radius:10px;padding:10px 34px 10px 11px;background:#fff;color:var(--ink);font:inherit;font-weight:800}
+.annual-winners-section{margin:26px 0 0;padding:24px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(145deg,#fffdf7,#f7fbff);box-shadow:0 12px 35px #183b6d10}
+.annual-winners-heading h3{margin:3px 0 6px;font-size:clamp(1.25rem,2.4vw,1.8rem)}
+.annual-winners-heading p:last-child{margin:0;color:var(--muted)}
+.annual-winners-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:18px}
+.annual-month-card{appearance:none;width:100%;min-height:170px;padding:18px;border:1px solid #c9d9ea;border-radius:16px;background:#fff;color:var(--ink);text-align:left;cursor:pointer;box-shadow:0 8px 20px #183b6d0d;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.annual-month-card:hover,.annual-month-card:focus-visible{transform:translateY(-2px);border-color:#d4a72c;box-shadow:0 13px 28px #8563001b;outline:none}
+.annual-month-card.has-data{border-top:5px solid #d4a72c;background:linear-gradient(160deg,#fffdf2,#fff)}
+.annual-month-name{display:flex;align-items:center;justify-content:space-between;gap:8px;color:var(--blue);font-size:.82rem;font-weight:950;text-transform:uppercase;letter-spacing:.04em}
+.annual-shared-badge{padding:4px 7px;border-radius:999px;background:#fff1bd;color:#785400;font-size:.62rem;letter-spacing:0;text-transform:none}
+.annual-winner{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:11px;padding-top:10px;border-top:1px solid #e4ebf3}
+.annual-winner strong{font-size:.88rem;line-height:1.25}
+.annual-winner span{flex:0 0 auto;color:#087452;font-size:1rem;font-weight:950}
+.annual-no-data{margin:27px 0 20px;color:var(--muted);font-weight:800;text-align:center}
+.annual-month-card small{display:block;margin-top:12px;color:var(--muted);font-size:.67rem;font-weight:700}
+@media(max-width:850px){.annual-winners-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi-filter-group{width:100%}.kpi-filter-group label{flex:1}.kpi-filter-group select{width:100%;min-width:0}}
+@media(max-width:520px){.annual-winners-section{padding:18px 14px}.annual-winners-grid{grid-template-columns:1fr}.annual-month-card{min-height:145px}}
