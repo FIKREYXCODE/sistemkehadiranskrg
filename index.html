@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="HEM SMARTTRACK">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="manifest" href="manifest.webmanifest?v=48">
+  <link rel="manifest" href="manifest.webmanifest?v=49">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=48">
+  <link rel="stylesheet" href="styles.css?v=49">
 </head>
 <body>
   <header class="topbar no-print">
@@ -43,7 +43,7 @@
     <a href="#rekod-pengisian-kelas" data-view-link="attendance"><span>01</span><strong>Rekod Pengisian Kelas</strong><small>Isi kehadiran mengikut kelas</small></a>
     <a href="#keberadaan-guru-akp" data-view-link="staff"><span>02</span><strong>Keberadaan Guru &amp; AKP</strong><small>Rekod pegawai tiada di sekolah</small></a>
     <a href="#guru-bertugas-harian" data-view-link="dailyDuty"><span>03</span><strong>Guru Bertugas Harian</strong><small>Senarai, catatan dan pengesahan</small></a>
-    <a href="#guru-bertugas" data-view-link="duty"><span>04</span><strong>Guru Bertugas Mingguan</strong><small>Senarai pagi dan petang</small></a>
+    <a href="#guru-bertugas" data-view-link="duty"><span>04</span><strong>HEM SmartDisiplin</strong><small>Sistem pengurusan disiplin murid</small></a>
     <a href="#guru-rmt" data-view-link="rmt"><span>05</span><strong>Guru Bertugas RMT</strong><small>Sidang pagi dan petang</small></a>
     <a href="#status-kelas" data-view-link="completion"><span>06</span><strong>Kelas Selesai / Belum</strong><small>Status pengisian harian</small></a>
     <a href="#rekod-kalendar" data-view-link="calendar"><span>07</span><strong>Rekod Ikut Kalendar</strong><small>Semak pengisian mengikut tarikh</small></a>
@@ -195,16 +195,14 @@
 
     <section id="weeklyDutyView" class="utility-card app-view no-print" data-view-panel="duty" hidden>
       <div class="utility-head">
-        <div><p class="eyebrow">Senarai mingguan</p><h2>Guru Bertugas Mingguan</h2><p>Paparan Isnin hingga Jumaat bagi sidang pagi dan petang berdasarkan rekod harian yang telah disimpan.</p></div>
-        <div class="utility-controls"><label>Tarikh dalam minggu<input id="weeklyDutyDate" type="date" required></label><button id="weeklyDutyRefresh" class="primary-button" type="button">Papar minggu</button></div>
+        <div><p class="eyebrow">Sistem disiplin murid</p><h2>HEM SmartDisiplin</h2><p>Gunakan sistem ini untuk merekod, menyemak dan mengurus laporan salah laku murid mengikut sidang yang betul.</p></div>
       </div>
       <a class="smart-discipline-card" href="https://fikreyxcode.github.io/hem-smartdisiplin-skrg/" target="_blank" rel="noopener noreferrer" aria-label="Buka HEM SmartDisiplin SK Ranggu dalam tab baharu">
         <span class="smart-discipline-icon" aria-hidden="true">🛡️</span>
         <span class="smart-discipline-copy"><small>PINTASAN SISTEM HEM</small><strong>HEM SmartDisiplin SK Ranggu</strong><span>Buka sistem pengurusan disiplin murid untuk tindakan guru bertugas.</span></span>
         <span class="smart-discipline-button">Buka SmartDisiplin ↗</span>
       </a>
-      <p id="weeklyDutyStatus" class="analysis-status" role="status">Pilih tarikh untuk memuatkan senarai.</p>
-      <div id="weeklyDutyGrid" class="weekly-duty-grid"></div>
+      <div hidden aria-hidden="true"><input id="weeklyDutyDate" type="date"><button id="weeklyDutyRefresh" type="button"></button><p id="weeklyDutyStatus"></p><div id="weeklyDutyGrid"></div></div>
     </section>
 
     <section id="completionView" class="utility-card app-view no-print" data-view-panel="completion" hidden>
@@ -442,6 +440,6 @@
   </div>
 
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="app.js?v=48" defer></script>
+  <script src="app.js?v=49" defer></script>
 </body>
 </html>
