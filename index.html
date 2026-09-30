@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="HEM SMARTTRACK">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="manifest" href="manifest.webmanifest?v=57">
+  <link rel="manifest" href="manifest.webmanifest?v=58">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=57">
+  <link rel="stylesheet" href="styles.css?v=58">
 </head>
 <body>
   <header class="topbar no-print">
@@ -302,6 +302,19 @@
       <div class="monitoring-gallery-head"><div><h3>4 OPR HEM terkini</h3><p>Empat laporan terkini dipaparkan di sini. Arkib penuh disimpan dalam Google Drive.</p></div><div class="opr-gallery-actions"><a class="secondary-button" href="https://drive.google.com/drive/folders/1YP8_ko7EgwcPCGuU2xKYvmtH0ogCm2IQ" target="_blank" rel="noopener">Buka Arkib Drive ↗</a><button id="oprRefresh" class="secondary-button" type="button">Muat semula</button></div></div>
       <div id="oprListStatus" class="monitoring-list-status" role="status">Memuatkan OPR HEM…</div>
       <div id="oprGallery" class="monitoring-gallery opr-gallery"></div>
+      <section class="hem-letters-section" aria-labelledby="hemLettersTitle">
+        <div class="monitoring-gallery-head">
+          <div><p class="eyebrow">Dokumen rasmi unit</p><h3 id="hemLettersTitle">Surat Menyurat HEM</h3><p>Dua surat terbaharu dipaparkan. Semua surat lama kekal dalam arkib bersama.</p></div>
+          <button id="letterArchiveToggle" class="secondary-button" type="button" aria-expanded="false">Lihat Semua Surat HEM</button>
+        </div>
+        <p id="letterListStatus" class="monitoring-list-status" role="status">Memuatkan surat HEM…</p>
+        <div id="latestLetterGrid" class="hem-letter-grid" aria-live="polite"></div>
+        <div id="letterArchive" class="hem-letter-archive" hidden>
+          <div class="letter-archive-heading"><h3>Arkib Surat HEM</h3><a class="secondary-button" href="https://drive.google.com/drive/folders/1YP8_ko7EgwcPCGuU2xKYvmtH0ogCm2IQ" target="_blank" rel="noopener">Buka Folder Google Drive ↗</a></div>
+          <p id="letterArchiveStatus" class="monitoring-list-status" role="status"></p>
+          <div id="letterArchiveGrid" class="hem-letter-grid"></div>
+        </div>
+      </section>
     </section>
 
     <section id="attendanceAnalysis" class="analysis-card app-view no-print" data-view-panel="analysis" aria-labelledby="analysisTitle" hidden>
@@ -327,9 +340,9 @@
       <div id="analysisStatus" class="analysis-status" role="status" aria-live="polite">Memuatkan analisis…</div>
       <div id="analysisSummary" class="analysis-summary" aria-label="Ringkasan peratus kehadiran"></div>
       <section class="kpi-panel" aria-labelledby="kpiTitle">
-        <div class="kpi-heading"><div><p class="eyebrow">KPI 95%</p><h3 id="kpiTitle">Prestasi KPI Kehadiran Bulanan</h3></div><div class="kpi-filter-group"><label>Tahun<select id="kpiYear" aria-label="Pilih tahun analisis"></select></label><label>Bulan<select id="kpiMonth" aria-label="Pilih bulan analisis"></select></label></div></div>
+        <div class="kpi-heading"><div><p class="eyebrow">KPI 96%</p><h3 id="kpiTitle">Prestasi KPI Kehadiran Bulanan</h3></div><div class="kpi-filter-group"><label>Tahun<select id="kpiYear" aria-label="Pilih tahun analisis"></select></label><label>Bulan<select id="kpiMonth" aria-label="Pilih bulan analisis"></select></label></div></div>
         <div id="kpiSummary" class="kpi-summary"></div>
-        <div class="kpi-columns"><section><h4>✅ Mencapai KPI 95%</h4><div id="kpiAchieved"></div></section><section><h4>⚠️ Belum Mencapai KPI 95%</h4><div id="kpiBelow"></div></section></div>
+        <div class="kpi-columns"><section><h4>✅ Mencapai KPI 96%</h4><div id="kpiAchieved"></div></section><section><h4>⚠️ Belum Mencapai KPI 96%</h4><div id="kpiBelow"></div></section></div>
         <div id="kpiClusters" class="kpi-clusters"></div>
       </section>
       <section class="annual-winners-section" aria-labelledby="annualWinnersTitle">
@@ -435,6 +448,30 @@
             <span id="adminStaffSaveStatus" class="form-message" role="status"></span>
           </div>
         </section>
+        <section class="admin-content-section" aria-labelledby="adminAnnouncementTitle">
+          <div class="admin-section-heading">
+            <div><p class="modal-kicker">MAKLUMAN GLOBAL</p><h2 id="adminAnnouncementTitle">News Ticker HEM</h2><p>Tambah, susun dan aktifkan makluman yang akan bergerak di bahagian bawah semua paparan.</p></div>
+            <button id="adminAnnouncementAdd" class="secondary-button" type="button">+ Tambah makluman</button>
+          </div>
+          <div id="adminAnnouncementList" class="admin-announcement-list"></div>
+          <div class="ticker-preview" aria-label="Pratonton ticker"><strong>📢 MAKLUMAN HEM</strong><div class="news-ticker-viewport"><div id="adminTickerPreviewTrack" class="news-ticker-track"></div></div></div>
+          <div class="admin-save-row"><button id="adminAnnouncementSave" class="primary-button" type="button">Simpan makluman</button><span id="adminAnnouncementStatus" class="form-message" role="status"></span></div>
+        </section>
+        <section class="admin-content-section" aria-labelledby="adminLetterTitle">
+          <div class="admin-section-heading"><div><p class="modal-kicker">ARKIB DOKUMEN</p><h2 id="adminLetterTitle">Surat Menyurat HEM</h2><p>Muat naik fail atau masukkan pautan Google Drive. Dua surat terbaharu dipaparkan secara automatik.</p></div></div>
+          <form id="adminLetterForm" class="admin-letter-form">
+            <label>Tajuk surat<input id="adminLetterName" type="text" maxlength="220" required></label>
+            <label>Tarikh surat<input id="adminLetterDate" type="date" required></label>
+            <label>Kategori<select id="adminLetterCategory" required><option>Surat Masuk</option><option>Surat Keluar</option><option>Surat Dalaman</option><option>Surat Makluman</option><option>Surat PPD / JPN / KPM</option><option>Lain-lain</option></select></label>
+            <label>No. rujukan<input id="adminLetterReference" type="text" maxlength="120"></label>
+            <label>Nama pengunggah<select id="adminLetterUpdatedBy" class="staff-choice" required><option value="">Pilih nama guru / AKP</option></select></label>
+            <label>Pautan Google Drive (pilihan)<input id="adminLetterDriveUrl" type="url" placeholder="https://drive.google.com/..."></label>
+            <label class="admin-letter-note">Catatan<textarea id="adminLetterNote" maxlength="1000" rows="3"></textarea></label>
+            <label class="admin-letter-file">Fail surat (PDF, DOC, DOCX atau gambar; maks. 8 MB)<input id="adminLetterFile" type="file" accept=".pdf,.doc,.docx,image/jpeg,image/png,image/webp"></label>
+            <div class="admin-save-row"><button id="adminLetterSave" class="primary-button" type="submit">Simpan surat</button><span id="adminLetterStatus" class="form-message" role="status"></span></div>
+          </form>
+          <div id="adminLetterList" class="admin-letter-list"></div>
+        </section>
         <section class="admin-organization-section" aria-labelledby="adminOrganizationTitle">
           <div class="admin-section-heading">
             <div>
@@ -454,7 +491,11 @@
     </section>
   </div>
 
+  <aside id="globalNewsTicker" class="global-news-ticker no-print" aria-label="Makluman HEM" hidden>
+    <strong>📢 MAKLUMAN HEM</strong>
+    <div class="news-ticker-viewport"><div id="newsTickerTrack" class="news-ticker-track"></div></div>
+  </aside>
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="app.js?v=57" defer></script>
+  <script src="app.js?v=58" defer></script>
 </body>
 </html>

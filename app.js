@@ -1,6 +1,7 @@
 const API_URL = "https://portal-kelas-sekolah-biru.afiqzkablemo.chatgpt.site/api/school";
 const SAFETY_API_URL = API_URL.replace(/\/school$/, "/safety");
 const ORGANIZATION_API_URL = API_URL.replace(/\/school$/, "/organization");
+const CONTENT_API_URL = API_URL.replace(/\/school$/, "/content");
 const $ = (selector) => document.querySelector(selector);
 const state = {
   date: "", classes: [], staffAbsences: { morning: [], afternoon: [] }, dutyTeachers: { morning: [], afternoon: [] }, meta: {}, loading: false, saveTimer: null,
@@ -11,6 +12,7 @@ const state = {
   weeklyDuty: { loading: false }, completion: { loading: false }, calendar: { loading: false }, rmtPreviewUrls: [], rmtReports: [], rmtLoading: false,
   opr: { reports: [], loading: false, previewUrls: [] },
   organization: { items: [], adminItems: [], deletedIds: [], loading: false },
+  content: { announcements: [], adminAnnouncements: [], deletedAnnouncementIds: [], latestLetters: [], letters: [], loading: false },
 };
 const DRAFT_PREFIX = "skrg-pending-v1:";
 const EDITOR_KEY = "skrg-editor-name-v1";
@@ -113,7 +115,7 @@ function refreshStaffNameChoices() {
     element.innerHTML = `<option value="">${safe(placeholder)}</option>${choices.map((name) => `<option value="${safe(name)}"${name === current ? " selected" : ""}>${safe(name)}</option>`).join("")}`;
   };
   fillSelect($("#editorName"), "Pilih nama guru / AKP");
-  for (const selector of ["#preparedByMorning", "#preparedByAfternoon", "#oprPreparedBy"]) fillSelect($(selector), "Pilih nama guru / AKP");
+  for (const selector of ["#preparedByMorning", "#preparedByAfternoon", "#oprPreparedBy", "#adminLetterUpdatedBy"]) fillSelect($(selector), "Pilih nama guru / AKP");
   for (const selector of ["#approvedByMorning", "#approvedByAfternoon"]) {
     const element = $(selector); if (!element) continue;
     const current = element.value;
@@ -1060,6 +1062,149 @@ async function saveOprReport(event) {
   } finally { $("#oprSave").disabled = false; }
 }
 
+function tickerMarkup(messages) {
+  const text = messages.map((item) => String(item.message || "").trim()).filter(Boolean).join(" • ");
+  if (!text) return "";
+  return `<span class="ticker-sequence">${safe(text)}</span><span class="ticker-sequence" aria-hidden="true">${safe(text)}</span>`;
+}
+
+function renderTicker() {
+  const ticker = $("#globalNewsTicker"), track = $("#newsTickerTrack");
+  const markup = tickerMarkup(state.content.announcements);
+  track.innerHTML = markup;
+  ticker.hidden = !markup;
+  document.body.classList.toggle("ticker-visible", Boolean(markup));
+  if (markup) track.style.setProperty("--ticker-duration", `${Math.max(24, state.content.announcements.reduce((sum, item) => sum + String(item.message || "").length, 0) * .16)}s`);
+}
+
+function formatLetterDate(value) {
+  const date = new Date(`${value}T12:00:00`);
+  return Number.isNaN(date.getTime()) ? String(value || "—") : new Intl.DateTimeFormat("ms-MY", { day: "numeric", month: "long", year: "numeric" }).format(date);
+}
+
+function letterCard(letter, admin = false) {
+  const fileLabel = letter.fileName || (letter.driveUrl ? "Buka di Google Drive" : "Buka surat");
+  return `<article class="hem-letter-card"><div class="letter-card-top"><span class="category-badge">${safe(letter.category || "Surat HEM")}</span><time>${safe(formatLetterDate(letter.letterDate))}</time></div><h4>${safe(letter.title)}</h4><dl><div><dt>No. rujukan</dt><dd>${safe(letter.referenceNo || "—")}</dd></div><div><dt>Dimuat naik oleh</dt><dd>${safe(letter.updatedBy || "—")}</dd></div>${letter.note ? `<div><dt>Catatan</dt><dd>${safe(letter.note)}</dd></div>` : ""}</dl><a class="letter-open-button" href="${safe(letter.fileUrl || letter.driveUrl || "#")}" target="_blank" rel="noopener">📄 ${safe(fileLabel)} ↗</a>${admin ? `<small>Dimuat naik ${safe(new Intl.DateTimeFormat("ms-MY", { dateStyle: "medium", timeStyle: "short" }).format(new Date(Number(letter.uploadedAt))))}</small>` : ""}</article>`;
+}
+
+function renderPublicLetters() {
+  $("#latestLetterGrid").innerHTML = state.content.latestLetters.map((item) => letterCard(item)).join("");
+  $("#letterListStatus").textContent = state.content.latestLetters.length ? `${state.content.latestLetters.length} surat HEM terbaharu.` : "Belum ada surat HEM dimuat naik.";
+}
+
+async function loadPublicContent(quiet = false) {
+  if (state.content.loading) return;
+  state.content.loading = true;
+  try {
+    const [announcementResponse, letterResponse] = await Promise.all([
+      fetch(`${CONTENT_API_URL}?mode=announcements`, { cache: "no-store" }),
+      fetch(`${CONTENT_API_URL}?mode=letters`, { cache: "no-store" }),
+    ]);
+    const [announcementData, letterData] = await Promise.all([
+      responseJson(announcementResponse, "Makluman tidak dapat dibuka."),
+      responseJson(letterResponse, "Surat HEM tidak dapat dibuka."),
+    ]);
+    if (!announcementResponse.ok) throw new Error(announcementData.error || "Makluman tidak dapat dibuka.");
+    if (!letterResponse.ok) throw new Error(letterData.error || "Surat HEM tidak dapat dibuka.");
+    state.content.announcements = Array.isArray(announcementData.announcements) ? announcementData.announcements : [];
+    state.content.latestLetters = Array.isArray(letterData.letters) ? letterData.letters.slice(0, 2) : [];
+    renderTicker(); renderPublicLetters();
+  } catch (error) {
+    if (!quiet) $("#letterListStatus").textContent = error.message || "Kandungan HEM tidak dapat dibuka.";
+  } finally { state.content.loading = false; }
+}
+
+async function toggleLetterArchive() {
+  const archive = $("#letterArchive"), opening = archive.hidden;
+  archive.hidden = !opening;
+  $("#letterArchiveToggle").setAttribute("aria-expanded", String(opening));
+  $("#letterArchiveToggle").textContent = opening ? "Tutup Arkib Surat" : "Lihat Semua Surat HEM";
+  if (!opening) return;
+  $("#letterArchiveStatus").textContent = "Memuatkan arkib surat…";
+  try {
+    const response = await fetch(`${CONTENT_API_URL}?mode=letters&all=1`, { cache: "no-store" });
+    const data = await responseJson(response, "Arkib surat tidak dapat dibuka.");
+    if (!response.ok) throw new Error(data.error || "Arkib surat tidak dapat dibuka.");
+    state.content.letters = Array.isArray(data.letters) ? data.letters : [];
+    $("#letterArchiveGrid").innerHTML = state.content.letters.map((item) => letterCard(item)).join("");
+    $("#letterArchiveStatus").textContent = state.content.letters.length ? `${state.content.letters.length} surat tersimpan dalam arkib.` : "Arkib surat masih kosong.";
+  } catch (error) { $("#letterArchiveStatus").textContent = error.message || "Arkib surat tidak dapat dibuka."; }
+}
+
+function renderAdminAnnouncements() {
+  $("#adminAnnouncementList").innerHTML = state.content.adminAnnouncements.map((item, index) => `<article class="admin-announcement-row" data-announcement-index="${index}"><span class="announcement-order">${index + 1}</span><textarea data-announcement-message maxlength="500" rows="2" aria-label="Teks makluman ${index + 1}">${safe(item.message || "")}</textarea><div class="announcement-actions"><button type="button" data-announcement-move="up" aria-label="Naikkan makluman" ${index === 0 ? "disabled" : ""}>↑</button><button type="button" data-announcement-move="down" aria-label="Turunkan makluman" ${index === state.content.adminAnnouncements.length - 1 ? "disabled" : ""}>↓</button><button class="${item.active === false ? "inactive" : "active"}" type="button" data-announcement-toggle>${item.active === false ? "Tidak aktif" : "Aktif"}</button><button class="danger" type="button" data-announcement-delete>Padam</button></div></article>`).join("") || '<p class="monitoring-empty">Belum ada makluman. Tekan “+ Tambah makluman”.</p>';
+  renderAdminTickerPreview();
+}
+
+function syncAdminAnnouncements() {
+  document.querySelectorAll("[data-announcement-index]").forEach((row) => {
+    const index = Number(row.dataset.announcementIndex);
+    if (state.content.adminAnnouncements[index]) state.content.adminAnnouncements[index].message = row.querySelector("[data-announcement-message]").value;
+  });
+}
+
+function renderAdminTickerPreview() {
+  const active = state.content.adminAnnouncements.filter((item) => item.active !== false && String(item.message || "").trim());
+  $("#adminTickerPreviewTrack").innerHTML = tickerMarkup(active) || '<span class="ticker-sequence">Pratonton makluman akan muncul di sini.</span>';
+}
+
+function renderAdminLetters() {
+  $("#adminLetterList").innerHTML = state.content.letters.length ? `<h3>Arkib semasa (${state.content.letters.length})</h3><div class="hem-letter-grid">${state.content.letters.map((item) => letterCard(item, true)).join("")}</div>` : '<p class="monitoring-empty">Belum ada surat HEM disimpan.</p>';
+}
+
+async function loadAdminContent() {
+  const response = await fetch(CONTENT_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "readAdmin", adminPin: state.adminPin }) });
+  const data = await responseJson(response, "Kandungan pentadbir tidak dapat dibuka.");
+  if (!response.ok) throw new Error(data.error || "Kandungan pentadbir tidak dapat dibuka.");
+  state.content.adminAnnouncements = (Array.isArray(data.announcements) ? data.announcements : []).map((item) => ({ ...item, active: Boolean(item.active) }));
+  state.content.deletedAnnouncementIds = [];
+  state.content.letters = Array.isArray(data.letters) ? data.letters : [];
+  renderAdminAnnouncements(); renderAdminLetters(); refreshStaffNameChoices();
+}
+
+async function saveAdminAnnouncements() {
+  syncAdminAnnouncements();
+  if (state.content.adminAnnouncements.some((item) => !String(item.message || "").trim())) { $("#adminAnnouncementStatus").textContent = "Isi teks semua makluman atau padam baris kosong."; return; }
+  $("#adminAnnouncementSave").disabled = true; $("#adminAnnouncementStatus").textContent = "Menyimpan…";
+  try {
+    const response = await fetch(CONTENT_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "saveAnnouncements", adminPin: state.adminPin, entries: state.content.adminAnnouncements, deletedIds: state.content.deletedAnnouncementIds }) });
+    const data = await responseJson(response, "Makluman gagal disimpan.");
+    if (!response.ok) throw new Error(data.error || "Makluman gagal disimpan.");
+    state.content.adminAnnouncements = (data.announcements || []).map((item) => ({ ...item, active: Boolean(item.active) }));
+    state.content.deletedAnnouncementIds = [];
+    renderAdminAnnouncements(); await loadPublicContent();
+    $("#adminAnnouncementStatus").textContent = "Makluman berjaya dikemas kini untuk semua peranti.";
+  } catch (error) { $("#adminAnnouncementStatus").textContent = error.message || "Makluman gagal disimpan."; }
+  finally { $("#adminAnnouncementSave").disabled = false; }
+}
+
+async function encodeLetterFile(file) {
+  if (!file) return null;
+  if (file.size > 8 * 1024 * 1024) throw new Error("Fail surat mestilah tidak melebihi 8 MB.");
+  const allowed = ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "image/jpeg", "image/png", "image/webp"];
+  if (!allowed.includes(file.type)) throw new Error("Gunakan fail PDF, DOC, DOCX, JPG, PNG atau WebP sahaja.");
+  const data = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(String(reader.result).split(",")[1] || ""); reader.onerror = () => reject(new Error("Fail tidak dapat dibaca.")); reader.readAsDataURL(file); });
+  return { name: file.name, type: file.type, data };
+}
+
+async function saveAdminLetter(event) {
+  event.preventDefault();
+  const fileInput = $("#adminLetterFile"), driveUrl = $("#adminLetterDriveUrl").value.trim();
+  if (!fileInput.files?.[0] && !driveUrl) { $("#adminLetterStatus").textContent = "Pilih fail surat atau masukkan pautan Google Drive."; return; }
+  $("#adminLetterSave").disabled = true; $("#adminLetterStatus").textContent = "Memuat naik dan menyimpan surat…";
+  try {
+    const file = await encodeLetterFile(fileInput.files?.[0]);
+    const payload = { action: "createLetter", adminPin: state.adminPin, title: $("#adminLetterName").value.trim(), letterDate: $("#adminLetterDate").value, category: $("#adminLetterCategory").value, referenceNo: $("#adminLetterReference").value.trim(), note: $("#adminLetterNote").value.trim(), updatedBy: $("#adminLetterUpdatedBy").value, driveUrl, file };
+    const response = await fetch(CONTENT_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    const data = await responseJson(response, "Surat gagal disimpan.");
+    if (!response.ok) throw new Error(data.error || "Surat gagal disimpan.");
+    $("#adminLetterForm").reset(); $("#adminLetterDate").value = state.date;
+    await loadAdminContent(); await loadPublicContent();
+    $("#adminLetterStatus").textContent = "Surat berjaya disimpan dalam arkib bersama.";
+  } catch (error) { $("#adminLetterStatus").textContent = error.message || "Surat gagal disimpan."; }
+  finally { $("#adminLetterSave").disabled = false; }
+}
+
 function visibleClasses() {
   return state.session === "all" ? state.classes : state.classes.filter((row) => classSession(row) === state.session);
 }
@@ -1390,7 +1535,7 @@ async function verifyAdmin(event) {
     $("#adminSaveStatus").textContent = "";
     renderAdminClasses(); renderSchoolStats();
     renderAdminStaffDirectory();
-    await loadAdminOrganization();
+    await Promise.all([loadAdminOrganization(), loadAdminContent()]);
   } catch (error) {
     state.adminPin = "";
     $("#adminError").textContent = error.message || "Kod admin tidak sah.";
@@ -1729,6 +1874,7 @@ $("#oprPhotos").addEventListener("change", (event) => renderOprPreview(event.tar
 $("#oprForm").addEventListener("submit", saveOprReport);
 $("#oprRefresh").addEventListener("click", loadOprReports);
 $("#oprDate").addEventListener("change", loadOprReports);
+$("#letterArchiveToggle").addEventListener("click", toggleLetterArchive);
 $("#adminButton").addEventListener("click", async () => {
   await flushSave();
   $("#adminModal").hidden = false;
@@ -1743,6 +1889,22 @@ $("#adminStaffSave").addEventListener("click", saveStaffDirectory);
 $("#adminStatsSave").addEventListener("click", saveSchoolStats);
 $("#adminOrganizationAdd").addEventListener("click", addOrganizationRow);
 $("#adminOrganizationSave").addEventListener("click", saveOrganization);
+$("#adminAnnouncementAdd").addEventListener("click", () => { syncAdminAnnouncements(); state.content.adminAnnouncements.push({ id: "", message: "", active: true }); renderAdminAnnouncements(); });
+$("#adminAnnouncementSave").addEventListener("click", saveAdminAnnouncements);
+$("#adminAnnouncementList").addEventListener("input", () => { syncAdminAnnouncements(); renderAdminTickerPreview(); });
+$("#adminAnnouncementList").addEventListener("click", (event) => {
+  const row = event.target.closest("[data-announcement-index]"); if (!row) return;
+  syncAdminAnnouncements();
+  const index = Number(row.dataset.announcementIndex), item = state.content.adminAnnouncements[index];
+  const direction = event.target.closest("[data-announcement-move]")?.dataset.announcementMove;
+  if (direction === "up" && index > 0) [state.content.adminAnnouncements[index - 1], state.content.adminAnnouncements[index]] = [item, state.content.adminAnnouncements[index - 1]];
+  else if (direction === "down" && index < state.content.adminAnnouncements.length - 1) [state.content.adminAnnouncements[index + 1], state.content.adminAnnouncements[index]] = [item, state.content.adminAnnouncements[index + 1]];
+  else if (event.target.closest("[data-announcement-toggle]")) item.active = item.active === false;
+  else if (event.target.closest("[data-announcement-delete]")) { if (item.id) state.content.deletedAnnouncementIds.push(item.id); state.content.adminAnnouncements.splice(index, 1); }
+  else return;
+  renderAdminAnnouncements();
+});
+$("#adminLetterForm").addEventListener("submit", saveAdminLetter);
 $("#adminOrganizationList").addEventListener("input", syncAdminOrganizationFromRows);
 $("#adminOrganizationList").addEventListener("change", (event) => {
   const row = event.target.closest("[data-organization-index]"); if (!row) return;
@@ -1838,6 +2000,7 @@ $("#analysisDate").value = state.date;
 $("#weeklyDutyDate").value = state.date;
 $("#completionDate").value = state.date;
 $("#calendarDate").value = state.date;
+$("#adminLetterDate").value = state.date;
 setupRmtTemplate();
 setupKpiFilters();
 refreshStaffNameChoices();
@@ -1847,6 +2010,7 @@ loadReport();
 loadAnalytics();
 loadMonitoringReports();
 loadOrganization();
+loadPublicContent();
 
 setInterval(() => {
   const editing = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName || "");
@@ -1862,6 +2026,10 @@ setInterval(() => {
   if (document.visibilityState === "visible" && $("#adminModal").hidden) loadOrganization(true);
 }, 60000);
 
+setInterval(() => {
+  if (document.visibilityState === "visible" && $("#adminModal").hidden) loadPublicContent(true);
+}, 60000);
+
 window.addEventListener("online", () => { if (hasPendingChanges()) scheduleSave(); });
 window.addEventListener("beforeunload", (event) => {
   if (!hasPendingChanges() && !state.savePromise) return;
@@ -1870,7 +2038,7 @@ window.addEventListener("beforeunload", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=57", { scope: "./", updateViaCache: "none" })
+    navigator.serviceWorker.register("./service-worker.js?v=58", { scope: "./", updateViaCache: "none" })
       .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
   });
 }
