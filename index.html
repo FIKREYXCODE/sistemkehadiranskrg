@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="HEM SMARTTRACK">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="manifest" href="manifest.webmanifest?v=55">
+  <link rel="manifest" href="manifest.webmanifest?v=56">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=55">
+  <link rel="stylesheet" href="styles.css?v=56">
 </head>
 <body>
   <header class="topbar no-print">
@@ -106,34 +106,12 @@
       </section>
       <section class="home-hem-panel" aria-labelledby="homeHemTitle">
         <div class="home-summary-heading">
-          <div><p class="eyebrow">Organisasi Hal Ehwal Murid 2026</p><h2 id="homeHemTitle">Pengurusan Unit HEM</h2></div>
+          <div><p class="eyebrow">Organisasi Hal Ehwal Murid 2026</p><h2 id="homeHemTitle">Carta Organisasi Pengurusan HEM</h2></div>
           <span class="hem-year-badge">SESI 2026</span>
         </div>
-        <div class="hem-leadership" aria-label="Kepimpinan Hal Ehwal Murid">
-          <article><span aria-hidden="true">🏫</span><div><small>Guru Besar</small><strong>Yunus Bin Patarai</strong></div></article>
-          <article class="primary"><span aria-hidden="true">🛡️</span><div><small>Penolong Kanan HEM</small><strong>Komala Bt Joseph</strong></div></article>
-          <article><span aria-hidden="true">📋</span><div><small>Setiausaha HEM</small><strong>Norlina Bt Bagwas</strong></div></article>
-        </div>
-        <details class="hem-units">
-          <summary><span>Lihat senarai bidang dan penyelaras HEM</span><small>15 bidang / unit</small></summary>
-          <div class="hem-unit-grid">
-            <article><strong>Disiplin &amp; Pengawas</strong><span>Noze Bt Tukijan</span></article>
-            <article><strong>Bimbingan dan Kaunseling</strong><span>Siti Nurul Fadzilah Bt Abdul Jalal</span></article>
-            <article><strong>Bantuan Awal Persekolahan</strong><span>Sabriah @ Habibah Bt Abdul Sabar</span></article>
-            <article><strong>Bantuan Susu Sekolah</strong><span>Faridah Bt Sunu</span></article>
-            <article><strong>Bantuan Yayasan Sabah</strong><span>Junaid Bin Nurdin</span></article>
-            <article><strong>SPBT</strong><span>Ani Bt Patola</span></article>
-            <article><strong>Pendaftaran Tingkatan 1</strong><span>Ag Ku Kemaindra Bin Pg Mohd Taib</span></article>
-            <article><strong>Kebajikan</strong><span>Halim Bin Bidi</span></article>
-            <article><strong>Rancangan Makanan Tambahan</strong><span>Nurul Anisa Bt Saparudin<br>Nechi Bt Serunai</span></article>
-            <article><strong>Transisi</strong><span>Darmawati Bt Lokkong</span></article>
-            <article><strong>Kantin</strong><span>Rini Bt Daud<br>Marini Bt Ladi</span></article>
-            <article><strong>Keselamatan</strong><span>Zamrie Bin Omar Ali</span></article>
-            <article><strong>PPDa</strong><span>Siti Jawara Bt Lukman<br>S. Lili Bt Ladi</span></article>
-            <article><strong>KWAMP / eKasih</strong><span>Evalorenna Laminsi</span></article>
-            <article><strong>3K</strong><span>Norimah Bt Jeyo Rejo</span></article>
-          </div>
-        </details>
+        <p id="hemOrganizationStatus" class="hem-organization-status" role="status">Memuatkan carta organisasi HEM…</p>
+        <div id="hemLeadershipChart" class="hem-leadership-chart" aria-label="Hierarki kepimpinan Hal Ehwal Murid"></div>
+        <div id="hemUnitChart" class="hem-unit-chart" aria-label="Bidang dan pegawai Hal Ehwal Murid"></div>
       </section>
       <section class="community-stats" aria-labelledby="communityStatsTitle">
         <div><p class="eyebrow">Statistik warga SK Ranggu</p><h2 id="communityStatsTitle">Warga Sekolah</h2><small>Dikemas kini oleh pentadbir sistem.</small></div>
@@ -452,11 +430,26 @@
             <span id="adminStaffSaveStatus" class="form-message" role="status"></span>
           </div>
         </section>
+        <section class="admin-organization-section" aria-labelledby="adminOrganizationTitle">
+          <div class="admin-section-heading">
+            <div>
+              <p class="modal-kicker">CARTA ORGANISASI</p>
+              <h2 id="adminOrganizationTitle">Pengurusan Organisasi HEM</h2>
+              <p>Pilih nama daripada senarai guru, tetapkan bidang, jawatan, peranan dan susunan. Gambar disimpan secara kekal dan dipaparkan pada semua peranti.</p>
+            </div>
+            <button id="adminOrganizationAdd" class="secondary-button" type="button">+ Tambah pegawai / bidang</button>
+          </div>
+          <div id="adminOrganizationList" class="admin-organization-list" aria-live="polite"></div>
+          <div class="admin-save-row">
+            <button id="adminOrganizationSave" class="primary-button" type="button">Simpan organisasi HEM</button>
+            <span id="adminOrganizationStatus" class="form-message" role="status"></span>
+          </div>
+        </section>
       </div>
     </section>
   </div>
 
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="app.js?v=55" defer></script>
+  <script src="app.js?v=56" defer></script>
 </body>
 </html>

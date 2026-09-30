@@ -1,5 +1,6 @@
 const API_URL = "https://portal-kelas-sekolah-biru.afiqzkablemo.chatgpt.site/api/school";
 const SAFETY_API_URL = API_URL.replace(/\/school$/, "/safety");
+const ORGANIZATION_API_URL = API_URL.replace(/\/school$/, "/organization");
 const $ = (selector) => document.querySelector(selector);
 const state = {
   date: "", classes: [], staffAbsences: { morning: [], afternoon: [] }, dutyTeachers: { morning: [], afternoon: [] }, meta: {}, loading: false, saveTimer: null,
@@ -9,6 +10,7 @@ const state = {
   monitoring: { reports: [], loading: false, previewUrls: [] },
   weeklyDuty: { loading: false }, completion: { loading: false }, calendar: { loading: false }, rmtPreviewUrls: [], rmtReports: [], rmtLoading: false,
   opr: { reports: [], loading: false, previewUrls: [] },
+  organization: { items: [], adminItems: [], deletedIds: [], loading: false },
 };
 const DRAFT_PREFIX = "skrg-pending-v1:";
 const EDITOR_KEY = "skrg-editor-name-v1";
@@ -207,6 +209,56 @@ function count(value, maximum = 999) {
 
 function percent(part, whole) {
   return whole > 0 ? `${((part / whole) * 100).toFixed(2)}%` : "0.00%";
+}
+
+function organizationInitials(name) {
+  const ignored = new Set(["BIN", "BINTI", "BT", "BTE", "PG", "MOHD", "MUHAMMAD", "@"]);
+  const parts = String(name || "").split(/\s+/).filter((part) => part && !ignored.has(part.toUpperCase()));
+  return (parts.slice(0, 2).map((part) => part[0]).join("") || "HEM").toUpperCase();
+}
+
+function organizationPortrait(item, admin = false) {
+  const src = item._previewUrl || item.photoUrl;
+  return src
+    ? `<img src="${safe(src)}" alt="Gambar ${safe(item.staffName || "pegawai HEM")}" loading="lazy">`
+    : `<span class="hem-avatar-placeholder" aria-label="Gambar belum dimuat naik">${safe(organizationInitials(item.staffName))}</span>`;
+}
+
+function organizationPersonCard(item, className = "") {
+  return `<article class="hem-person-card ${className}">
+    <div class="hem-person-photo">${organizationPortrait(item)}</div>
+    <div class="hem-person-copy"><small>${safe(item.positionTitle)}</small><strong>${safe(item.staffName)}</strong><span>${safe(item.fieldName)}</span><em>${safe(item.roleLabel)}</em></div>
+  </article>`;
+}
+
+function renderOrganization() {
+  const items = state.organization.items.filter((item) => item.active !== false).sort((a, b) => Number(a.sortOrder) - Number(b.sortOrder));
+  const leadership = items.filter((item) => Number(item.hierarchyLevel) <= 3);
+  const unitPeople = items.filter((item) => Number(item.hierarchyLevel) >= 4);
+  const levels = [...new Set(leadership.map((item) => Number(item.hierarchyLevel)))].sort((a, b) => a - b);
+  $("#hemLeadershipChart").innerHTML = levels.map((level, index) => {
+    const cards = leadership.filter((item) => Number(item.hierarchyLevel) === level).map((item) => organizationPersonCard(item, level === 2 ? "primary" : "")).join("");
+    return `<div class="hem-hierarchy-level">${cards}</div>${index < levels.length - 1 ? '<div class="hem-hierarchy-arrow" aria-hidden="true">↓</div>' : ""}`;
+  }).join("");
+  $("#hemUnitChart").innerHTML = unitPeople.length
+    ? `<div class="hem-unit-heading"><span>UNIT DAN BIDANG HEM</span><small>${unitPeople.length} pegawai aktif</small></div><div class="hem-unit-grid">${unitPeople.map((item) => organizationPersonCard(item, "unit")).join("")}</div>`
+    : "";
+  $("#hemOrganizationStatus").textContent = items.length ? "Carta ini dikemas kini melalui Tetapan Sistem." : "Belum ada organisasi HEM aktif untuk dipaparkan.";
+}
+
+async function loadOrganization(silent = false) {
+  if (state.organization.loading) return;
+  state.organization.loading = true;
+  if (!silent) $("#hemOrganizationStatus").textContent = "Memuatkan carta organisasi HEM…";
+  try {
+    const response = await fetch(ORGANIZATION_API_URL, { cache: "no-store" });
+    const data = await responseJson(response, "Carta organisasi HEM tidak dapat dibuka.");
+    if (!response.ok) throw new Error(data.error || "Carta organisasi HEM tidak dapat dibuka.");
+    state.organization.items = Array.isArray(data.organization) ? data.organization : [];
+    renderOrganization();
+  } catch (error) {
+    if (!silent) $("#hemOrganizationStatus").textContent = error.message || "Carta organisasi HEM tidak dapat dibuka.";
+  } finally { state.organization.loading = false; }
 }
 
 function classFigures(row) {
@@ -1113,6 +1165,108 @@ function syncAdminStaffDirectoryFromRows() {
   }));
 }
 
+function organizationStaffOptions(selectedId) {
+  return `<option value="">Pilih guru / pegawai</option>${state.adminStaffDirectory.map((item) => `<option value="${Number(item.id) || ""}"${Number(item.id) === Number(selectedId) ? " selected" : ""}>${safe(item.name)}${item.active === false ? " (tidak aktif)" : ""}</option>`).join("")}`;
+}
+
+function renderAdminOrganization() {
+  const target = $("#adminOrganizationList");
+  if (!state.organization.adminItems.length) {
+    target.innerHTML = '<p class="organization-admin-empty">Belum ada rekod. Tekan “+ Tambah pegawai / bidang”.</p>';
+    return;
+  }
+  target.innerHTML = state.organization.adminItems.map((item, index) => `<article class="organization-admin-card" data-organization-index="${index}" data-organization-id="${safe(item.id || "")}">
+    <div class="organization-photo-editor">
+      <div class="organization-photo-preview">${organizationPortrait(item, true)}</div>
+      <label class="secondary-button organization-photo-button">Upload / Tukar gambar<input data-organization-photo type="file" accept="image/jpeg,image/png,image/webp,image/*" hidden></label>
+      <button class="organization-remove-photo" data-organization-remove-photo type="button"${item.photoUrl || item._previewUrl ? "" : " disabled"}>Padam gambar</button>
+    </div>
+    <div class="organization-admin-fields">
+      <label>Nama pegawai<select data-organization-field="staffId" required>${organizationStaffOptions(item.staffId)}</select></label>
+      <label>Jawatan<input data-organization-field="positionTitle" type="text" maxlength="100" value="${safe(item.positionTitle || "")}" placeholder="Contoh: Penyelaras"></label>
+      <label>Bidang HEM<input data-organization-field="fieldName" type="text" maxlength="140" value="${safe(item.fieldName || "")}" placeholder="Contoh: Disiplin &amp; Sahsiah Murid"></label>
+      <label>Peranan<input data-organization-field="roleLabel" type="text" maxlength="100" value="${safe(item.roleLabel || "")}" placeholder="Contoh: Penyelaras / AJK"></label>
+      <label>Tahap hierarki<select data-organization-field="hierarchyLevel">${[[1,"1 - Guru Besar"],[2,"2 - Penolong Kanan HEM"],[3,"3 - Setiausaha HEM"],[4,"4 - Penyelaras Unit"],[5,"5 - AJK / Pegawai"]].map(([value,label]) => `<option value="${value}"${Number(item.hierarchyLevel) === value ? " selected" : ""}>${label}</option>`).join("")}</select></label>
+      <label>Susunan<input data-organization-field="sortOrder" type="number" min="1" max="999" value="${count(item.sortOrder || index + 1, 999)}"></label>
+    </div>
+    <div class="organization-admin-actions">
+      <span class="staff-status ${item.active === false ? "inactive" : "active"}">${item.active === false ? "Tidak aktif" : "Aktif"}</span>
+      <button class="staff-toggle-button ${item.active === false ? "activate" : "deactivate"}" data-organization-toggle type="button">${item.active === false ? "Aktifkan" : "Nyahaktif"}</button>
+      <button class="organization-delete-button" data-organization-delete type="button">Padam rekod</button>
+    </div>
+  </article>`).join("");
+}
+
+function syncAdminOrganizationFromRows() {
+  document.querySelectorAll("#adminOrganizationList [data-organization-index]").forEach((row) => {
+    const index = Number(row.dataset.organizationIndex), item = state.organization.adminItems[index];
+    if (!item) return;
+    for (const field of ["staffId", "positionTitle", "fieldName", "roleLabel", "hierarchyLevel", "sortOrder"]) {
+      const input = row.querySelector(`[data-organization-field="${field}"]`);
+      if (!input) continue;
+      item[field] = ["staffId", "hierarchyLevel", "sortOrder"].includes(field) ? Number(input.value) : input.value.trim();
+    }
+  });
+}
+
+function addOrganizationRow() {
+  syncAdminOrganizationFromRows();
+  state.organization.adminItems.push({ id: "", staffId: "", staffName: "", fieldName: "", positionTitle: "Penyelaras", roleLabel: "Penyelaras", hierarchyLevel: 4, sortOrder: state.organization.adminItems.length + 1, active: true, photoUrl: "", removePhoto: false });
+  renderAdminOrganization();
+  $("#adminOrganizationList [data-organization-index]:last-child select")?.focus();
+}
+
+async function loadAdminOrganization() {
+  $("#adminOrganizationStatus").textContent = "Memuatkan organisasi HEM…";
+  try {
+    const response = await fetch(ORGANIZATION_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "readAdmin", adminPin: state.adminPin }) });
+    const data = await responseJson(response, "Organisasi HEM tidak dapat dibuka.");
+    if (!response.ok) throw new Error(data.error || "Organisasi HEM tidak dapat dibuka.");
+    state.organization.adminItems = (Array.isArray(data.organization) ? data.organization : []).map((item) => ({ ...item, _file: null, _previewUrl: "", removePhoto: false }));
+    state.organization.deletedIds = [];
+    renderAdminOrganization();
+    $("#adminOrganizationStatus").textContent = "Organisasi HEM sedia untuk dikemas kini.";
+  } catch (error) { $("#adminOrganizationStatus").textContent = error.message || "Organisasi HEM tidak dapat dibuka."; }
+}
+
+async function prepareOrganizationPhoto(file) {
+  if (!file || !(file.type || "").startsWith("image/") || file.size > 25 * 1024 * 1024) throw new Error("Pilih gambar JPG, PNG atau WebP yang tidak melebihi 25 MB.");
+  const image = await loadMonitoringImage(file), size = Math.min(image.naturalWidth, image.naturalHeight);
+  const sourceX = Math.max(0, Math.round((image.naturalWidth - size) / 2)), sourceY = Math.max(0, Math.round((image.naturalHeight - size) / 2));
+  const canvas = document.createElement("canvas"); canvas.width = 640; canvas.height = 640;
+  const context = canvas.getContext("2d"); if (!context) throw new Error("Gambar profil tidak dapat diproses.");
+  context.fillStyle = "#ffffff"; context.fillRect(0, 0, 640, 640); context.drawImage(image, sourceX, sourceY, size, size, 0, 0, 640, 640);
+  const blob = await new Promise((resolve, reject) => canvas.toBlob((result) => result ? resolve(result) : reject(new Error("Gambar profil tidak dapat dikecilkan.")), "image/jpeg", 0.86));
+  return { name: "profil-hem.jpg", type: "image/jpeg", data: await readBlobAsBase64(blob) };
+}
+
+async function saveOrganization() {
+  syncAdminOrganizationFromRows();
+  const items = state.organization.adminItems;
+  if (!items.length || items.some((item) => !Number(item.staffId) || !item.fieldName || !item.positionTitle || !item.roleLabel)) {
+    $("#adminOrganizationStatus").textContent = "Lengkapkan nama, bidang, jawatan dan peranan bagi setiap rekod."; return;
+  }
+  $("#adminOrganizationSave").disabled = true; $("#adminOrganizationStatus").textContent = "Memproses gambar dan menyimpan…";
+  try {
+    const entries = [];
+    for (const item of items) entries.push({
+      id: item.id || "", staffId: Number(item.staffId), fieldName: item.fieldName, positionTitle: item.positionTitle, roleLabel: item.roleLabel,
+      hierarchyLevel: Number(item.hierarchyLevel), sortOrder: Number(item.sortOrder), active: item.active !== false, removePhoto: item.removePhoto === true,
+      photo: item._file ? await prepareOrganizationPhoto(item._file) : null,
+    });
+    const response = await fetch(ORGANIZATION_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "saveOrganization", adminPin: state.adminPin, entries, deletedIds: state.organization.deletedIds }) });
+    const data = await responseJson(response, "Organisasi HEM gagal disimpan.");
+    if (!response.ok) throw new Error(data.error || "Organisasi HEM gagal disimpan.");
+    for (const item of state.organization.adminItems) if (item._previewUrl) URL.revokeObjectURL(item._previewUrl);
+    state.organization.adminItems = (Array.isArray(data.organization) ? data.organization : []).map((item) => ({ ...item, _file: null, _previewUrl: "", removePhoto: false }));
+    state.organization.deletedIds = [];
+    state.organization.items = state.organization.adminItems.filter((item) => item.active !== false);
+    renderAdminOrganization(); renderOrganization();
+    $("#adminOrganizationStatus").textContent = "Organisasi HEM berjaya disimpan dan dikemas kini pada semua peranti.";
+  } catch (error) { $("#adminOrganizationStatus").textContent = error.message || "Organisasi HEM gagal disimpan."; }
+  finally { $("#adminOrganizationSave").disabled = false; }
+}
+
 function showAdminLogin(message = "") {
   state.adminPin = "";
   $("#adminSettingsView").hidden = true;
@@ -1147,6 +1301,7 @@ async function verifyAdmin(event) {
     $("#adminSaveStatus").textContent = "";
     renderAdminClasses(); renderSchoolStats();
     renderAdminStaffDirectory();
+    await loadAdminOrganization();
   } catch (error) {
     state.adminPin = "";
     $("#adminError").textContent = error.message || "Kod admin tidak sah.";
@@ -1183,6 +1338,7 @@ async function saveStaffDirectory() {
     state.adminStaffDirectory = Array.isArray(data.staffDirectory) ? data.staffDirectory.map((item) => ({ ...item, active: Boolean(item.active) })) : entries;
     state.staffDirectory = state.adminStaffDirectory.filter((item) => item.active);
     refreshStaffNameChoices(); renderStaff(); renderAdminStaffDirectory(); updateEditingAccess();
+    if (state.organization.adminItems.length) renderAdminOrganization();
     $("#adminStaffSaveStatus").textContent = "Senarai nama berjaya dikemas kini untuk semua guru.";
   } catch (error) {
     $("#adminStaffSaveStatus").textContent = error.message || "Senarai nama gagal disimpan.";
@@ -1485,6 +1641,39 @@ $("#adminSave").addEventListener("click", saveClassProfiles);
 $("#adminStaffAdd").addEventListener("click", addAdminStaffRow);
 $("#adminStaffSave").addEventListener("click", saveStaffDirectory);
 $("#adminStatsSave").addEventListener("click", saveSchoolStats);
+$("#adminOrganizationAdd").addEventListener("click", addOrganizationRow);
+$("#adminOrganizationSave").addEventListener("click", saveOrganization);
+$("#adminOrganizationList").addEventListener("input", syncAdminOrganizationFromRows);
+$("#adminOrganizationList").addEventListener("change", (event) => {
+  const row = event.target.closest("[data-organization-index]"); if (!row) return;
+  syncAdminOrganizationFromRows();
+  const index = Number(row.dataset.organizationIndex), item = state.organization.adminItems[index];
+  if (event.target.matches('[data-organization-field="staffId"]')) {
+    item.staffName = state.adminStaffDirectory.find((staff) => Number(staff.id) === Number(item.staffId))?.name || "";
+  }
+  if (event.target.matches("[data-organization-photo]")) {
+    const file = event.target.files?.[0]; if (!file) return;
+    if (!(file.type || "").startsWith("image/") || file.size > 25 * 1024 * 1024) { event.target.value = ""; $("#adminOrganizationStatus").textContent = "Pilih gambar yang sah dan tidak melebihi 25 MB."; return; }
+    if (item._previewUrl) URL.revokeObjectURL(item._previewUrl);
+    item._file = file; item._previewUrl = URL.createObjectURL(file); item.removePhoto = false;
+  }
+  renderAdminOrganization();
+});
+$("#adminOrganizationList").addEventListener("click", (event) => {
+  const row = event.target.closest("[data-organization-index]"); if (!row) return;
+  syncAdminOrganizationFromRows();
+  const index = Number(row.dataset.organizationIndex), item = state.organization.adminItems[index];
+  if (event.target.closest("[data-organization-toggle]")) item.active = item.active === false;
+  else if (event.target.closest("[data-organization-remove-photo]")) {
+    if (item._previewUrl) URL.revokeObjectURL(item._previewUrl);
+    item._file = null; item._previewUrl = ""; item.photoUrl = ""; item.removePhoto = true;
+  } else if (event.target.closest("[data-organization-delete]")) {
+    if (item.id) state.organization.deletedIds.push(item.id);
+    if (item._previewUrl) URL.revokeObjectURL(item._previewUrl);
+    state.organization.adminItems.splice(index, 1);
+  } else return;
+  renderAdminOrganization();
+});
 $("#adminStaffBody").addEventListener("input", (event) => {
   const input = event.target.closest("[data-admin-staff-name]");
   if (!input) return;
@@ -1557,6 +1746,7 @@ activateViewFromHash();
 loadReport();
 loadAnalytics();
 loadMonitoringReports();
+loadOrganization();
 
 setInterval(() => {
   const editing = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName || "");
@@ -1568,6 +1758,10 @@ setInterval(() => {
   if (document.visibilityState === "visible" && !monitoringEditing && !state.monitoring.loading) loadMonitoringReports();
 }, 30000);
 
+setInterval(() => {
+  if (document.visibilityState === "visible" && $("#adminModal").hidden) loadOrganization(true);
+}, 60000);
+
 window.addEventListener("online", () => { if (hasPendingChanges()) scheduleSave(); });
 window.addEventListener("beforeunload", (event) => {
   if (!hasPendingChanges() && !state.savePromise) return;
@@ -1576,7 +1770,7 @@ window.addEventListener("beforeunload", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=55", { scope: "./", updateViaCache: "none" })
+    navigator.serviceWorker.register("./service-worker.js?v=56", { scope: "./", updateViaCache: "none" })
       .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
   });
 }
