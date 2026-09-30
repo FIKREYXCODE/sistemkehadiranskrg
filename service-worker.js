@@ -4,7 +4,7 @@ const APP_SHELL = [
   "./index.html",
   "./styles.css?v=57",
   "./app.js?v=57",
-  "./manifest.webmanifest?v=56",
+  "./manifest.webmanifest?v=57",
   "./logo-kpm-cutout.png",
   "./logo-skrg-cutout.png",
   "./icon-smarttrack-choice-180.png",
