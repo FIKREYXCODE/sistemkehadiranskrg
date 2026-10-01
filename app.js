@@ -115,7 +115,7 @@ function refreshStaffNameChoices() {
     element.innerHTML = `<option value="">${safe(placeholder)}</option>${choices.map((name) => `<option value="${safe(name)}"${name === current ? " selected" : ""}>${safe(name)}</option>`).join("")}`;
   };
   fillSelect($("#editorName"), "Pilih nama guru / AKP");
-  for (const selector of ["#preparedByMorning", "#preparedByAfternoon", "#oprPreparedBy", "#adminLetterUpdatedBy"]) fillSelect($(selector), "Pilih nama guru / AKP");
+  for (const selector of ["#preparedByMorning", "#preparedByAfternoon", "#oprPreparedBy", "#letterUpdatedBy"]) fillSelect($(selector), "Pilih nama guru / AKP");
   for (const selector of ["#approvedByMorning", "#approvedByAfternoon"]) {
     const element = $(selector); if (!element) continue;
     const current = element.value;
@@ -1220,22 +1220,23 @@ async function encodeLetterFile(file) {
   return { name: file.name, type: file.type, data };
 }
 
-async function saveAdminLetter(event) {
+async function saveLetter(event) {
   event.preventDefault();
-  const fileInput = $("#adminLetterFile"), driveUrl = $("#adminLetterDriveUrl").value.trim();
-  if (!fileInput.files?.[0] && !driveUrl) { $("#adminLetterStatus").textContent = "Pilih fail surat atau masukkan pautan Google Drive."; return; }
-  $("#adminLetterSave").disabled = true; $("#adminLetterStatus").textContent = "Memuat naik dan menyimpan surat…";
+  const fileInput = $("#letterFile"), driveUrl = $("#letterDriveUrl").value.trim();
+  if (!fileInput.files?.[0] && !driveUrl) { $("#letterStatus").textContent = "Pilih fail surat atau masukkan pautan Google Drive."; return; }
+  $("#letterSave").disabled = true; $("#letterStatus").textContent = "Memuat naik dan menyimpan surat…";
   try {
     const file = await encodeLetterFile(fileInput.files?.[0]);
-    const payload = { action: "createLetter", adminPin: state.adminPin, title: $("#adminLetterName").value.trim(), letterDate: $("#adminLetterDate").value, category: $("#adminLetterCategory").value, referenceNo: $("#adminLetterReference").value.trim(), note: $("#adminLetterNote").value.trim(), updatedBy: $("#adminLetterUpdatedBy").value, driveUrl, file };
+    const payload = { action: "createLetter", title: $("#letterName").value.trim(), letterDate: $("#letterDate").value, category: $("#letterCategory").value, referenceNo: $("#letterReference").value.trim(), note: $("#letterNote").value.trim(), updatedBy: $("#letterUpdatedBy").value, driveUrl, file };
     const response = await fetch(CONTENT_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     const data = await responseJson(response, "Surat gagal disimpan.");
     if (!response.ok) throw new Error(data.error || "Surat gagal disimpan.");
-    $("#adminLetterForm").reset(); $("#adminLetterDate").value = state.date;
-    await loadAdminContent(); await loadPublicContent();
-    $("#adminLetterStatus").textContent = "Surat berjaya disimpan dalam arkib bersama.";
-  } catch (error) { $("#adminLetterStatus").textContent = error.message || "Surat gagal disimpan."; }
-  finally { $("#adminLetterSave").disabled = false; }
+    $("#letterForm").reset(); $("#letterDate").value = state.date; refreshStaffNameChoices();
+    await loadPublicContent();
+    if (!$("#letterArchive").hidden) { $("#letterArchive").hidden = true; await toggleLetterArchive(); }
+    $("#letterStatus").textContent = "Surat berjaya disimpan dalam arkib bersama dan boleh dilihat oleh semua guru.";
+  } catch (error) { $("#letterStatus").textContent = error.message || "Surat gagal disimpan."; }
+  finally { $("#letterSave").disabled = false; }
 }
 
 function visibleClasses() {
@@ -1937,7 +1938,7 @@ $("#adminAnnouncementList").addEventListener("click", (event) => {
   else return;
   renderAdminAnnouncements();
 });
-$("#adminLetterForm").addEventListener("submit", saveAdminLetter);
+$("#letterForm").addEventListener("submit", saveLetter);
 $("#adminOrganizationList").addEventListener("input", syncAdminOrganizationFromRows);
 $("#adminOrganizationList").addEventListener("change", (event) => {
   const row = event.target.closest("[data-organization-index]"); if (!row) return;
@@ -2033,7 +2034,7 @@ $("#analysisDate").value = state.date;
 $("#weeklyDutyDate").value = state.date;
 $("#completionDate").value = state.date;
 $("#calendarDate").value = state.date;
-$("#adminLetterDate").value = state.date;
+$("#letterDate").value = state.date;
 setupRmtTemplate();
 setupKpiFilters();
 refreshStaffNameChoices();
@@ -2079,7 +2080,7 @@ window.addEventListener("beforeunload", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=62", { scope: "./", updateViaCache: "none" })
+    navigator.serviceWorker.register("./service-worker.js?v=63", { scope: "./", updateViaCache: "none" })
       .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
   });
 }

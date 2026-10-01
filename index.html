@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="HEM SMARTTRACK">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="manifest" href="manifest.webmanifest?v=62">
+  <link rel="manifest" href="manifest.webmanifest?v=63">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=62">
+  <link rel="stylesheet" href="styles.css?v=63">
 </head>
 <body>
   <header class="topbar no-print">
@@ -304,9 +304,26 @@
       <div id="oprGallery" class="monitoring-gallery opr-gallery"></div>
       <section class="hem-letters-section" aria-labelledby="hemLettersTitle">
         <div class="monitoring-gallery-head">
-          <div><p class="eyebrow">Dokumen rasmi unit</p><h3 id="hemLettersTitle">Surat Menyurat HEM</h3><p>Dua surat terbaharu dipaparkan. Semua surat lama kekal dalam arkib bersama.</p></div>
+          <div><p class="eyebrow">Dokumen rasmi unit</p><h3 id="hemLettersTitle">Surat Menyurat HEM</h3><p>Semua guru dan AKP boleh memasukkan surat berkaitan HEM. Dua surat terbaharu dipaparkan dan surat lama kekal dalam arkib bersama.</p></div>
           <button id="letterArchiveToggle" class="secondary-button" type="button" aria-expanded="false">Lihat Semua Surat HEM</button>
         </div>
+        <form id="letterForm" class="letter-upload-form" aria-labelledby="letterUploadTitle">
+          <div class="letter-upload-heading">
+            <h4 id="letterUploadTitle">Masukkan surat berkaitan HEM</h4>
+            <p>Isi maklumat surat dan pilih fail, atau masukkan pautan Google Drive. Surat yang disimpan boleh dilihat oleh semua guru pada pelbagai peranti.</p>
+          </div>
+          <div class="letter-upload-grid">
+            <label>Tajuk surat<input id="letterName" type="text" maxlength="220" placeholder="Contoh: Surat Makluman Program HEM" required></label>
+            <label>Tarikh surat<input id="letterDate" type="date" required></label>
+            <label>Kategori<select id="letterCategory" required><option>Surat Masuk</option><option>Surat Keluar</option><option>Surat Dalaman</option><option>Surat Makluman</option><option>Surat PPD / JPN / KPM</option><option>Lain-lain</option></select></label>
+            <label>No. rujukan<input id="letterReference" type="text" maxlength="120" placeholder="Pilihan"></label>
+            <label>Nama pengunggah<select id="letterUpdatedBy" class="staff-choice" required><option value="">Pilih nama guru / AKP</option></select></label>
+            <label>Pautan Google Drive (pilihan)<input id="letterDriveUrl" type="url" placeholder="https://drive.google.com/..."></label>
+            <label class="letter-upload-note">Catatan<textarea id="letterNote" maxlength="1000" rows="3" placeholder="Ringkasan atau tindakan berkaitan surat (pilihan)"></textarea></label>
+            <label class="letter-upload-file">Fail surat (PDF, DOC, DOCX atau gambar; maks. 8 MB)<input id="letterFile" type="file" accept=".pdf,.doc,.docx,image/jpeg,image/png,image/webp"></label>
+          </div>
+          <div class="monitoring-submit-row"><button id="letterSave" class="primary-button" type="submit">Simpan Surat HEM</button><p id="letterStatus" class="form-message" role="status" aria-live="polite"></p></div>
+        </form>
         <p id="letterListStatus" class="monitoring-list-status" role="status">Memuatkan surat HEM…</p>
         <div id="latestLetterGrid" class="hem-letter-grid" aria-live="polite"></div>
         <div id="letterArchive" class="hem-letter-archive" hidden>
@@ -458,18 +475,7 @@
           <div class="admin-save-row"><button id="adminAnnouncementSave" class="primary-button" type="button">Simpan makluman</button><span id="adminAnnouncementStatus" class="form-message" role="status"></span></div>
         </section>
         <section class="admin-content-section" aria-labelledby="adminLetterTitle">
-          <div class="admin-section-heading"><div><p class="modal-kicker">ARKIB DOKUMEN</p><h2 id="adminLetterTitle">Surat Menyurat HEM</h2><p>Muat naik fail atau masukkan pautan Google Drive. Dua surat terbaharu dipaparkan secara automatik.</p></div></div>
-          <form id="adminLetterForm" class="admin-letter-form">
-            <label>Tajuk surat<input id="adminLetterName" type="text" maxlength="220" required></label>
-            <label>Tarikh surat<input id="adminLetterDate" type="date" required></label>
-            <label>Kategori<select id="adminLetterCategory" required><option>Surat Masuk</option><option>Surat Keluar</option><option>Surat Dalaman</option><option>Surat Makluman</option><option>Surat PPD / JPN / KPM</option><option>Lain-lain</option></select></label>
-            <label>No. rujukan<input id="adminLetterReference" type="text" maxlength="120"></label>
-            <label>Nama pengunggah<select id="adminLetterUpdatedBy" class="staff-choice" required><option value="">Pilih nama guru / AKP</option></select></label>
-            <label>Pautan Google Drive (pilihan)<input id="adminLetterDriveUrl" type="url" placeholder="https://drive.google.com/..."></label>
-            <label class="admin-letter-note">Catatan<textarea id="adminLetterNote" maxlength="1000" rows="3"></textarea></label>
-            <label class="admin-letter-file">Fail surat (PDF, DOC, DOCX atau gambar; maks. 8 MB)<input id="adminLetterFile" type="file" accept=".pdf,.doc,.docx,image/jpeg,image/png,image/webp"></label>
-            <div class="admin-save-row"><button id="adminLetterSave" class="primary-button" type="submit">Simpan surat</button><span id="adminLetterStatus" class="form-message" role="status"></span></div>
-          </form>
+          <div class="admin-section-heading"><div><p class="modal-kicker">ARKIB DOKUMEN</p><h2 id="adminLetterTitle">Surat Menyurat HEM</h2><p>Guru memasukkan surat terus melalui halaman Template OPR HEM tanpa kod pentadbir. Arkib semasa dipaparkan di bawah untuk semakan pentadbir.</p></div></div>
           <div id="adminLetterList" class="admin-letter-list"></div>
         </section>
         <section class="admin-organization-section" aria-labelledby="adminOrganizationTitle">
@@ -496,6 +502,6 @@
     <div class="news-ticker-viewport"><div id="newsTickerTrack" class="news-ticker-track"></div></div>
   </aside>
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="app.js?v=62" defer></script>
+  <script src="app.js?v=63" defer></script>
 </body>
 </html>
