@@ -10,7 +10,7 @@ const state = {
   analytics: { period: "week", date: "", loading: false, filtersReady: false, filterPromise: null, annualLoadingYear: "", annualCache: new Map() },
   monitoring: { reports: [], loading: false, previewUrls: [] },
   weeklyDuty: { loading: false }, completion: { loading: false }, calendar: { loading: false }, rmtPreviewUrls: [], rmtReports: [], rmtLoading: false,
-  opr: { reports: [], loading: false, previewUrls: [] },
+  opr: { reports: [], loading: false, previewUrls: [] }, editingRecord: null,
   organization: { items: [], adminItems: [], deletedIds: [], loading: false },
   content: { announcements: [], adminAnnouncements: [], deletedAnnouncementIds: [], latestLetters: [], letters: [], loading: false },
 };
@@ -115,7 +115,7 @@ function refreshStaffNameChoices() {
     element.innerHTML = `<option value="">${safe(placeholder)}</option>${choices.map((name) => `<option value="${safe(name)}"${name === current ? " selected" : ""}>${safe(name)}</option>`).join("")}`;
   };
   fillSelect($("#editorName"), "Pilih nama guru / AKP");
-  for (const selector of ["#preparedByMorning", "#preparedByAfternoon", "#oprPreparedBy", "#letterUpdatedBy"]) fillSelect($(selector), "Pilih nama guru / AKP");
+  for (const selector of ["#preparedByMorning", "#preparedByAfternoon", "#oprPreparedBy", "#letterUpdatedBy", "#editOprPreparedBy", "#editLetterUpdatedBy"]) fillSelect($(selector), "Pilih nama guru / AKP");
   for (const selector of ["#approvedByMorning", "#approvedByAfternoon"]) {
     const element = $(selector); if (!element) continue;
     const current = element.value;
@@ -1013,7 +1013,8 @@ function renderOprReports() {
   $("#oprGallery").innerHTML = state.opr.reports.map((report) => {
     const created = new Intl.DateTimeFormat("ms-MY", { dateStyle: "medium", timeStyle: "short" }).format(new Date(Number(report.createdAt)));
     const photos = (Array.isArray(report.photos) ? report.photos : []).map((photo, index) => `<a href="${safe(photo.url)}" target="_blank" rel="noopener"><img src="${safe(photo.url)}" loading="lazy" alt="${safe(report.location)} gambar ${index + 1}"></a>`).join("");
-    return `<article class="monitoring-report"><div class="monitoring-photo-grid">${photos}</div><div class="monitoring-report-body"><div class="monitoring-report-top"><span class="category-badge">OPR HEM</span><time>${safe(created)}</time></div><h3>${safe(report.location)}</h3><p class="monitoring-by">Disediakan oleh <strong>${safe(report.updatedBy || "—")}</strong></p><dl><div><dt>Tarikh program</dt><dd>${safe(report.reportDate || "—")}</dd></div></dl></div></article>`;
+    const audit = report.lastEditedAt ? `<p class="record-audit">Dikemas kini oleh <strong>${safe(report.lastEditedBy || "—")}</strong> • ${safe(formatAuditTime(report.lastEditedAt))}</p>` : `<p class="record-audit">Rekod asal • ${safe(created)}</p>`;
+    return `<article class="monitoring-report"><div class="monitoring-photo-grid">${photos}</div><div class="monitoring-report-body"><div class="monitoring-report-top"><span class="category-badge">OPR HEM</span><time>${safe(created)}</time></div><h3>${safe(report.location)}</h3><p class="monitoring-by">Disediakan oleh <strong>${safe(report.updatedBy || "—")}</strong></p><dl><div><dt>Tarikh program</dt><dd>${safe(report.reportDate || "—")}</dd></div></dl>${audit}<button class="record-edit-button" type="button" data-edit-opr="${safe(report.id)}">✎ Edit OPR</button></div></article>`;
   }).join("");
   $("#oprListStatus").textContent = state.opr.reports.length ? `${state.opr.reports.length} OPR HEM ditemui pada tarikh ini.` : "Belum ada OPR HEM pada tarikh dipilih.";
 }
@@ -1114,9 +1115,80 @@ function formatLetterDate(value) {
   return Number.isNaN(date.getTime()) ? String(value || "—") : new Intl.DateTimeFormat("ms-MY", { day: "numeric", month: "long", year: "numeric" }).format(date);
 }
 
+function formatAuditTime(value) {
+  const time = Number(value);
+  if (!time) return "—";
+  return new Intl.DateTimeFormat("ms-MY", { dateStyle: "medium", timeStyle: "short" }).format(new Date(time));
+}
+
 function letterCard(letter, admin = false) {
   const fileLabel = letter.fileName || (letter.driveUrl ? "Buka di Google Drive" : "Buka surat");
-  return `<article class="hem-letter-card"><div class="letter-card-top"><span class="category-badge">${safe(letter.category || "Surat HEM")}</span><time>${safe(formatLetterDate(letter.letterDate))}</time></div><h4>${safe(letter.title)}</h4><dl><div><dt>No. rujukan</dt><dd>${safe(letter.referenceNo || "—")}</dd></div><div><dt>Dimuat naik oleh</dt><dd>${safe(letter.updatedBy || "—")}</dd></div>${letter.note ? `<div><dt>Catatan</dt><dd>${safe(letter.note)}</dd></div>` : ""}</dl><a class="letter-open-button" href="${safe(letter.fileUrl || letter.driveUrl || "#")}" target="_blank" rel="noopener">📄 ${safe(fileLabel)} ↗</a>${admin ? `<small>Dimuat naik ${safe(new Intl.DateTimeFormat("ms-MY", { dateStyle: "medium", timeStyle: "short" }).format(new Date(Number(letter.uploadedAt))))}</small>` : ""}</article>`;
+  const audit = letter.lastEditedAt ? `Dikemas kini oleh <strong>${safe(letter.lastEditedBy || "—")}</strong> • ${safe(formatAuditTime(letter.lastEditedAt))}` : `Rekod asal • ${safe(formatAuditTime(letter.uploadedAt))}`;
+  return `<article class="hem-letter-card"><div class="letter-card-top"><span class="category-badge">${safe(letter.category || "Surat HEM")}</span><time>${safe(formatLetterDate(letter.letterDate))}</time></div><h4>${safe(letter.title)}</h4><dl><div><dt>No. rujukan</dt><dd>${safe(letter.referenceNo || "—")}</dd></div><div><dt>Dimuat naik oleh</dt><dd>${safe(letter.updatedBy || "—")}</dd></div>${letter.note ? `<div><dt>Catatan</dt><dd>${safe(letter.note)}</dd></div>` : ""}</dl><div class="letter-card-actions"><a class="letter-open-button" href="${safe(letter.fileUrl || letter.driveUrl || "#")}" target="_blank" rel="noopener">📄 ${safe(fileLabel)} ↗</a>${admin ? "" : `<button class="record-edit-button" type="button" data-edit-letter="${safe(letter.id)}">✎ Edit surat</button>`}</div><p class="record-audit">${audit}</p>${admin ? `<small>Dimuat naik ${safe(formatAuditTime(letter.uploadedAt))}</small>` : ""}</article>`;
+}
+
+function requireRecordEditor() {
+  const name = editorName();
+  if (name) return name;
+  setStatus("Pilih Nama pengisi dahulu sebelum mengedit rekod.", "error");
+  $("#identityBar").hidden = false;
+  $("#identityBar").scrollIntoView({ behavior: "smooth", block: "center" });
+  setTimeout(() => $("#editorName").focus(), 350);
+  return "";
+}
+
+function openRecordEditor(type, id) {
+  const editor = requireRecordEditor();
+  if (!editor) return;
+  const record = type === "opr"
+    ? state.opr.reports.find((item) => String(item.id) === String(id))
+    : [...state.content.latestLetters, ...state.content.letters].find((item) => String(item.id) === String(id));
+  if (!record) return;
+  state.editingRecord = record;
+  $("#recordEditType").value = type; $("#recordEditId").value = id;
+  $("#oprEditFields").hidden = type !== "opr"; $("#letterEditFields").hidden = type !== "letter";
+  $("#oprEditFields").querySelectorAll("input,select,textarea").forEach((field) => { field.disabled = type !== "opr"; });
+  $("#letterEditFields").querySelectorAll("input,select,textarea").forEach((field) => { field.disabled = type !== "letter"; });
+  $("#recordEditTitle").textContent = type === "opr" ? "Edit OPR HEM" : "Edit Surat Menyurat HEM";
+  $("#recordEditorName").textContent = editor; $("#recordEditStatus").textContent = "";
+  if (type === "opr") {
+    $("#editOprProgram").value = record.location || ""; $("#editOprDate").value = record.reportDate || state.date;
+    $("#editOprPreparedBy").value = record.updatedBy || "";
+  } else {
+    $("#editLetterName").value = record.title || ""; $("#editLetterDate").value = record.letterDate || state.date;
+    $("#editLetterCategory").value = record.category || "Surat Masuk"; $("#editLetterReference").value = record.referenceNo || "";
+    $("#editLetterUpdatedBy").value = record.updatedBy || ""; $("#editLetterDriveUrl").value = record.driveUrl || "";
+    $("#editLetterNote").value = record.note || "";
+  }
+  $("#recordEditModal").hidden = false; document.body.classList.add("modal-open");
+}
+
+function closeRecordEditor() {
+  state.editingRecord = null; $("#recordEditModal").hidden = true; document.body.classList.remove("modal-open");
+}
+
+async function saveRecordEdit(event) {
+  event.preventDefault();
+  const type = $("#recordEditType").value, id = $("#recordEditId").value, editor = requireRecordEditor();
+  if (!editor) return;
+  $("#recordEditSave").disabled = true; $("#recordEditStatus").textContent = "Menyimpan perubahan…";
+  try {
+    let response;
+    if (type === "opr") {
+      response = await fetch(SAFETY_API_URL, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id, program: $("#editOprProgram").value.trim(), date: $("#editOprDate").value, preparedBy: $("#editOprPreparedBy").value, editorName: editor }) });
+    } else {
+      response = await fetch(CONTENT_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "updateLetter", id, title: $("#editLetterName").value.trim(), letterDate: $("#editLetterDate").value, category: $("#editLetterCategory").value, referenceNo: $("#editLetterReference").value.trim(), note: $("#editLetterNote").value.trim(), updatedBy: $("#editLetterUpdatedBy").value, driveUrl: $("#editLetterDriveUrl").value.trim(), editorName: editor }) });
+    }
+    const data = await responseJson(response, "Rekod gagal dikemas kini.");
+    if (!response.ok) throw new Error(data.error || "Rekod gagal dikemas kini.");
+    if (type === "opr") await loadOprReports();
+    else {
+      await loadPublicContent();
+      if (!$("#letterArchive").hidden) { $("#letterArchive").hidden = true; await toggleLetterArchive(); }
+    }
+    closeRecordEditor(); setStatus(`Rekod berjaya dikemas kini oleh ${editor}.`, "saved");
+  } catch (error) { $("#recordEditStatus").textContent = error.message || "Rekod gagal dikemas kini."; }
+  finally { $("#recordEditSave").disabled = false; }
 }
 
 function renderPublicLetters() {
@@ -1892,7 +1964,7 @@ $("#rmtFrom").addEventListener("change", loadRmtReports);
 $("#menuToggle").addEventListener("click", () => setSidebar(!document.body.classList.contains("sidebar-open")));
 $("#sidebarBackdrop").addEventListener("click", () => setSidebar(false));
 document.querySelectorAll("[data-view-link]").forEach((link) => link.addEventListener("click", () => setSidebar(false)));
-document.addEventListener("keydown", (event) => { if (event.key === "Escape") setSidebar(false); });
+document.addEventListener("keydown", (event) => { if (event.key === "Escape") { setSidebar(false); if (!$("#recordEditModal").hidden) closeRecordEditor(); } });
 $("#monitoringRefresh").addEventListener("click", loadMonitoringReports);
 $("#monitoringPhotos").addEventListener("change", (event) => renderMonitoringPreview(event.target.files));
 $("#monitoringForm").addEventListener("submit", saveMonitoringReport);
@@ -1908,7 +1980,13 @@ $("#oprPhotos").addEventListener("change", (event) => renderOprPreview(event.tar
 $("#oprForm").addEventListener("submit", saveOprReport);
 $("#oprRefresh").addEventListener("click", loadOprReports);
 $("#oprDate").addEventListener("change", loadOprReports);
+$("#oprGallery").addEventListener("click", (event) => { const button = event.target.closest("[data-edit-opr]"); if (button) openRecordEditor("opr", button.dataset.editOpr); });
 $("#letterArchiveToggle").addEventListener("click", toggleLetterArchive);
+$("#latestLetterGrid").addEventListener("click", (event) => { const button = event.target.closest("[data-edit-letter]"); if (button) openRecordEditor("letter", button.dataset.editLetter); });
+$("#letterArchiveGrid").addEventListener("click", (event) => { const button = event.target.closest("[data-edit-letter]"); if (button) openRecordEditor("letter", button.dataset.editLetter); });
+$("#recordEditForm").addEventListener("submit", saveRecordEdit);
+$("#recordEditClose").addEventListener("click", closeRecordEditor);
+$("#recordEditModal").addEventListener("click", (event) => { if (event.target === $("#recordEditModal")) closeRecordEditor(); });
 $("#adminButton").addEventListener("click", async () => {
   await flushSave();
   $("#adminModal").hidden = false;
@@ -2080,7 +2158,7 @@ window.addEventListener("beforeunload", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=64", { scope: "./", updateViaCache: "none" })
+    navigator.serviceWorker.register("./service-worker.js?v=65", { scope: "./", updateViaCache: "none" })
       .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
   });
 }

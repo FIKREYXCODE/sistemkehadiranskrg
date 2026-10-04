@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="HEM SMARTTRACK">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="manifest" href="manifest.webmanifest?v=64">
+  <link rel="manifest" href="manifest.webmanifest?v=65">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=64">
+  <link rel="stylesheet" href="styles.css?v=65">
 </head>
 <body>
   <header class="topbar no-print">
@@ -326,6 +326,7 @@
           <div class="monitoring-submit-row"><button id="letterSave" class="primary-button" type="submit">Simpan Surat HEM</button><p id="letterStatus" class="form-message" role="status" aria-live="polite"></p></div>
         </form>
         <p id="letterListStatus" class="monitoring-list-status" role="status">Memuatkan surat HEM…</p>
+        <p class="letter-swipe-hint">Leret ke kiri atau kanan untuk melihat surat lain.</p>
         <div id="latestLetterGrid" class="hem-letter-grid" aria-live="polite"></div>
         <div id="letterArchive" class="hem-letter-archive" hidden>
           <div class="letter-archive-heading"><h3>Arkib Surat HEM</h3><a class="secondary-button" href="https://drive.google.com/drive/folders/1YP8_ko7EgwcPCGuU2xKYvmtH0ogCm2IQ" target="_blank" rel="noopener">Buka Folder Google Drive ↗</a></div>
@@ -409,6 +410,34 @@
     </section>
   </main>
   </div>
+  </div>
+
+  <div id="recordEditModal" class="modal-backdrop no-print" hidden>
+    <section class="admin-modal record-edit-modal" role="dialog" aria-modal="true" aria-labelledby="recordEditTitle">
+      <button id="recordEditClose" class="modal-close" type="button" aria-label="Tutup">×</button>
+      <p class="modal-kicker">KEMAS KINI REKOD</p>
+      <h2 id="recordEditTitle">Edit rekod</h2>
+      <p class="record-edit-note">Perubahan direkodkan secara automatik menggunakan nama pengisi semasa.</p>
+      <form id="recordEditForm" class="record-edit-form">
+        <input id="recordEditType" type="hidden"><input id="recordEditId" type="hidden">
+        <div id="oprEditFields" class="record-edit-fields">
+          <label>Nama program<input id="editOprProgram" type="text" maxlength="180" required></label>
+          <label>Tarikh program<input id="editOprDate" type="date" required></label>
+          <label>Disediakan oleh<select id="editOprPreparedBy" class="staff-choice" required><option value="">Pilih nama guru / AKP</option></select></label>
+        </div>
+        <div id="letterEditFields" class="record-edit-fields" hidden>
+          <label>Tajuk surat<input id="editLetterName" type="text" maxlength="220"></label>
+          <label>Tarikh surat<input id="editLetterDate" type="date"></label>
+          <label>Kategori<select id="editLetterCategory"><option>Surat Masuk</option><option>Surat Keluar</option><option>Surat Dalaman</option><option>Surat Makluman</option><option>Surat PPD / JPN / KPM</option><option>Lain-lain</option></select></label>
+          <label>No. rujukan<input id="editLetterReference" type="text" maxlength="120"></label>
+          <label>Nama pengunggah<select id="editLetterUpdatedBy" class="staff-choice"><option value="">Pilih nama guru / AKP</option></select></label>
+          <label>Pautan Google Drive<input id="editLetterDriveUrl" type="url" placeholder="https://drive.google.com/..."></label>
+          <label class="record-edit-wide">Catatan<textarea id="editLetterNote" maxlength="1000" rows="3"></textarea></label>
+        </div>
+        <p class="record-editor-audit">Penyunting: <strong id="recordEditorName">—</strong></p>
+        <div class="admin-save-row"><button id="recordEditSave" class="primary-button" type="submit">Simpan perubahan</button><span id="recordEditStatus" class="form-message" role="status"></span></div>
+      </form>
+    </section>
   </div>
 
   <div id="adminModal" class="modal-backdrop no-print" hidden>
@@ -503,6 +532,6 @@
     <div class="news-ticker-viewport"><div id="newsTickerTrack" class="news-ticker-track"></div></div>
   </aside>
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="app.js?v=64" defer></script>
+  <script src="app.js?v=65" defer></script>
 </body>
 </html>
