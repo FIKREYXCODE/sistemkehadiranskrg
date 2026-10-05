@@ -1056,7 +1056,9 @@ async function saveOprReport(event) {
     $("#oprProgram").value = "";
     $("#oprPhotos").value = "";
     clearOprPreview();
-    $("#oprFormStatus").textContent = "OPR HEM berjaya disimpan dan boleh dilihat oleh guru lain.";
+    $("#oprFormStatus").textContent = result.archive?.ok === false
+      ? `OPR HEM selamat dalam sistem. ${result.archive.warning || "Salinan Google Drive belum berjaya."}`
+      : "OPR HEM berjaya disimpan dalam sistem dan dua simpanan Google Drive.";
     await loadOprReports();
   } catch (error) {
     $("#oprFormStatus").textContent = error.message || "OPR HEM gagal disimpan.";
@@ -1306,7 +1308,11 @@ async function saveLetter(event) {
     $("#letterForm").reset(); $("#letterDate").value = state.date; refreshStaffNameChoices();
     await loadPublicContent();
     if (!$("#letterArchive").hidden) { $("#letterArchive").hidden = true; await toggleLetterArchive(); }
-    $("#letterStatus").textContent = "Surat berjaya disimpan dalam arkib bersama dan boleh dilihat oleh semua guru.";
+    $("#letterStatus").textContent = data.archive?.ok === false
+      ? `Surat selamat dalam sistem. ${data.archive.warning || "Salinan Google Drive belum berjaya."}`
+      : file
+        ? "Surat berjaya disimpan dalam sistem dan dua simpanan Google Drive."
+        : "Surat berjaya disimpan melalui pautan Google Drive yang diberikan.";
   } catch (error) { $("#letterStatus").textContent = error.message || "Surat gagal disimpan."; }
   finally { $("#letterSave").disabled = false; }
 }

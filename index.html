@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="HEM SMARTTRACK">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="manifest" href="manifest.webmanifest?v=66">
+  <link rel="manifest" href="manifest.webmanifest?v=67">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=66">
+  <link rel="stylesheet" href="styles.css?v=67">
 </head>
 <body>
   <header class="topbar no-print">
@@ -299,7 +299,7 @@
         <div id="oprPreview" class="monitoring-preview" aria-live="polite"></div>
         <div class="monitoring-submit-row"><button id="oprSave" class="primary-button" type="submit">Simpan OPR HEM</button><p id="oprFormStatus" class="form-message" role="status"></p></div>
       </form>
-      <div class="monitoring-gallery-head"><div><h3>4 OPR HEM terkini</h3><p>Empat laporan terkini dipaparkan di sini. Arkib penuh disimpan dalam Google Drive.</p></div><div class="opr-gallery-actions"><a class="secondary-button" href="https://drive.google.com/drive/folders/1YP8_ko7EgwcPCGuU2xKYvmtH0ogCm2IQ" target="_blank" rel="noopener">Buka Arkib Drive ↗</a><button id="oprRefresh" class="secondary-button" type="button">Muat semula</button></div></div>
+      <div class="monitoring-gallery-head"><div><h3>4 OPR HEM terkini</h3><p>Empat laporan terkini dipaparkan di sini. Setiap fail turut disalin ke dua simpanan Google Drive dan diasingkan mengikut bulan.</p></div><div class="opr-gallery-actions"><a class="secondary-button" href="https://drive.google.com/drive/folders/1YP8_ko7EgwcPCGuU2xKYvmtH0ogCm2IQ" target="_blank" rel="noopener">Simpanan 1 ↗</a><a class="secondary-button" href="https://drive.google.com/drive/folders/1klaopuebuVSOlNUI-b7pBarL_Mr1qzto" target="_blank" rel="noopener">Simpanan 2 (MOE) ↗</a><button id="oprRefresh" class="secondary-button" type="button">Muat semula</button></div></div>
       <div id="oprListStatus" class="monitoring-list-status" role="status">Memuatkan OPR HEM…</div>
       <p class="opr-swipe-hint">Leret ke kiri atau kanan untuk melihat OPR lain.</p>
       <div id="oprGallery" class="monitoring-gallery opr-gallery"></div>
@@ -329,7 +329,7 @@
         <p class="letter-swipe-hint">Leret ke kiri atau kanan untuk melihat surat lain.</p>
         <div id="latestLetterGrid" class="hem-letter-grid" aria-live="polite"></div>
         <div id="letterArchive" class="hem-letter-archive" hidden>
-          <div class="letter-archive-heading"><h3>Arkib Surat HEM</h3><a class="secondary-button" href="https://drive.google.com/drive/folders/1YP8_ko7EgwcPCGuU2xKYvmtH0ogCm2IQ" target="_blank" rel="noopener">Buka Folder Google Drive ↗</a></div>
+          <div class="letter-archive-heading"><h3>Arkib Surat HEM</h3><div class="opr-gallery-actions"><a class="secondary-button" href="https://drive.google.com/drive/folders/15ZcrKi-vr0-2ZNUrkMAmjucGPOPaldnx" target="_blank" rel="noopener">Simpanan 1 ↗</a><a class="secondary-button" href="https://drive.google.com/drive/folders/15nbwLjnsjVx-DNqdJLwAdUznLb0EPlQY" target="_blank" rel="noopener">Simpanan 2 (MOE) ↗</a></div></div>
           <p id="letterArchiveStatus" class="monitoring-list-status" role="status"></p>
           <div id="letterArchiveGrid" class="hem-letter-grid"></div>
         </div>
@@ -532,6 +532,6 @@
     <div class="news-ticker-viewport"><div id="newsTickerTrack" class="news-ticker-track"></div></div>
   </aside>
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="app.js?v=66" defer></script>
+  <script src="app.js?v=67" defer></script>
 </body>
 </html>
