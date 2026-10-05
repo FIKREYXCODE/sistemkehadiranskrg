@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="HEM SMARTTRACK">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="manifest" href="manifest.webmanifest?v=67">
+  <link rel="manifest" href="manifest.webmanifest?v=68">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=67">
+  <link rel="stylesheet" href="styles.css?v=68">
 </head>
 <body>
   <header class="topbar no-print">
@@ -305,8 +305,12 @@
       <div id="oprGallery" class="monitoring-gallery opr-gallery"></div>
       <section class="hem-letters-section" aria-labelledby="hemLettersTitle">
         <div class="monitoring-gallery-head">
-          <div><p class="eyebrow">Dokumen rasmi unit</p><h3 id="hemLettersTitle">Surat Menyurat HEM</h3><p>Semua guru dan AKP boleh memasukkan surat berkaitan HEM. Dua surat terbaharu dipaparkan dan surat lama kekal dalam arkib bersama.</p></div>
-          <button id="letterArchiveToggle" class="secondary-button" type="button" aria-expanded="false">Lihat Semua Surat HEM</button>
+          <div><p class="eyebrow">Dokumen rasmi unit</p><h3 id="hemLettersTitle">Surat Menyurat HEM</h3><p>Semua guru dan AKP boleh memasukkan surat berkaitan HEM. Setiap fail turut disalin ke dua simpanan Google Drive dan diasingkan mengikut bulan.</p></div>
+          <div class="opr-gallery-actions letter-drive-actions">
+            <a class="secondary-button" href="https://drive.google.com/drive/folders/15ZcrKi-vr0-2ZNUrkMAmjucGPOPaldnx" target="_blank" rel="noopener">Simpanan 1 ↗</a>
+            <a class="secondary-button" href="https://drive.google.com/drive/folders/15nbwLjnsjVx-DNqdJLwAdUznLb0EPlQY" target="_blank" rel="noopener">Simpanan 2 (MOE) ↗</a>
+            <button id="letterArchiveToggle" class="secondary-button" type="button" aria-expanded="false">Lihat Semua Surat HEM</button>
+          </div>
         </div>
         <form id="letterForm" class="letter-upload-form" aria-labelledby="letterUploadTitle">
           <div class="letter-upload-heading">
@@ -329,7 +333,7 @@
         <p class="letter-swipe-hint">Leret ke kiri atau kanan untuk melihat surat lain.</p>
         <div id="latestLetterGrid" class="hem-letter-grid" aria-live="polite"></div>
         <div id="letterArchive" class="hem-letter-archive" hidden>
-          <div class="letter-archive-heading"><h3>Arkib Surat HEM</h3><div class="opr-gallery-actions"><a class="secondary-button" href="https://drive.google.com/drive/folders/15ZcrKi-vr0-2ZNUrkMAmjucGPOPaldnx" target="_blank" rel="noopener">Simpanan 1 ↗</a><a class="secondary-button" href="https://drive.google.com/drive/folders/15nbwLjnsjVx-DNqdJLwAdUznLb0EPlQY" target="_blank" rel="noopener">Simpanan 2 (MOE) ↗</a></div></div>
+          <div class="letter-archive-heading"><h3>Arkib Surat HEM</h3></div>
           <p id="letterArchiveStatus" class="monitoring-list-status" role="status"></p>
           <div id="letterArchiveGrid" class="hem-letter-grid"></div>
         </div>
@@ -532,6 +536,6 @@
     <div class="news-ticker-viewport"><div id="newsTickerTrack" class="news-ticker-track"></div></div>
   </aside>
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="app.js?v=67" defer></script>
+  <script src="app.js?v=68" defer></script>
 </body>
 </html>
