@@ -1385,6 +1385,31 @@ function renderHomeClassTotals() {
   }
 }
 
+function renderEnrolmentOverview() {
+  const levelTotals = new Map([["Prasekolah", { male: 0, female: 0, total: 0 }]]);
+  for (let year = 1; year <= 6; year += 1) levelTotals.set(`Tahun ${year}`, { male: 0, female: 0, total: 0 });
+  for (const row of state.classes) {
+    const figures = classFigures(row);
+    const yearMatch = String(row.id || "").match(/^tahun-([1-6])-/);
+    const key = String(row.id || "").startsWith("pra-") ? "Prasekolah" : yearMatch ? `Tahun ${yearMatch[1]}` : "";
+    if (!key || !levelTotals.has(key)) continue;
+    const item = levelTotals.get(key);
+    item.male += figures.enrolMale;
+    item.female += figures.enrolFemale;
+    item.total += figures.enrolTotal;
+  }
+  const preschool = levelTotals.get("Prasekolah");
+  const primary = [...levelTotals.entries()].filter(([key]) => key.startsWith("Tahun ")).reduce((sum, [, item]) => ({
+    male: sum.male + item.male, female: sum.female + item.female, total: sum.total + item.total,
+  }), { male: 0, female: 0, total: 0 });
+  $("#primaryEnrolTotal").textContent = primary.total;
+  $("#preschoolEnrolTotal").textContent = preschool.total;
+  $("#schoolEnrolTotal").textContent = primary.total + preschool.total;
+  $("#primaryMaleTotal").textContent = primary.male;
+  $("#primaryFemaleTotal").textContent = primary.female;
+  $("#yearEnrolTotals").innerHTML = [...levelTotals.entries()].map(([label, item]) => `<span><b>${safe(label)}</b><strong>${item.total}</strong></span>`).join("");
+}
+
 function renderTotals() {
   const totals = visibleClasses().reduce((sum, row) => {
     const f = classFigures(row);
@@ -1398,6 +1423,7 @@ function renderTotals() {
   $("#summaryPresent").textContent = totals.presentTotal || 0;
   $("#summaryAbsent").textContent = totals.absentTotal || 0;
   $("#summaryPercent").textContent = percent(totals.presentTotal || 0, totals.enrolTotal || 0);
+  renderEnrolmentOverview();
   renderHomeClassTotals();
 }
 
@@ -2164,7 +2190,7 @@ window.addEventListener("beforeunload", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=68", { scope: "./", updateViaCache: "none" })
+    navigator.serviceWorker.register("./service-worker.js?v=69", { scope: "./", updateViaCache: "none" })
       .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
   });
 }

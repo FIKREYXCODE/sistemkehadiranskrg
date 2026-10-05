@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="HEM SMARTTRACK">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="manifest" href="manifest.webmanifest?v=68">
+  <link rel="manifest" href="manifest.webmanifest?v=69">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=68">
+  <link rel="stylesheet" href="styles.css?v=69">
 </head>
 <body>
   <header class="topbar no-print">
@@ -85,10 +85,28 @@
       <section class="home-summary-card" aria-labelledby="homeSummaryTitle">
         <div class="home-summary-heading"><div><p class="eyebrow">Ringkasan kehadiran</p><h2 id="homeSummaryTitle">Ringkasan Kehadiran</h2></div><time id="homeSummaryDate">—</time></div>
         <div class="summary-grid" aria-label="Ringkasan kehadiran">
-          <div><span>Jumlah murid</span><strong id="summaryEnrol">0</strong></div>
+          <div><span>Keseluruhan sekolah (termasuk Pra)</span><strong id="summaryEnrol">0</strong></div>
           <div><span>Hadir</span><strong id="summaryPresent">0</strong></div>
           <div class="danger"><span>Tidak hadir</span><strong id="summaryAbsent">0</strong></div>
           <div class="success"><span>Peratus hadir</span><strong id="summaryPercent">0%</strong></div>
+        </div>
+      </section>
+      <section class="enrolment-overview" aria-labelledby="enrolmentOverviewTitle">
+        <div class="enrolment-overview-heading">
+          <div><p class="eyebrow">Data enrolmen • 5 Oktober 2026</p><h2 id="enrolmentOverviewTitle">Ringkasan Murid Perdana</h2></div>
+          <small>Murid Perdana ialah Tahun 1 hingga Tahun 6 dan tidak termasuk Prasekolah.</small>
+        </div>
+        <div class="enrolment-kpis" aria-label="Ringkasan enrolmen murid">
+          <article><span>Murid Perdana</span><strong id="primaryEnrolTotal">0</strong></article>
+          <article><span>Prasekolah</span><strong id="preschoolEnrolTotal">0</strong></article>
+          <article><span>Keseluruhan sekolah</span><strong id="schoolEnrolTotal">0</strong></article>
+          <article><span>Lelaki Perdana</span><strong id="primaryMaleTotal">0</strong></article>
+          <article><span>Perempuan Perdana</span><strong id="primaryFemaleTotal">0</strong></article>
+        </div>
+        <div id="yearEnrolTotals" class="year-enrol-totals" aria-label="Jumlah murid mengikut peringkat"></div>
+        <div class="enrolment-demographics" aria-label="Demografi murid Perdana">
+          <span><b>801</b> Islam</span><span><b>15</b> Bukan Islam</span><span><b>17</b> Bukan warganegara / tiada maklumat</span>
+          <span><b>84</b> Melayu</span><span><b>1</b> Cina</span><span><b>307</b> Bumiputera Sabah</span><span><b>424</b> Lain-lain</span>
         </div>
       </section>
       <section class="home-session-panel" aria-labelledby="homeSessionTitle">
@@ -536,6 +554,6 @@
     <div class="news-ticker-viewport"><div id="newsTickerTrack" class="news-ticker-track"></div></div>
   </aside>
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="app.js?v=68" defer></script>
+  <script src="app.js?v=69" defer></script>
 </body>
 </html>
