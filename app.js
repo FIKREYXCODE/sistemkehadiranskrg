@@ -136,7 +136,7 @@ function auditKey(section, recordId, fieldName) { return `${section}:${recordId}
 function auditDetails(section, recordId, fieldName) {
   const item = state.audit.get(auditKey(section, recordId, fieldName));
   if (!item) return { className: "", title: "" };
-  const time = new Intl.DateTimeFormat("ms-MY", { dateStyle: "medium", timeStyle: "short" }).format(new Date(Number(item.updatedAt)));
+  const time = formatDisplayDateTime(item.updatedAt);
   return { className: " has-audit", title: `Diisi oleh: ${item.updatedBy} • ${time}` };
 }
 
@@ -289,6 +289,27 @@ function dateObject(value) { return new Date(`${value}T00:00:00Z`); }
 function dateValue(date) { return date.toISOString().slice(0, 10); }
 function addDays(date, days) { const next = new Date(date); next.setUTCDate(next.getUTCDate() + days); return next; }
 
+const DISPLAY_DATE_FORMATTER = new Intl.DateTimeFormat("ms-MY", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+const DISPLAY_DATE_TIME_FORMATTER = new Intl.DateTimeFormat("ms-MY", { day: "numeric", month: "long", year: "numeric", hour: "numeric", minute: "2-digit", timeZone: "Asia/Kuching" });
+
+function formatDisplayDate(value) {
+  const text = String(value || "").trim();
+  if (!text) return "—";
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(text) ? dateObject(text) : new Date(text);
+  return Number.isNaN(date.getTime()) ? text : DISPLAY_DATE_FORMATTER.format(date);
+}
+
+function formatDisplayDateTime(value) {
+  if (value === undefined || value === null || value === "" || Number(value) === 0) return "—";
+  const numeric = Number(value);
+  const date = new Date(Number.isFinite(numeric) && numeric > 0 ? numeric : value);
+  return Number.isNaN(date.getTime()) ? "—" : DISPLAY_DATE_TIME_FORMATTER.format(date);
+}
+
+function formatEmbeddedDates(value) {
+  return String(value || "").replace(/\b\d{4}-\d{2}-\d{2}\b/g, (date) => formatDisplayDate(date));
+}
+
 function analyticsRange(period, anchorValue) {
   const anchor = dateObject(anchorValue);
   if (period === "month") {
@@ -368,8 +389,7 @@ function renderAnalytics(records, range) {
   const winners = [...ranking.values()].map((item) => ({ ...item, value: item.enrol ? (item.present / item.enrol) * 100 : 0 })).sort((a, b) => b.value - a.value || b.records - a.records || a.name.localeCompare(b.name, "ms")).slice(0, 3);
   const medals = [{ icon: "🥇", label: "Emas", className: "gold" }, { icon: "🥈", label: "Perak", className: "silver" }, { icon: "🥉", label: "Gangsa", className: "bronze" }];
   $("#attendancePodium").innerHTML = winners.length ? winners.map((item, index) => `<article class="podium-card ${medals[index].className}"><div class="podium-medal" aria-hidden="true">${medals[index].icon}</div><strong>${safe(item.name)}</strong><span>${item.value.toFixed(2)}%</span><small>${safe(item.teacher)}</small><small>${item.records} rekod • ${medals[index].label}</small></article>`).join("") : '<p class="monitoring-empty">Belum ada data kelas yang mencukupi untuk kedudukan emas, perak dan gangsa.</p>';
-  const rangeFormatter = new Intl.DateTimeFormat("ms-MY", { day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
-  $("#analysisRangeLabel").textContent = `${rangeFormatter.format(dateObject(range.from))} – ${rangeFormatter.format(dateObject(range.to))}`;
+  $("#analysisRangeLabel").textContent = `${formatDisplayDate(range.from)} – ${formatDisplayDate(range.to)}`;
   const width = 1000, height = 350, left = 58, right = 24, top = 24, bottom = 52;
   const plotWidth = width - left - right, plotHeight = height - top - bottom;
   const groupWidth = plotWidth / Math.max(days.length, 1);
@@ -378,7 +398,7 @@ function renderAnalytics(records, range) {
   const colors = { all: "#0755b5", morning: "#08a06c", afternoon: "#f28b23" };
   const grids = [0, 25, 50, 75, 100].map((value) => `<line class="chart-grid" x1="${left}" y1="${y(value)}" x2="${width-right}" y2="${y(value)}"/><text class="chart-axis-text" x="${left-10}" y="${y(value)+4}" text-anchor="end">${value}%</text>`).join("");
   const labelEvery = days.length > 10 ? 5 : 1;
-  const xLabels = days.map((day, index) => (index % labelEvery === 0 || index === days.length - 1) ? `<text class="chart-axis-text" x="${x(index)}" y="${height-20}" text-anchor="middle">${new Intl.DateTimeFormat("ms-MY", { day: "2-digit", month: "short", timeZone: "UTC" }).format(dateObject(day.date))}</text>` : "").join("");
+  const xLabels = days.map((day, index) => (index % labelEvery === 0 || index === days.length - 1) ? `<text class="chart-axis-text" x="${x(index)}" y="${height-20}" text-anchor="middle">${safe(formatDisplayDate(day.date))}</text>` : "").join("");
   const sessions = ["all", "morning", "afternoon"];
   const barWidth = Math.max(3, Math.min(20, groupWidth * 0.24));
   const bars = days.map((day, index) => sessions.map((session, sessionIndex) => {
@@ -392,10 +412,10 @@ function renderAnalytics(records, range) {
     const valueLabel = barHeight >= 42
       ? `<text class="chart-bar-value" x="${barCenter}" y="${barY + barHeight / 2}" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90 ${barCenter} ${barY + barHeight / 2})">${valueText}</text>`
       : `<text class="chart-bar-value outside" x="${barCenter}" y="${Math.max(top + 10, barY - 5)}" text-anchor="middle">${valueText}</text>`;
-    return `<rect class="chart-bar" fill="${colors[session]}" x="${barX}" y="${barY}" width="${barWidth}" height="${barHeight}" rx="3"><title>${labels[session]} • ${day.date}: ${value.toFixed(2)}%</title></rect>${valueLabel}`;
+    return `<rect class="chart-bar" fill="${colors[session]}" x="${barX}" y="${barY}" width="${barWidth}" height="${barHeight}" rx="3"><title>${labels[session]} • ${safe(formatDisplayDate(day.date))}: ${value.toFixed(2)}%</title></rect>${valueLabel}`;
   }).join("")).join("");
   $("#attendanceChart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Graf bar peratus kehadiran ${safe($("#analysisRangeLabel").textContent)}">${grids}${xLabels}${bars}</svg>`;
-  $("#analysisTableBody").innerHTML = days.map((day) => `<tr><td>${rangeFormatter.format(dateObject(day.date))}</td><td>${analysisPercent(day.all)}</td><td>${analysisPercent(day.morning)}</td><td>${analysisPercent(day.afternoon)}</td><td>${day.recordCount}</td></tr>`).join("");
+  $("#analysisTableBody").innerHTML = days.map((day) => `<tr><td>${safe(formatDisplayDate(day.date))}</td><td>${analysisPercent(day.all)}</td><td>${analysisPercent(day.morning)}</td><td>${analysisPercent(day.afternoon)}</td><td>${day.recordCount}</td></tr>`).join("");
   const totalRecords = records.length;
   $("#analysisStatus").className = "analysis-status";
   $("#analysisStatus").textContent = totalRecords ? `${totalRecords} rekod kelas ditemui. Analisis ini tidak mengubah data asal.` : "Belum ada rekod kehadiran tersimpan dalam tempoh ini.";
@@ -569,14 +589,14 @@ async function loadWeeklyDuty() {
   try {
     const dates = schoolWeekDates($("#weeklyDutyDate").value || state.date);
     const reports = await Promise.all(dates.map(fetchSchoolDate));
-    const formatter = new Intl.DateTimeFormat("ms-MY", { weekday: "long", day: "2-digit", month: "short", year: "numeric", timeZone: "UTC" });
+    const weekdayFormatter = new Intl.DateTimeFormat("ms-MY", { weekday: "long", timeZone: "UTC" });
     const getNames = (data, session) => (Array.isArray(data.dutyTeachers) ? data.dutyTeachers : []).filter((item) => item.session === session).sort((a, b) => Number(a.rowOrder) - Number(b.rowOrder)).map((item) => String(item.teacherName || "").trim()).filter(Boolean);
     $("#weeklyDutyGrid").innerHTML = reports.map((data, index) => {
       const morning = getNames(data, "morning"), afternoon = getNames(data, "afternoon");
       const list = (names) => names.length ? `<ol>${names.map((name) => `<li>${safe(name)}</li>`).join("")}</ol>` : "<p>Belum diisi.</p>";
-      return `<article class="weekly-duty-day"><div class="weekly-duty-date"><strong>${safe(formatter.format(dateObject(dates[index])))}</strong><small>${dates[index]}</small></div><div class="weekly-duty-session"><h4>Sidang Pagi</h4>${list(morning)}</div><div class="weekly-duty-session afternoon"><h4>Sidang Petang</h4>${list(afternoon)}</div></article>`;
+      return `<article class="weekly-duty-day"><div class="weekly-duty-date"><strong>${safe(formatDisplayDate(dates[index]))}</strong><small>${safe(weekdayFormatter.format(dateObject(dates[index])))}</small></div><div class="weekly-duty-session"><h4>Sidang Pagi</h4>${list(morning)}</div><div class="weekly-duty-session afternoon"><h4>Sidang Petang</h4>${list(afternoon)}</div></article>`;
     }).join("");
-    $("#weeklyDutyStatus").textContent = `Senarai ${dates[0]} hingga ${dates[4]} berjaya dimuatkan.`;
+    $("#weeklyDutyStatus").textContent = `Senarai ${formatDisplayDate(dates[0])} hingga ${formatDisplayDate(dates[4])} berjaya dimuatkan.`;
   } catch (error) {
     $("#weeklyDutyStatus").textContent = error.message || "Senarai mingguan tidak dapat dibuka.";
     $("#weeklyDutyGrid").innerHTML = "";
@@ -595,7 +615,7 @@ async function loadCompletionView() {
       return `<section class="completion-list ${complete ? "complete" : "incomplete"}"><h4>${complete ? "Kelas selesai" : "Kelas belum selesai"}<strong>${items.length}</strong></h4>${items.length ? `<div class="class-chip-list">${items.map((row) => `<span class="class-chip">${safe(row.name)}</span>`).join("")}</div>` : '<p class="class-list-empty">Tiada kelas dalam kategori ini.</p>'}</section>`;
     };
     $("#completionListsView").innerHTML = renderList(true) + renderList(false);
-    $("#completionStatus").textContent = `${classes.length} kelas disemak bagi ${date}.`;
+    $("#completionStatus").textContent = `${classes.length} kelas disemak bagi ${formatDisplayDate(date)}.`;
   } catch (error) { $("#completionStatus").textContent = error.message || "Status kelas tidak dapat dibuka."; $("#completionListsView").innerHTML = ""; }
   finally { state.completion.loading = false; $("#completionRefresh").disabled = false; }
 }
@@ -610,10 +630,10 @@ async function loadCalendarRecord() {
     $("#calendarTableBody").innerHTML = classes.map((row) => {
       const classAudits = audits.filter((item) => item.section === "attendance" && String(item.recordId) === String(row.id)).sort((a, b) => Number(b.updatedAt) - Number(a.updatedAt));
       const latest = classAudits[0], completed = classAudits.length > 0, figures = classFigures(row);
-      const time = latest ? new Intl.DateTimeFormat("ms-MY", { dateStyle: "medium", timeStyle: "short" }).format(new Date(Number(latest.updatedAt))) : "—";
+      const time = latest ? formatDisplayDateTime(latest.updatedAt) : "—";
       return `<tr><td><strong>${safe(row.name)}</strong></td><td>${safe(row.teacherName || "—")}</td><td>${percent(figures.presentTotal, figures.enrolTotal)}</td><td>${completed ? '<span class="class-status complete">Selesai</span>' : '<span class="class-status incomplete">Belum selesai</span>'}</td><td>${safe(latest?.updatedBy || "—")}</td><td>${safe(time)}</td></tr>`;
     }).join("");
-    $("#calendarStatus").textContent = `${classes.length} kelas dipaparkan bagi ${date}. Halakan tetikus pada data kehadiran harian untuk butiran pengisi setiap medan.`;
+    $("#calendarStatus").textContent = `${classes.length} kelas dipaparkan bagi ${formatDisplayDate(date)}. Halakan tetikus pada data kehadiran harian untuk butiran pengisi setiap medan.`;
   } catch (error) { $("#calendarStatus").textContent = error.message || "Rekod kalendar tidak dapat dibuka."; $("#calendarTableBody").innerHTML = ""; }
   finally { state.calendar.loading = false; $("#calendarRefresh").disabled = false; }
 }
@@ -682,12 +702,13 @@ function isRmtReport(report) {
 function renderRmtReports() {
   const sessionLabel = (value) => value === "afternoon" ? "Sidang Petang" : "Sidang Pagi";
   $("#rmtSharedGallery").innerHTML = state.rmtReports.map((report) => {
-    const created = new Intl.DateTimeFormat("ms-MY", { dateStyle: "medium", timeStyle: "short" }).format(new Date(Number(report.createdAt)));
-    const photos = (Array.isArray(report.photos) ? report.photos : []).map((photo, index) => `<a href="${safe(photo.url)}" target="_blank" rel="noopener"><img src="${safe(photo.url)}" loading="lazy" alt="Gambar RMT ${safe(report.location)} ${index + 1}"></a>`).join("");
+    const created = formatDisplayDateTime(report.createdAt);
+    const displayLocation = formatEmbeddedDates(report.location);
+    const photos = (Array.isArray(report.photos) ? report.photos : []).map((photo, index) => `<a href="${safe(photo.url)}" target="_blank" rel="noopener"><img src="${safe(photo.url)}" loading="lazy" alt="Gambar RMT ${safe(displayLocation)} ${index + 1}"></a>`).join("");
     let details = null;
     try { details = String(report.issue || "").startsWith("[rmt-v2]") ? JSON.parse(String(report.issue).slice(8)) : null; } catch { details = null; }
-    const content = details ? `<dl class="rmt-report-details"><div><dt>Penerima</dt><dd>${safe(details.recipients)} orang</dd></div><div><dt>Dibekalkan</dt><dd>${safe(details.supplied)} hidangan</dd></div><div><dt>Menu</dt><dd>${safe(details.menu)}</dd></div><div><dt>Penilaian</dt><dd>${safe(details.rating)}</dd></div>${details.notes ? `<div><dt>Catatan</dt><dd>${safe(details.notes)}</dd></div>` : ""}</dl>` : `<p>${safe(report.action || "")}</p>`;
-    return `<article class="rmt-shared-report"><div class="monitoring-photo-grid">${photos}</div><div><span class="category-badge">${sessionLabel(report.session)}</span><h4>${safe(report.location)}</h4><p>Diisi oleh <strong>${safe(report.updatedBy || "—")}</strong></p><small>${safe(created)}</small>${content}</div></article>`;
+    const content = details ? `<dl class="rmt-report-details"><div><dt>Penerima</dt><dd>${safe(details.recipients)} orang</dd></div><div><dt>Dibekalkan</dt><dd>${safe(details.supplied)} hidangan</dd></div><div><dt>Menu</dt><dd>${safe(details.menu)}</dd></div><div><dt>Penilaian</dt><dd>${safe(details.rating)}</dd></div>${details.notes ? `<div><dt>Catatan</dt><dd>${safe(details.notes)}</dd></div>` : ""}</dl>` : `<p>${safe(formatEmbeddedDates(report.action))}</p>`;
+    return `<article class="rmt-shared-report"><div class="monitoring-photo-grid">${photos}</div><div><span class="category-badge">${sessionLabel(report.session)}</span><h4>${safe(displayLocation)}</h4><p>Diisi oleh <strong>${safe(report.updatedBy || "—")}</strong></p><small>${safe(created)}</small>${content}</div></article>`;
   }).join("");
   $("#rmtSharedStatus").textContent = state.rmtReports.length ? `${state.rmtReports.length} laporan gambar RMT ditemui.` : "Belum ada gambar RMT tersimpan bagi minggu ini.";
 }
@@ -735,7 +756,7 @@ async function saveRmtPhotos() {
       routeStatus: "not_applicable",
       parkingStatus: "not_applicable",
       issue: `Bukti laporan Guru Bertugas RMT ${$("#rmtPhotoSession").value === "afternoon" ? "Sidang Petang" : "Sidang Pagi"}`,
-      action: `Jumlah murid RMT — Pagi: ${morning} • Petang: ${afternoon} • Tempoh: ${$("#rmtFrom").value} hingga ${$("#rmtTo").value}`,
+      action: `Jumlah murid RMT — Pagi: ${morning} • Petang: ${afternoon} • Tempoh: ${formatDisplayDate($("#rmtFrom").value)} hingga ${formatDisplayDate($("#rmtTo").value)}`,
       photos,
     };
     const response = await fetch(SAFETY_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -764,7 +785,7 @@ async function saveRmtReport(event) {
   try {
     const details = { recipients: count(value("recipients")), supplied: count(value("supplied")), menu: value("menu"), rating: value("rating"), notes: value("notes") };
     const photos = await Promise.all(files.map(prepareMonitoringPhoto));
-    const payload = { date: state.date, updatedBy: editorName(), category: "both", session, location: `RMT • ${session === "morning" ? "Sidang Pagi" : "Sidang Petang"} • ${state.date}`, routeStatus: "not_applicable", parkingStatus: "not_applicable", issue: `[rmt-v2]${JSON.stringify(details)}`, action: details.notes || "Laporan RMT lengkap", photos };
+    const payload = { date: state.date, updatedBy: editorName(), category: "both", session, location: `RMT • ${session === "morning" ? "Sidang Pagi" : "Sidang Petang"} • ${formatDisplayDate(state.date)}`, routeStatus: "not_applicable", parkingStatus: "not_applicable", issue: `[rmt-v2]${JSON.stringify(details)}`, action: details.notes || "Laporan RMT lengkap", photos };
     const response = await fetch(SAFETY_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     const result = await responseJson(response, "Laporan RMT gagal disimpan.");
     if (!response.ok) throw new Error(result.error || "Laporan RMT gagal disimpan.");
@@ -907,7 +928,7 @@ function addMonitoringItem() {
 function renderMonitoringReports() {
   const reports = state.monitoring.reports.filter((report) => !isRmtReport(report) && report.category !== "opr");
   const renderReport = (report) => {
-    const created = new Intl.DateTimeFormat("ms-MY", { dateStyle: "medium", timeStyle: "short" }).format(new Date(Number(report.createdAt)));
+    const created = formatDisplayDateTime(report.createdAt);
     const photos = (Array.isArray(report.photos) ? report.photos : []).map((photo, index) =>
       `<a href="${safe(photo.url)}" target="_blank" rel="noopener"><img src="${safe(photo.url)}" loading="lazy" alt="${safe(MONITORING_CATEGORY_LABELS[report.category] || "Pemantauan")} di ${safe(report.location)}, gambar ${index + 1}"></a>`
     ).join("");
@@ -1011,10 +1032,10 @@ function renderOprPreview(files) {
 
 function renderOprReports() {
   $("#oprGallery").innerHTML = state.opr.reports.map((report) => {
-    const created = new Intl.DateTimeFormat("ms-MY", { dateStyle: "medium", timeStyle: "short" }).format(new Date(Number(report.createdAt)));
+    const created = formatDisplayDateTime(report.createdAt);
     const photos = (Array.isArray(report.photos) ? report.photos : []).map((photo, index) => `<a href="${safe(photo.url)}" target="_blank" rel="noopener"><img src="${safe(photo.url)}" loading="lazy" alt="${safe(report.location)} gambar ${index + 1}"></a>`).join("");
     const audit = report.lastEditedAt ? `<p class="record-audit">Dikemas kini oleh <strong>${safe(report.lastEditedBy || "—")}</strong> • ${safe(formatAuditTime(report.lastEditedAt))}</p>` : `<p class="record-audit">Rekod asal • ${safe(created)}</p>`;
-    return `<article class="monitoring-report"><div class="monitoring-photo-grid">${photos}</div><div class="monitoring-report-body"><div class="monitoring-report-top"><span class="category-badge">OPR HEM</span><time>${safe(created)}</time></div><h3>${safe(report.location)}</h3><p class="monitoring-by">Disediakan oleh <strong>${safe(report.updatedBy || "—")}</strong></p><dl><div><dt>Tarikh program</dt><dd>${safe(report.reportDate || "—")}</dd></div></dl>${audit}<button class="record-edit-button" type="button" data-edit-opr="${safe(report.id)}">✎ Edit OPR</button></div></article>`;
+    return `<article class="monitoring-report"><div class="monitoring-photo-grid">${photos}</div><div class="monitoring-report-body"><div class="monitoring-report-top"><span class="category-badge">OPR HEM</span><time>${safe(created)}</time></div><h3>${safe(report.location)}</h3><p class="monitoring-by">Disediakan oleh <strong>${safe(report.updatedBy || "—")}</strong></p><dl><div><dt>Tarikh program</dt><dd>${safe(formatDisplayDate(report.reportDate))}</dd></div></dl>${audit}<button class="record-edit-button" type="button" data-edit-opr="${safe(report.id)}">✎ Edit OPR</button></div></article>`;
   }).join("");
   $("#oprListStatus").textContent = state.opr.reports.length ? `${state.opr.reports.length} OPR HEM ditemui pada tarikh ini.` : "Belum ada OPR HEM pada tarikh dipilih.";
 }
@@ -1113,14 +1134,11 @@ function renderTicker() {
 }
 
 function formatLetterDate(value) {
-  const date = new Date(`${value}T12:00:00`);
-  return Number.isNaN(date.getTime()) ? String(value || "—") : new Intl.DateTimeFormat("ms-MY", { day: "numeric", month: "long", year: "numeric" }).format(date);
+  return formatDisplayDate(value);
 }
 
 function formatAuditTime(value) {
-  const time = Number(value);
-  if (!time) return "—";
-  return new Intl.DateTimeFormat("ms-MY", { dateStyle: "medium", timeStyle: "short" }).format(new Date(time));
+  return formatDisplayDateTime(value);
 }
 
 function letterCard(letter, admin = false) {
@@ -1334,10 +1352,10 @@ function setStatus(message, type = "") {
 }
 
 function updateDateHeading() {
-  const date = new Date(`${state.date}T12:00:00`);
+  const date = dateObject(state.date);
   if (Number.isNaN(date.getTime())) return;
-  const longDate = new Intl.DateTimeFormat("ms-MY", { day: "2-digit", month: "long", year: "numeric" }).format(date);
-  const weekday = new Intl.DateTimeFormat("ms-MY", { weekday: "long" }).format(date);
+  const longDate = formatDisplayDate(state.date);
+  const weekday = new Intl.DateTimeFormat("ms-MY", { weekday: "long", timeZone: "UTC" }).format(date);
   $("#dateLong").textContent = longDate;
   $("#dayLong").textContent = weekday;
   $("#homeSummaryDate").textContent = `${longDate} • ${weekday}`;
@@ -2190,7 +2208,7 @@ window.addEventListener("beforeunload", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=69", { scope: "./", updateViaCache: "none" })
+    navigator.serviceWorker.register("./service-worker.js?v=70", { scope: "./", updateViaCache: "none" })
       .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
   });
 }
