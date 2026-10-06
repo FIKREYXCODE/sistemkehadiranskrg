@@ -310,6 +310,33 @@ function formatEmbeddedDates(value) {
   return String(value || "").replace(/\b\d{4}-\d{2}-\d{2}\b/g, (date) => formatDisplayDate(date));
 }
 
+function syncLocalizedDateInput(input) {
+  const display = input.closest(".localized-date-control")?.querySelector(".localized-date-display");
+  if (display) display.querySelector("span").textContent = input.value ? formatDisplayDate(input.value) : "Pilih tarikh";
+}
+
+function syncAllLocalizedDateInputs() {
+  document.querySelectorAll('input[type="date"]').forEach(syncLocalizedDateInput);
+}
+
+function enhanceLocalizedDateInputs() {
+  document.querySelectorAll('input[type="date"]').forEach((input) => {
+    if (input.closest(".localized-date-control")) return;
+    const wrapper = document.createElement("span");
+    wrapper.className = "localized-date-control";
+    input.parentNode.insertBefore(wrapper, input);
+    wrapper.appendChild(input);
+    const display = document.createElement("span");
+    display.className = "localized-date-display";
+    display.setAttribute("aria-hidden", "true");
+    display.innerHTML = '<span></span><b aria-hidden="true">📅</b>';
+    wrapper.appendChild(display);
+    input.addEventListener("input", () => syncLocalizedDateInput(input));
+    input.addEventListener("change", () => syncLocalizedDateInput(input));
+    syncLocalizedDateInput(input);
+  });
+}
+
 function analyticsRange(period, anchorValue) {
   const anchor = dateObject(anchorValue);
   if (period === "month") {
@@ -652,6 +679,7 @@ function setupRmtTemplate() {
   const rmtAnchor = day === 0 ? dateValue(addDays(today, 1)) : day === 6 ? dateValue(addDays(today, 2)) : state.date;
   const dates = schoolWeekDates(rmtAnchor);
   $("#rmtWeek").value = isoWeekNumber(rmtAnchor); $("#rmtFrom").value = dates[0]; $("#rmtTo").value = dates[4];
+  syncAllLocalizedDateInputs();
   updateRmtTotal();
 }
 
@@ -1180,6 +1208,7 @@ function openRecordEditor(type, id) {
     $("#editLetterUpdatedBy").value = record.updatedBy || ""; $("#editLetterDriveUrl").value = record.driveUrl || "";
     $("#editLetterNote").value = record.note || "";
   }
+  syncAllLocalizedDateInputs();
   $("#recordEditModal").hidden = false; document.body.classList.add("modal-open");
 }
 
@@ -1323,7 +1352,7 @@ async function saveLetter(event) {
     const response = await fetch(CONTENT_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     const data = await responseJson(response, "Surat gagal disimpan.");
     if (!response.ok) throw new Error(data.error || "Surat gagal disimpan.");
-    $("#letterForm").reset(); $("#letterDate").value = state.date; refreshStaffNameChoices();
+    $("#letterForm").reset(); $("#letterDate").value = state.date; syncAllLocalizedDateInputs(); refreshStaffNameChoices();
     await loadPublicContent();
     if (!$("#letterArchive").hidden) { $("#letterArchive").hidden = true; await toggleLetterArchive(); }
     $("#letterStatus").textContent = data.archive?.ok === false
@@ -1688,6 +1717,7 @@ async function verifyAdmin(event) {
     $("#adminLoginView").hidden = true;
     $("#adminSettingsView").hidden = false;
     $("#profileEffectiveDate").value = state.date || localDateValue();
+    syncAllLocalizedDateInputs();
     $("#adminSaveStatus").textContent = "";
     renderAdminClasses(); renderSchoolStats();
     renderAdminStaffDirectory();
@@ -1936,6 +1966,7 @@ for (const selector of ["#dutyMorningBody", "#dutyAfternoonBody"]) {
 
 function syncReportDateInputs() {
   ["#reportDate", "#staffPageDate", "#dailyDutyDate", "#monitoringDate", "#oprDate"].forEach((selector) => { $(selector).value = state.date; });
+  syncAllLocalizedDateInputs();
 }
 
 async function changeReportDate(event) {
@@ -2164,6 +2195,7 @@ $("#completionDate").value = state.date;
 $("#calendarDate").value = state.date;
 $("#letterDate").value = state.date;
 setupRmtTemplate();
+enhanceLocalizedDateInputs();
 setupKpiFilters();
 refreshStaffNameChoices();
 try { $("#editorName").value = localStorage.getItem(EDITOR_KEY) || ""; } catch { /* abaikan */ }
@@ -2208,7 +2240,7 @@ window.addEventListener("beforeunload", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=70", { scope: "./", updateViaCache: "none" })
+    navigator.serviceWorker.register("./service-worker.js?v=71", { scope: "./", updateViaCache: "none" })
       .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
   });
 }
