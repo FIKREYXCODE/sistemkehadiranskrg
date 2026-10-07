@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="HEM SMARTTRACK">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="manifest" href="manifest.webmanifest?v=71">
+  <link rel="manifest" href="manifest.webmanifest?v=73">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=71">
+  <link rel="stylesheet" href="styles.css?v=73">
 </head>
 <body>
   <header class="topbar no-print">
@@ -249,6 +249,23 @@
         <span class="smart-discipline-copy"><small>PINTASAN SISTEM HEM</small><strong>HEM SmartDisiplin SK Ranggu</strong><span>Buka sistem pengurusan disiplin murid untuk tindakan guru bertugas.</span></span>
         <span class="smart-discipline-button">Buka SmartDisiplin ↗</span>
       </a>
+      <div class="discipline-public-grid">
+        <a class="discipline-public-card" href="https://fikreyxcode.github.io/hem-smartdisiplin-skrg/?public=1" target="_blank" rel="noopener noreferrer">
+          <span class="discipline-public-icon" aria-hidden="true">☁️</span>
+          <span><small>PAPARAN AWAM</small><strong>Status Disiplin Sekolah</strong><em>Ringkasan selamat tanpa nama murid atau butiran sulit.</em></span>
+          <b>Buka paparan ↗</b>
+        </a>
+        <section class="discipline-alert-card" aria-labelledby="disciplineAlertTitle">
+          <div class="discipline-alert-heading"><span aria-hidden="true">⚠️</span><div><small>ALERT TINDAKAN</small><strong id="disciplineAlertTitle">Perlu perhatian</strong></div><b id="disciplineAlertTotal">—</b></div>
+          <div class="discipline-alert-list">
+            <span>Belum tindakan <strong id="disciplinePendingAction">—</strong></span>
+            <span>Menunggu pengesahan <strong id="disciplinePendingApproval">—</strong></span>
+            <span>Menunggu SSDM <strong id="disciplinePendingSsdm">—</strong></span>
+            <span>SSDM perlu susulan <strong id="disciplineSsdmAttention">—</strong></span>
+          </div>
+          <p id="disciplineAlertStatus" role="status">Memuatkan status semasa…</p>
+        </section>
+      </div>
       <div hidden aria-hidden="true"><input id="weeklyDutyDate" type="date"><button id="weeklyDutyRefresh" type="button"></button><p id="weeklyDutyStatus"></p><div id="weeklyDutyGrid"></div></div>
     </section>
 
@@ -554,6 +571,7 @@
     <div class="news-ticker-viewport"><div id="newsTickerTrack" class="news-ticker-track"></div></div>
   </aside>
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="app.js?v=71" defer></script>
+  <script src="class-demographics.js?v=73" defer></script>
+  <script src="app.js?v=73" defer></script>
 </body>
 </html>

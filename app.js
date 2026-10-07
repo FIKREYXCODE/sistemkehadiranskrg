@@ -2,6 +2,7 @@ const API_URL = "https://portal-kelas-sekolah-biru.afiqzkablemo.chatgpt.site/api
 const SAFETY_API_URL = API_URL.replace(/\/school$/, "/safety");
 const ORGANIZATION_API_URL = API_URL.replace(/\/school$/, "/organization");
 const CONTENT_API_URL = API_URL.replace(/\/school$/, "/content");
+const DISCIPLINE_PUBLIC_API_URL = "https://hem-smartdisiplin-ranggu.afiqzkablemo.chatgpt.site/api/public-summary";
 const $ = (selector) => document.querySelector(selector);
 const state = {
   date: "", classes: [], staffAbsences: { morning: [], afternoon: [] }, dutyTeachers: { morning: [], afternoon: [] }, meta: {}, loading: false, saveTimer: null,
@@ -42,6 +43,7 @@ const ADMIN_APPROVERS = {
 const ABSENCE_REASONS = ["Kursus / Bengkel", "Mesyuarat / Taklimat", "Urusan Rasmi", "Program / Aktiviti Rasmi", "Tugas Rasmi di Luar Sekolah", "Cuti Sakit / MC", "Cuti Rehat Khas / CRK", "Cuti Tanpa Rekod / CTR", "Cuti Bersalin", "Cuti Kuarantin", "Cuti / Kebenaran Khas", "Lain-lain"];
 const KPI_TARGET = 96;
 const MONITORING_LOCATIONS = ["Kawasan Perhimpunan", "Bilik Darjah", "Koridor", "Tangga", "Padang", "Dewan", "Tandas Murid Lelaki", "Tandas Murid Perempuan", "Tandas Guru", "Surau / Bilik Solat", "Kantin", "Kawasan RMT", "Penyediaan Makanan RMT", "Pengendalian Makanan RMT", "Pintu Pagar", "Laluan Keluar / Masuk", "Kawasan Letak Kenderaan", "Laluan Pejalan Kaki", "Kawasan Sekitar Sekolah", "Longkang & Saliran", "Tempat Pembuangan Sampah", "Landskap / Kawasan Hijau", "Bilik UBK", "Makmal Komputer", "Pusat Sumber", "Bilik Sains", "Bilik Muzik", "Stor", "Bilik khas lain", "Lain-lain"];
+const CLASS_ETHNICITY_COUNTS = window.CLASS_ETHNICITY_COUNTS || {};
 
 function draftKey(date = state.date) { return `${DRAFT_PREFIX}${date}`; }
 
@@ -98,6 +100,32 @@ function localDateValue() {
 
 function safe(value) {
   return String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" }[char]));
+}
+
+async function loadDisciplinePublicSummary() {
+  const status = $("#disciplineAlertStatus");
+  if (!status) return;
+  try {
+    const response = await fetch(DISCIPLINE_PUBLIC_API_URL, { cache: "no-store" });
+    const data = await response.json();
+    if (!response.ok || !data.summary) throw new Error(data.error || "Status tidak tersedia");
+    const summary = data.summary;
+    const fields = {
+      disciplinePendingAction: summary.pendingAction,
+      disciplinePendingApproval: summary.pendingApproval,
+      disciplinePendingSsdm: summary.pendingSsdm,
+      disciplineSsdmAttention: summary.ssdmAttention,
+    };
+    for (const [id, value] of Object.entries(fields)) { const element = $(`#${id}`); if (element) element.textContent = String(Number(value) || 0); }
+    const total = Object.values(fields).reduce((sum, value) => sum + (Number(value) || 0), 0);
+    $("#disciplineAlertTotal").textContent = String(total);
+    $("#disciplineAlertTotal").classList.toggle("clear", total === 0);
+    status.textContent = summary.updatedAt ? `Data semasa • ${formatDisplayDateTime(summary.updatedAt)}` : "Data semasa telah dimuatkan";
+  } catch (error) {
+    console.error(error);
+    status.textContent = "Alert belum dapat dimuatkan. Buka SmartDisiplin untuk semakan.";
+    status.classList.add("error");
+  }
 }
 
 function activeStaffNames() {
@@ -1424,10 +1452,14 @@ function renderHomeClassTotals() {
       return match && group.years.includes(Number(match[1]));
     });
     target.innerHTML = rows.length
-      ? rows.map((row) => {
+      ? `<p class="home-class-hint">Pilih kelas untuk melihat pecahan kaum murid.</p>${rows.map((row) => {
         const total = classFigures(row).enrolTotal;
-        return `<div class="home-class-total" title="${safe(row.name)}: ${total} murid"><span>${safe(row.name)}</span><b aria-label="${total} murid">${total}</b></div>`;
-      }).join("")
+        const breakdown = Object.entries(CLASS_ETHNICITY_COUNTS[String(row.id)] || {}).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ms"));
+        const ethnicity = breakdown.length
+          ? `<div class="home-ethnicity-breakdown" aria-label="Pecahan kaum ${safe(row.name)}">${breakdown.map(([name, countValue]) => `<span><strong>${safe(name.toLocaleLowerCase("ms").replace(/(^|[\s-])\p{L}/gu, (letter) => letter.toLocaleUpperCase("ms")))}</strong><em>${countValue}</em></span>`).join("")}</div>`
+          : '<div class="home-ethnicity-breakdown"><span>Maklumat kaum belum tersedia.</span></div>';
+        return `<details class="home-class-total"><summary title="Pilih untuk lihat pecahan kaum ${safe(row.name)}"><span>${safe(row.name)}</span><b aria-label="${total} murid">${total}</b></summary>${ethnicity}</details>`;
+      }).join("")}`
       : "<p>Tiada maklumat kelas.</p>";
   }
 }
@@ -2205,6 +2237,7 @@ loadAnalytics();
 loadMonitoringReports();
 loadOrganization();
 loadPublicContent();
+loadDisciplinePublicSummary();
 
 setInterval(() => {
   const editing = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName || "");
@@ -2224,6 +2257,10 @@ setInterval(() => {
   if (document.visibilityState === "visible" && $("#adminModal").hidden) loadPublicContent(true);
 }, 60000);
 
+setInterval(() => {
+  if (document.visibilityState === "visible") loadDisciplinePublicSummary();
+}, 60000);
+
 window.addEventListener("online", () => { if (hasPendingChanges()) scheduleSave(); });
 let tickerResizeTimer;
 window.addEventListener("resize", () => {
@@ -2240,7 +2277,7 @@ window.addEventListener("beforeunload", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=71", { scope: "./", updateViaCache: "none" })
+    navigator.serviceWorker.register("./service-worker.js?v=73", { scope: "./", updateViaCache: "none" })
       .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
   });
 }
