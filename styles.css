@@ -741,3 +741,20 @@ body{background:#fff;color:#000}
 .idme-icon .idme-launch{position:absolute;top:-3px;right:-3px;display:grid;width:16px;height:16px;place-items:center;border:2px solid #fff;border-radius:50%;background:#0755b5;color:#fff;font-size:.52rem;font-weight:900;line-height:1}
 .idme-icon:hover{transform:translateY(-1px);box-shadow:0 8px 19px #001d4a4d}
 @media(max-width:800px){.idme-icon{width:43px;height:43px;padding:0}.idme-icon .idme-word b{font-size:.72rem}.idme-icon .idme-launch{width:15px;height:15px;font-size:.48rem}}
+
+/* v98: semua kandungan laman utama muat dalam lebar telefon tanpa sapuan sisi. */
+@media(max-width:800px){
+  .home-view{overflow-x:hidden}
+  .home-summary-card .summary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible;scroll-snap-type:none}
+  .home-summary-card .summary-grid div{display:grid;min-width:0;min-height:58px;scroll-snap-align:none}
+  .enrolment-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible;scroll-snap-type:none}
+  .enrolment-kpis article{min-width:0;scroll-snap-align:none}.enrolment-kpis article:last-child{grid-column:1/-1}
+  .year-enrol-totals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));overflow:visible;scroll-snap-type:none}
+  .year-enrol-totals span{min-width:0;white-space:normal;scroll-snap-align:none}
+  .enrolment-demographics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible;scroll-snap-type:none}
+  .enrolment-demographics span{min-width:0;white-space:normal;line-height:1.2;scroll-snap-align:none}.enrolment-demographics span:nth-child(3){grid-column:1/-1}
+  .home-session-grid{display:grid;grid-template-columns:1fr;overflow:visible;scroll-snap-type:none}
+  .home-session-grid article{width:100%;min-width:0;scroll-snap-align:none}
+  .hem-unit-rows{display:grid;grid-template-columns:1fr;overflow:visible;scroll-snap-type:none}
+  .hem-unit-row{width:100%;min-width:0;grid-template-columns:repeat(2,minmax(0,1fr));scroll-snap-align:none}
+}
