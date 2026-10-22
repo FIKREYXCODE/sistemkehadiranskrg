@@ -773,3 +773,23 @@ body{background:#fff;color:#000}
   .idme-icon{width:auto;height:auto;padding:3px 1px}.idme-icon .idme-text{font-size:.9rem}
   .community-stats{grid-template-columns:minmax(0,1fr) 62px 62px;gap:4px;margin-bottom:42px;padding:6px 8px}.community-stats h2{font-size:.78rem}.community-stats article{display:flex;align-items:baseline;justify-content:center;gap:3px;padding:4px}.community-stats article strong{font-size:.9rem}.community-stats article small{font-size:.48rem}
 }
+
+/* v100: pintasan idMe bulat bertema gelap seperti ikon notifikasi. */
+.idme-icon{
+  position:relative;display:grid;place-items:center;
+  width:46px;height:46px;min-width:46px;padding:0;
+  border:1px solid #55c9df;border-radius:50%;
+  background:linear-gradient(145deg,#171b24,#061f48);
+  box-shadow:0 6px 15px #00162f45;text-decoration:none
+}
+.idme-icon .idme-text{display:block;color:#fff;font-size:.78rem;font-weight:950;line-height:1;letter-spacing:-.04em}
+.idme-icon::after{
+  content:"";position:absolute;top:3px;right:3px;width:8px;height:8px;
+  border:2px solid #061f48;border-radius:50%;background:#28cbe3
+}
+.idme-icon:hover{transform:translateY(-1px);box-shadow:0 8px 18px #00162f55;text-decoration:none}
+@media(max-width:800px){
+  .idme-icon{width:42px;height:42px;min-width:42px;padding:0}
+  .idme-icon .idme-text{font-size:.72rem}
+  .idme-icon::after{top:2px;right:2px;width:7px;height:7px}
+}
