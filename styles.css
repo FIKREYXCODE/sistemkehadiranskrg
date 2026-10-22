@@ -818,3 +818,52 @@ body{background:#fff;color:#000}
   #viewAttendance .entry-controls .session-picker select{min-height:42px;padding:8px 24px 8px 8px;font-size:.68rem}
   #viewAttendance .entry-controls .session-picker small{display:none}
 }
+
+/* v103: rekod e-JKM bertukar kepada kad kelas pada telefon tanpa leret sisi. */
+#viewAttendance .attendance-table{min-width:100%}
+#viewAttendance .attendance-table .name-col{min-width:220px}
+#viewAttendance .attendance-table .note-col{min-width:120px}
+#viewAttendance .attendance-table .note-input{min-width:110px}
+#viewAttendance .attendance-table th,
+#viewAttendance .attendance-table td{padding-left:5px;padding-right:5px}
+#viewAttendance .attendance-table .status-col,
+#viewAttendance .attendance-table .attendance-status{display:none}
+#viewAttendance .attendance-table .attendance-teacher::after{display:inline-flex;align-items:center;width:max-content;margin-left:7px;padding:4px 7px;border-radius:999px;font-size:.56rem;font-weight:950;vertical-align:middle}
+#viewAttendance .attendance-table tr.class-complete .attendance-teacher::after{content:"✓ Selesai";background:#dff7ea;color:#08733d}
+#viewAttendance .attendance-table tr.class-incomplete .attendance-teacher::after{content:"Belum selesai";background:#fff0f2;color:#a61f32}
+@media(max-width:700px){
+  #viewAttendance .table-section{padding:14px 10px 5px}
+  #viewAttendance .table-scroll{overflow:visible;border:0}
+  #viewAttendance .attendance-table{display:block;min-width:0;font-size:.72rem}
+  #viewAttendance .attendance-table thead{display:none}
+  #viewAttendance .attendance-table tbody{display:grid;gap:11px}
+  #viewAttendance .attendance-table tbody tr{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:10px;border:1px solid #cad9e8;border-radius:14px;background:#fff;box-shadow:0 6px 15px #143d7a0d}
+  #viewAttendance .attendance-table tbody td{display:grid;align-content:center;min-width:0;min-height:48px;padding:7px;border:1px solid #e0e8f1;border-radius:9px;background:#f8fbff;text-align:center}
+  #viewAttendance .attendance-table tbody td::before{content:attr(data-label);display:block;margin-bottom:4px;color:#667792;font-size:.52rem;font-weight:900;line-height:1.1;text-transform:uppercase}
+  #viewAttendance .attendance-table .attendance-index{position:absolute;top:8px;right:8px;z-index:2;display:grid;width:25px;height:25px;min-height:0;padding:0;border:0;border-radius:999px;background:#e6f2ff;color:#0755b5;font-size:.64rem;font-weight:950}
+  #viewAttendance .attendance-table .attendance-index::before{display:none}
+  #viewAttendance .attendance-table .attendance-teacher{grid-column:1/3;align-content:start;padding-right:6px;border-left:4px solid #efacb5;text-align:left;font-size:.68rem;line-height:1.25}
+  #viewAttendance .attendance-table .attendance-teacher::after{align-self:start;margin-top:6px;margin-left:0;font-size:.54rem}
+  #viewAttendance .attendance-table tr.class-complete .attendance-teacher{border-left-color:#0db76f;background:#f2fbf6}
+  #viewAttendance .attendance-table tr.class-complete .attendance-teacher::after{content:"✓ Selesai";background:#dff7ea;color:#08733d}
+  #viewAttendance .attendance-table tr.class-incomplete .attendance-teacher::after{content:"Belum selesai";background:#fff0f2;color:#a61f32}
+  #viewAttendance .attendance-table .attendance-class{grid-column:3;padding-right:30px;background:#eef6ff;color:#073876;font-size:.72rem}
+  #viewAttendance .attendance-table .attendance-status{display:none}
+  #viewAttendance .attendance-table .attendance-percent{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;min-height:38px;padding:7px 10px;background:#edf8f3;color:#08733d;font-weight:900}
+  #viewAttendance .attendance-table .attendance-percent::before{display:inline;margin:0;color:inherit;font-size:.58rem}
+  #viewAttendance .attendance-table .attendance-absent-percent{background:#fff3f4;color:#a61f32}
+  #viewAttendance .attendance-table .attendance-edit{background:#fff9df}
+  #viewAttendance .attendance-table .cell-input{min-width:0;min-height:36px;padding:7px 5px;font-size:.76rem}
+  #viewAttendance .attendance-table .attendance-note{grid-column:1/-1;display:block;min-height:0;padding:8px;text-align:left}
+  #viewAttendance .attendance-table .attendance-note::before{font-size:.57rem}
+  #viewAttendance .attendance-table .note-input{min-width:0;text-align:left}
+  #viewAttendance .attendance-table tfoot{display:block;margin-top:12px}
+  #viewAttendance .attendance-table tfoot tr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;padding:9px;border-radius:12px;background:#e7f1fb}
+  #viewAttendance .attendance-table tfoot td{display:grid;align-content:center;min-width:0;min-height:42px;padding:6px;border:1px solid #cbdced;border-radius:8px;background:#fff;text-align:center;font-size:.68rem}
+  #viewAttendance .attendance-table tfoot td::before{content:attr(data-label);display:block;margin-bottom:3px;color:#667792;font-size:.48rem;font-weight:900;text-transform:uppercase}
+  #viewAttendance .attendance-table tfoot .attendance-total-title{grid-column:1/-1;display:block;min-height:0;background:#0755b5;color:#fff;font-weight:950}
+  #viewAttendance .attendance-table tfoot .attendance-total-title::before{display:none}
+  #viewAttendance .attendance-table tfoot .attendance-total-percent{grid-column:span 3;display:flex;align-items:center;justify-content:space-between;min-height:34px;padding:6px 9px;font-weight:950}
+  #viewAttendance .attendance-table tfoot .attendance-total-percent::before{display:inline;margin:0}
+  #viewAttendance .attendance-table tfoot .attendance-total-note{display:none}
+}
