@@ -20,6 +20,18 @@ body{margin:0;background:linear-gradient(135deg,#edf7ff 0%,#fff 46%,#e9f3ff 100%
 .workspace-nav strong,.workspace-nav small{display:block}.workspace-nav strong{font-size:.9rem}.workspace-nav small{margin-top:2px;color:var(--muted);font-size:.68rem}
 .workspace-nav a[aria-current="page"]{border-color:var(--blue);background:linear-gradient(135deg,#eef8ff,#fff);box-shadow:0 12px 34px #0755b526}
 .workspace-nav a[aria-current="page"]>span{background:var(--blue);color:#fff}
+.workspace-nav .sidebar-group{flex:0 0 auto;width:100%;border:1px solid #cbdced;border-radius:13px;background:#fff;overflow:hidden;box-shadow:0 9px 28px #183b6d12}
+.workspace-nav .sidebar-group>summary{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:11px;padding:12px 13px;cursor:pointer;list-style:none}
+.workspace-nav .sidebar-group>summary::-webkit-details-marker{display:none}
+.workspace-nav .sidebar-group>summary>span:first-child{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:var(--pale);color:var(--blue);font-size:.75rem;font-weight:900}
+.workspace-nav .sidebar-group>summary:after{content:"⌄";color:var(--blue);font-weight:900;transition:transform .18s}
+.workspace-nav .sidebar-group[open]>summary:after{transform:rotate(180deg)}
+.sidebar-group-copy{min-width:0}.sidebar-group-copy strong,.sidebar-group-copy small{display:block}.sidebar-group-copy strong{font-size:.9rem}.sidebar-group-copy small{margin-top:2px;color:var(--muted);font-size:.68rem}
+.sidebar-submenu{display:grid;gap:6px;padding:8px 8px 9px 55px;border-top:1px solid #e4edf7}
+.workspace-nav .sidebar-submenu a{grid-template-columns:auto 1fr;gap:8px;padding:9px 10px;border:0;border-radius:9px;background:#f4f8fd;box-shadow:none}
+.workspace-nav .sidebar-submenu a>span{grid-row:auto;width:31px;height:26px;border-radius:7px;font-size:.64rem}
+.workspace-nav .sidebar-submenu strong{font-size:.74rem}
+.workspace-nav .sidebar-submenu a[aria-current="page"]{background:#e5f2ff;box-shadow:none}
 .identity-bar{width:min(1180px,94vw);margin:12px auto 0;display:flex;align-items:center;gap:20px;padding:13px 18px;border:1px solid #cbdced;border-radius:16px;background:#f8fcff}.identity-bar[hidden]{display:none!important}
 .identity-bar .user-picker{width:min(360px,100%);font-size:.78rem;font-weight:900;color:var(--navy)}
 .identity-bar .user-picker input,.identity-bar .user-picker select{width:100%;margin-top:5px;padding:10px 12px;border:1px solid #aac7df;border-radius:9px;background:#fff;color:var(--ink);font:inherit}
@@ -385,7 +397,7 @@ body{background:#fff;color:#000}
 /* Menu utama tersembunyi secara automatik dan dibuka melalui butang Menu. */
 .menu-toggle{border:1px solid #ffffff55;border-radius:12px;padding:11px 16px;background:#073876;color:#fff;font-weight:900;cursor:pointer}
 .app-layout{grid-template-columns:minmax(0,1fr)}
-.workspace-nav{position:fixed;z-index:42;top:114px;bottom:16px;left:16px;width:min(330px,calc(100vw - 32px));margin:0;display:flex;flex-direction:column;grid-template-columns:none;transform:translateX(calc(-100% - 28px));transition:transform .22s ease;max-height:none;overscroll-behavior:contain}
+.workspace-nav{position:fixed;z-index:42;top:114px;bottom:16px;left:16px;width:min(330px,calc(100vw - 32px));margin:0;display:flex;flex-direction:column;grid-template-columns:none;overflow-y:auto;transform:translateX(calc(-100% - 28px));transition:transform .22s ease;max-height:none;overscroll-behavior:contain}
 .sidebar-open .workspace-nav{transform:translateX(0)}
 .sidebar-backdrop{position:fixed;z-index:40;inset:104px 0 0;border:0;background:#061b3b80;opacity:0;pointer-events:none;transition:opacity .22s ease}
 .sidebar-open .sidebar-backdrop{opacity:1;pointer-events:auto}
@@ -466,3 +478,9 @@ body{background:#fff;color:#000}
 /* v69: bezakan murid Perdana daripada jumlah keseluruhan termasuk Prasekolah. */
 .enrolment-overview{margin-top:20px;padding:22px 24px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(145deg,#fff,#f3f9ff);box-shadow:0 14px 42px #183b6d12}.enrolment-overview-heading{display:flex;align-items:end;justify-content:space-between;gap:20px}.enrolment-overview-heading h2{margin:3px 0 0;font-size:clamp(1.2rem,2vw,1.65rem)}.enrolment-overview-heading>small{max-width:520px;color:var(--muted);font-weight:700;text-align:right}.enrolment-kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:16px}.enrolment-kpis article{padding:13px 14px;border:1px solid #cdddf0;border-radius:14px;background:#fff}.enrolment-kpis span{display:block;color:var(--muted);font-size:.72rem;font-weight:800}.enrolment-kpis strong{display:block;margin-top:4px;color:var(--blue);font-size:1.55rem}.year-enrol-totals{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin-top:10px}.year-enrol-totals span{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:9px 10px;border-radius:11px;background:#eaf4ff;color:#39506f;font-size:.72rem}.year-enrol-totals strong{color:#0755b5;font-size:.95rem}.enrolment-demographics{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.enrolment-demographics span{padding:7px 10px;border:1px solid #d4e2f1;border-radius:999px;background:#fff;color:#526580;font-size:.7rem;font-weight:700}.enrolment-demographics b{color:#0b4e9e}
 @media(max-width:800px){.enrolment-overview{padding:17px 15px}.enrolment-overview-heading{align-items:flex-start;flex-direction:column;gap:7px}.enrolment-overview-heading>small{text-align:left}.enrolment-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.enrolment-kpis article:nth-child(3){grid-column:1/-1}.year-enrol-totals{grid-template-columns:repeat(2,minmax(0,1fr))}.year-enrol-totals span:first-child{grid-column:1/-1}}
+
+/* v83: Menu 05 dipecahkan kepada anak menu supaya paparan RMT lebih ringkas. */
+#rmtStatusView .rmt-calendar-panel,#rmtReportView .rmt-photo-section{margin-top:0}
+.rmt-archive-head label{min-width:220px;color:var(--muted);font-size:.76rem;font-weight:900}
+.rmt-archive-head label>input{display:block;width:100%;margin-top:6px}
+@media(max-width:700px){.sidebar-submenu{padding-left:12px}.rmt-archive-head label{width:100%;min-width:0}}

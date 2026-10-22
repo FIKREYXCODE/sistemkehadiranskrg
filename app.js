@@ -2166,7 +2166,7 @@ for (const selector of ["#dutyMorningBody", "#dutyAfternoonBody"]) {
 });
 
 function syncReportDateInputs() {
-  ["#reportDate", "#staffPageDate", "#dailyDutyDate", "#monitoringDate", "#oprDate"].forEach((selector) => { $(selector).value = state.date; });
+  ["#reportDate", "#staffPageDate", "#dailyDutyDate", "#monitoringDate", "#oprDate", "#rmtArchiveDate"].forEach((selector) => { $(selector).value = state.date; });
   syncAllLocalizedDateInputs();
 }
 
@@ -2187,8 +2187,10 @@ $("#sessionFilter").addEventListener("change", (event) => {
   updateSessionVisibility();
   updateEditingAccess();
 });
-const VIEW_HASHES = { home: "utama", attendance: "e-jkm", staff: "keberadaan-guru-akp", dailyDuty: "guru-bertugas-harian", duty: "guru-bertugas", calendar: "rekod-kalendar", monitoring: "laporan-pemantauan", analysis: "analisis", rmt: "guru-rmt", opr: "template-opr-hem" };
+const VIEW_HASHES = { home: "utama", attendance: "e-jkm", staff: "keberadaan-guru-akp", dailyDuty: "guru-bertugas-harian", duty: "guru-bertugas", calendar: "rekod-kalendar", monitoring: "laporan-pemantauan", analysis: "analisis", rmtInfo: "guru-rmt-maklumat", rmtStatus: "guru-rmt-status", rmtReport: "guru-rmt-laporan", rmtArchive: "guru-rmt-arkib", opr: "template-opr-hem" };
 const HASH_VIEWS = Object.fromEntries(Object.entries(VIEW_HASHES).map(([view, hash]) => [hash, view]));
+const RMT_VIEWS = ["rmtInfo", "rmtStatus", "rmtReport", "rmtArchive"];
+HASH_VIEWS["guru-rmt"] = "rmtInfo";
 HASH_VIEWS["laporan-bergambar"] = "monitoring";
 HASH_VIEWS.kehadiran = "attendance";
 HASH_VIEWS["rekod-pengisian-kelas"] = "attendance";
@@ -2196,6 +2198,7 @@ HASH_VIEWS["status-kelas"] = "attendance";
 
 function activateViewFromHash() {
   const requested = HASH_VIEWS[window.location.hash.replace(/^#/, "")] || "home";
+  const isRmtView = RMT_VIEWS.includes(requested);
   document.querySelectorAll("[data-view-panel]").forEach((panel) => {
     panel.hidden = panel.dataset.viewPanel !== requested;
   });
@@ -2203,15 +2206,17 @@ function activateViewFromHash() {
     if (link.dataset.viewLink === requested) link.setAttribute("aria-current", "page");
     else link.removeAttribute("aria-current");
   });
+  $("#rmtNavGroup").open = isRmtView;
   $("#top").hidden = false;
-  $("#identityBar").hidden = !["attendance", "staff", "dailyDuty", "rmt", "monitoring"].includes(requested);
+  $("#identityBar").hidden = !(["attendance", "staff", "dailyDuty", "monitoring"].includes(requested) || isRmtView);
   $("#printButton").hidden = requested !== "attendance";
   if (requested === "analysis") { loadAnalytics(); if (state.classes.length) loadKpiDashboard(); }
   if (requested === "monitoring") loadMonitoringReports();
   if (requested === "duty") loadWeeklyDuty();
   if (requested === "completion") loadCompletionView();
   if (requested === "calendar") loadCalendarRecord();
-  if (requested === "rmt") { loadRmtWeek(); loadRmtReports(); }
+  if (requested === "rmtInfo") loadRmtWeek();
+  if (["rmtStatus", "rmtArchive"].includes(requested)) loadRmtReports();
   if (requested === "opr") loadOprReports();
   setSidebar(false);
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -2245,14 +2250,23 @@ $("#rmtPhotoSave").addEventListener("click", saveRmtPhotos);
 $("#rmtPhotoRefresh").addEventListener("click", loadRmtReports);
 $("#rmtFrom").addEventListener("change", changeRmtEntryDate);
 $("#rmtCalendarMonth").addEventListener("change", () => { state.rmtMonth = $("#rmtCalendarMonth").value; state.rmtShowAll = false; state.rmtSelectedDate = ""; loadRmtReports(); });
+$("#rmtArchiveDate").addEventListener("change", async () => {
+  const date = $("#rmtArchiveDate").value;
+  if (!date) return;
+  state.rmtSelectedDate = date;
+  state.rmtMonth = date.slice(0, 7);
+  $("#rmtCalendarMonth").value = state.rmtMonth;
+  await loadRmtReports();
+});
 $("#rmtShowAll").addEventListener("click", () => { state.rmtShowAll = false; state.rmtSelectedDate = ""; renderRmtCalendar(); renderRmtReports(); });
 $("#rmtCalendarGrid").addEventListener("click", (event) => {
   const button = event.target.closest("[data-rmt-date]");
   if (!button) return;
   state.rmtSelectedDate = button.dataset.rmtDate;
   state.rmtShowAll = false;
-  renderRmtCalendar(); renderRmtReports();
-  $("#rmtSharedGallery").scrollIntoView({ behavior: "smooth", block: "start" });
+  $("#rmtArchiveDate").value = state.rmtSelectedDate;
+  syncAllLocalizedDateInputs();
+  window.location.hash = VIEW_HASHES.rmtArchive;
 });
 $("#menuToggle").addEventListener("click", () => setSidebar(!document.body.classList.contains("sidebar-open")));
 $("#sidebarBackdrop").addEventListener("click", () => setSidebar(false));
@@ -2457,7 +2471,7 @@ window.addEventListener("beforeunload", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=81", { scope: "./", updateViaCache: "none" })
+    navigator.serviceWorker.register("./service-worker.js?v=83", { scope: "./", updateViaCache: "none" })
       .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
   });
 }
