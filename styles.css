@@ -554,7 +554,7 @@ body{background:#fff;color:#000}
 #rmtArchiveView .monitoring-list-status{margin:8px 0;padding:8px 11px;font-size:.7rem}
 #rmtArchiveView .rmt-shared-gallery{grid-template-columns:repeat(auto-fit,minmax(500px,1fr));gap:10px;margin-top:8px}
 #rmtArchiveView .rmt-shared-report{gap:11px;padding:10px}
-#rmtArchiveView .rmt-shared-report .monitoring-photo-grid{min-height:145px}
+#rmtArchiveView .rmt-shared-report .monitoring-photo-grid{align-self:start;height:210px;min-height:0;overflow:hidden}
 #rmtArchiveView .rmt-shared-report h4{margin:6px 0 3px;font-size:.9rem}
 #rmtArchiveView .rmt-shared-report p{margin:4px 0;font-size:.7rem}
 #rmtArchiveView .rmt-report-details{gap:5px;margin:7px 0}
@@ -592,7 +592,7 @@ body{background:#fff;color:#000}
   #rmtReportView .rmt-number-field{grid-template-rows:minmax(2.25em,auto) 38px}
   #rmtArchiveView .rmt-shared-gallery{display:flex;gap:9px;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x mandatory}
   #rmtArchiveView .rmt-shared-report{flex:0 0 min(88vw,560px);grid-template-columns:1fr;scroll-snap-align:start}
-  #rmtArchiveView .rmt-shared-report .monitoring-photo-grid{height:135px;min-height:135px}
+  #rmtArchiveView .rmt-shared-report .monitoring-photo-grid{height:135px;min-height:0}
 }
 
 @media(max-width:390px){#rmtInfoView .rmt-name-list{grid-template-columns:1fr}}
