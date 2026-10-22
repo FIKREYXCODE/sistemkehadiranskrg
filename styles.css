@@ -793,3 +793,28 @@ body{background:#fff;color:#000}
   .idme-icon .idme-text{font-size:.72rem}
   .idme-icon::after{top:2px;right:2px;width:7px;height:7px}
 }
+
+/* v101: pemilih tarikh e-JKM yang lebih kompak dan mesra telefon. */
+#viewAttendance .date-panel{gap:20px;padding:18px 24px;border-radius:18px}
+#viewAttendance .date-panel h1{margin-bottom:5px;font-size:clamp(1.25rem,2vw,1.65rem)}
+#viewAttendance .date-panel p:not(.eyebrow){font-size:.8rem;line-height:1.35}
+#viewAttendance .entry-controls{grid-template-columns:175px 195px;gap:10px}
+#viewAttendance .entry-controls label{font-size:.76rem}
+#viewAttendance .entry-controls .localized-date-control,
+#viewAttendance .entry-controls .date-picker input,
+#viewAttendance .entry-controls .session-picker select{margin-top:5px}
+#viewAttendance .entry-controls .localized-date-display{min-height:44px;padding:0 11px;border-radius:10px;font-size:.78rem}
+#viewAttendance .entry-controls .session-picker select{min-height:44px;padding:9px 10px;border-radius:10px;font-size:.78rem}
+#viewAttendance .entry-controls .session-picker small{margin-top:4px;font-size:.58rem;line-height:1.25}
+@media(max-width:800px){
+  #viewAttendance .date-panel{gap:11px;padding:13px 14px;border-radius:16px}
+  #viewAttendance .date-panel .eyebrow{margin-bottom:4px;font-size:.57rem}
+  #viewAttendance .date-panel h1{margin:0;font-size:1.02rem;line-height:1.18}
+  #viewAttendance .date-panel>div:first-child>p:last-child{display:none}
+  #viewAttendance .entry-controls{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
+  #viewAttendance .entry-controls label{min-width:0;font-size:.63rem}
+  #viewAttendance .entry-controls .localized-date-display{min-height:42px;padding:0 8px;font-size:.68rem;letter-spacing:-.02em}
+  #viewAttendance .entry-controls .localized-date-display b{font-size:.72rem}
+  #viewAttendance .entry-controls .session-picker select{min-height:42px;padding:8px 24px 8px 8px;font-size:.68rem}
+  #viewAttendance .entry-controls .session-picker small{display:none}
+}
