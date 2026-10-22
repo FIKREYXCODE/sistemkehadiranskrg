@@ -11,6 +11,7 @@ const state = {
   analytics: { period: "week", date: "", loading: false, filtersReady: false, filterPromise: null, annualLoadingYear: "", annualCache: new Map() },
   monitoring: { reports: [], loading: false, previewUrls: [] },
   weeklyDuty: { loading: false }, completion: { loading: false }, calendar: { loading: false }, rmtPreviewUrls: [], rmtReports: [], rmtLoading: false,
+  rmtMonth: "", rmtSelectedDate: "", rmtShowAll: true, rmtScheduleLoading: false,
   opr: { reports: [], loading: false, previewUrls: [] }, editingRecord: null,
   organization: { items: [], adminItems: [], deletedIds: [], loading: false },
   content: { announcements: [], adminAnnouncements: [], deletedAnnouncementIds: [], latestLetters: [], letters: [], loading: false },
@@ -707,8 +708,20 @@ function setupRmtTemplate() {
   const rmtAnchor = day === 0 ? dateValue(addDays(today, 1)) : day === 6 ? dateValue(addDays(today, 2)) : state.date;
   const dates = schoolWeekDates(rmtAnchor);
   $("#rmtWeek").value = isoWeekNumber(rmtAnchor); $("#rmtFrom").value = dates[0]; $("#rmtTo").value = dates[4];
+  state.rmtMonth = state.date.slice(0, 7);
+  $("#rmtCalendarMonth").value = state.rmtMonth;
   syncAllLocalizedDateInputs();
   updateRmtTotal();
+}
+
+async function changeRmtWeekStart() {
+  const selected = $("#rmtFrom").value || state.date;
+  const dates = schoolWeekDates(selected);
+  $("#rmtFrom").value = dates[0];
+  $("#rmtTo").value = dates[4];
+  $("#rmtWeek").value = isoWeekNumber(dates[0]);
+  syncAllLocalizedDateInputs();
+  await loadRmtWeek();
 }
 
 function updateRmtTotal() {
@@ -755,9 +768,77 @@ function isRmtReport(report) {
   return String(report?.location || "").startsWith("RMT •");
 }
 
+function rmtMonthRange(month = state.rmtMonth || state.date.slice(0, 7)) {
+  const match = /^(\d{4})-(\d{2})$/.exec(month);
+  const year = Number(match?.[1] || state.date.slice(0, 4));
+  const monthNumber = Number(match?.[2] || state.date.slice(5, 7));
+  const lastDay = new Date(Date.UTC(year, monthNumber, 0)).getUTCDate();
+  const normalized = `${year}-${String(monthNumber).padStart(2, "0")}`;
+  return { month: normalized, from: `${normalized}-01`, to: `${normalized}-${String(lastDay).padStart(2, "0")}`, year, monthNumber, lastDay };
+}
+
+function rmtNameValues(target) {
+  return Array.from($(target).querySelectorAll(".rmt-name-input")).map((input) => input.value.trim()).filter(Boolean);
+}
+
+function setRmtNameValues(target, names = []) {
+  $(target).querySelectorAll(".rmt-name-input").forEach((input, index) => { input.value = names[index] || ""; });
+}
+
+async function loadRmtWeek() {
+  if (state.rmtScheduleLoading) return;
+  state.rmtScheduleLoading = true;
+  const date = $("#rmtFrom").value || state.date;
+  $("#rmtDutyStatus").textContent = "Memuatkan senarai guru mingguan…";
+  try {
+    const response = await fetch(`${SAFETY_API_URL}?mode=rmt-week&date=${encodeURIComponent(date)}`, { cache: "no-store" });
+    const data = await responseJson(response, "Senarai guru RMT tidak dapat dibuka.");
+    if (!response.ok) throw new Error(data.error || "Senarai guru RMT tidak dapat dibuka.");
+    const schedule = data.schedule;
+    if (!schedule) {
+      setRmtNameValues("#rmtMorningNames"); setRmtNameValues("#rmtAfternoonNames");
+      $("#rmtDutyStatus").textContent = "Belum ada senarai guru RMT disimpan bagi minggu ini.";
+      return;
+    }
+    $("#rmtWeek").value = schedule.weekNumber;
+    $("#rmtFrom").value = schedule.weekStart;
+    $("#rmtTo").value = schedule.weekEnd;
+    $("#rmtMorningCount").value = schedule.morningCount;
+    $("#rmtAfternoonCount").value = schedule.afternoonCount;
+    setRmtNameValues("#rmtMorningNames", schedule.morningNames);
+    setRmtNameValues("#rmtAfternoonNames", schedule.afternoonNames);
+    updateRmtTotal(); syncAllLocalizedDateInputs();
+    $("#rmtDutyStatus").textContent = `Senarai minggu ${schedule.weekNumber} tersimpan oleh ${schedule.updatedBy || "guru bertugas"}.`;
+  } catch (error) {
+    $("#rmtDutyStatus").textContent = error.message || "Senarai guru RMT tidak dapat dibuka.";
+  } finally { state.rmtScheduleLoading = false; }
+}
+
+async function saveRmtWeek() {
+  if (!editorName()) { $("#rmtDutyStatus").textContent = "Pilih nama pengisi di bahagian atas dahulu."; $("#editorName").focus(); return; }
+  const morningNames = rmtNameValues("#rmtMorningNames"), afternoonNames = rmtNameValues("#rmtAfternoonNames");
+  const button = $("#rmtDutySave"); button.disabled = true; $("#rmtDutyStatus").textContent = "Menyimpan senarai guru mingguan…";
+  try {
+    const payload = { action: "saveRmtWeek", weekStart: $("#rmtFrom").value, weekEnd: $("#rmtTo").value, weekNumber: count($("#rmtWeek").value, 53), morningCount: count($("#rmtMorningCount").value, 9999), afternoonCount: count($("#rmtAfternoonCount").value, 9999), morningNames, afternoonNames, updatedBy: editorName() };
+    const response = await fetch(SAFETY_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    const data = await responseJson(response, "Senarai guru RMT gagal disimpan.");
+    if (!response.ok) throw new Error(data.error || "Senarai guru RMT gagal disimpan.");
+    $("#rmtDutyStatus").textContent = "Senarai guru RMT berjaya disimpan dan boleh dilihat pada semua peranti.";
+  } catch (error) { $("#rmtDutyStatus").textContent = error.message || "Senarai guru RMT gagal disimpan."; }
+  finally { button.disabled = false; }
+}
+
+function rmtReportsForDisplay() {
+  if (state.rmtShowAll || !state.rmtSelectedDate) return state.rmtReports;
+  return state.rmtReports.filter((report) => report.reportDate === state.rmtSelectedDate);
+}
+
 function renderRmtReports() {
   const sessionLabel = (value) => value === "afternoon" ? "Sidang Petang" : "Sidang Pagi";
-  $("#rmtSharedGallery").innerHTML = state.rmtReports.map((report) => {
+  const reports = rmtReportsForDisplay();
+  $("#rmtGalleryTitle").textContent = state.rmtShowAll ? "Semua Laporan RMT Bulan Ini" : `Laporan ${formatDisplayDate(state.rmtSelectedDate)}`;
+  $("#rmtGallerySubtitle").textContent = state.rmtShowAll ? `${state.rmtReports.length} laporan ditemui dalam bulan pilihan.` : `${reports.length} laporan ditemui pada tarikh ini.`;
+  $("#rmtSharedGallery").innerHTML = reports.map((report) => {
     const created = formatDisplayDateTime(report.createdAt);
     const displayLocation = formatEmbeddedDates(report.location);
     const photos = (Array.isArray(report.photos) ? report.photos : []).map((photo, index) => `<a href="${safe(photo.url)}" target="_blank" rel="noopener"><img src="${safe(photo.url)}" loading="lazy" alt="Gambar RMT ${safe(displayLocation)} ${index + 1}"></a>`).join("");
@@ -766,25 +847,76 @@ function renderRmtReports() {
     const content = details ? `<dl class="rmt-report-details"><div><dt>Penerima</dt><dd>${safe(details.recipients)} orang</dd></div><div><dt>Dibekalkan</dt><dd>${safe(details.supplied)} hidangan</dd></div><div><dt>Menu</dt><dd>${safe(details.menu)}</dd></div><div><dt>Penilaian</dt><dd>${safe(details.rating)}</dd></div>${details.notes ? `<div><dt>Catatan</dt><dd>${safe(details.notes)}</dd></div>` : ""}</dl>` : `<p>${safe(formatEmbeddedDates(report.action))}</p>`;
     return `<article class="rmt-shared-report"><div class="monitoring-photo-grid">${photos}</div><div><span class="category-badge">${sessionLabel(report.session)}</span><h4>${safe(displayLocation)}</h4><p>Diisi oleh <strong>${safe(report.updatedBy || "—")}</strong></p><small>${safe(created)}</small>${content}</div></article>`;
   }).join("");
-  $("#rmtSharedStatus").textContent = state.rmtReports.length ? `${state.rmtReports.length} laporan gambar RMT ditemui.` : "Belum ada gambar RMT tersimpan bagi minggu ini.";
+  if (!reports.length) $("#rmtSharedGallery").innerHTML = '<p class="monitoring-empty">Belum ada laporan RMT bagi pilihan ini.</p>';
+  $("#rmtSharedStatus").textContent = reports.length ? `${reports.length} laporan RMT dipaparkan.` : "Belum ada laporan RMT bagi pilihan ini.";
+}
+
+function renderRmtCalendar() {
+  const range = rmtMonthRange();
+  const sessionsByDate = new Map();
+  for (const report of state.rmtReports) {
+    const sessions = sessionsByDate.get(report.reportDate) || new Set();
+    sessions.add(report.session === "afternoon" ? "afternoon" : "morning");
+    sessionsByDate.set(report.reportDate, sessions);
+  }
+  const totalMorning = state.rmtReports.filter((item) => item.session === "morning").length;
+  const totalAfternoon = state.rmtReports.filter((item) => item.session === "afternoon").length;
+  const completeDays = Array.from(sessionsByDate.values()).filter((sessions) => sessions.has("morning") && sessions.has("afternoon")).length;
+  $("#rmtSummaryTotal").textContent = state.rmtReports.length;
+  $("#rmtSummaryMorning").textContent = totalMorning;
+  $("#rmtSummaryAfternoon").textContent = totalAfternoon;
+  $("#rmtSummaryComplete").textContent = completeDays;
+  const firstDayOffset = (new Date(Date.UTC(range.year, range.monthNumber - 1, 1)).getUTCDay() + 6) % 7;
+  const cells = Array.from({ length: firstDayOffset }, () => '<span class="rmt-calendar-spacer" aria-hidden="true"></span>');
+  for (let day = 1; day <= range.lastDay; day++) {
+    const date = `${range.month}-${String(day).padStart(2, "0")}`;
+    const dateObjectValue = new Date(`${date}T00:00:00Z`), weekday = dateObjectValue.getUTCDay();
+    const sessions = sessionsByDate.get(date) || new Set();
+    const hasMorning = sessions.has("morning"), hasAfternoon = sessions.has("afternoon");
+    let status = "missing", label = "Belum ada laporan";
+    if (hasMorning && hasAfternoon) { status = "complete"; label = "Pagi dan petang lengkap"; }
+    else if (hasMorning || hasAfternoon) { status = "partial"; label = hasMorning ? "Sidang pagi sahaja" : "Sidang petang sahaja"; }
+    else if (weekday === 0 || weekday === 6 || date > localDateValue()) { status = "future"; label = "Tiada pengisian diperlukan"; }
+    const selected = !state.rmtShowAll && state.rmtSelectedDate === date ? " selected" : "";
+    cells.push(`<button class="rmt-calendar-day ${status}${selected}" type="button" data-rmt-date="${date}" aria-label="${safe(formatDisplayDate(date))}: ${safe(label)}"><span>${day}</span><small>${hasMorning ? "P" : ""}${hasMorning && hasAfternoon ? " + " : ""}${hasAfternoon ? "PTG" : ""}</small></button>`);
+  }
+  $("#rmtCalendarGrid").innerHTML = cells.join("");
+  $("#rmtCalendarStatus").textContent = state.rmtReports.length ? `${state.rmtReports.length} laporan berjaya dipulihkan dan dipaparkan bagi bulan ini.` : "Belum ada laporan RMT dalam bulan pilihan.";
+}
+
+async function loadRmtReportsFromDailyArchive(range) {
+  const dates = Array.from({ length: range.lastDay }, (_, index) => `${range.month}-${String(index + 1).padStart(2, "0")}`);
+  const results = await Promise.all(dates.map(async (date) => {
+    try {
+      const response = await fetch(`${SAFETY_API_URL}?date=${encodeURIComponent(date)}&limit=20`, { cache: "no-store" });
+      const data = await responseJson(response, "");
+      return response.ok && Array.isArray(data.reports) ? data.reports.filter(isRmtReport) : [];
+    } catch { return []; }
+  }));
+  return results.flat();
 }
 
 async function loadRmtReports() {
   if (state.rmtLoading) return;
   state.rmtLoading = true;
-  $("#rmtSharedStatus").textContent = "Memuatkan gambar RMT…";
+  $("#rmtSharedStatus").textContent = "Memuatkan semua laporan RMT…";
+  $("#rmtCalendarStatus").textContent = "Memuatkan rekod RMT…";
   try {
-    const date = state.date;
-    const response = await fetch(`${SAFETY_API_URL}?date=${encodeURIComponent(date)}`, { cache: "no-store" });
+    state.rmtMonth = $("#rmtCalendarMonth").value || state.rmtMonth || state.date.slice(0, 7);
+    const range = rmtMonthRange(state.rmtMonth);
+    const response = await fetch(`${SAFETY_API_URL}?mode=rmt&from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`, { cache: "no-store" });
     const data = await responseJson(response, "Gambar RMT tidak dapat dibuka.");
-    if (!response.ok) throw new Error(data.error || "Gambar RMT tidak dapat dibuka.");
-    state.rmtReports = (Array.isArray(data.reports) ? data.reports : []).filter(isRmtReport);
-    renderRmtReports();
+    const supportsMonthlyArchive = response.ok && data.from === range.from && data.to === range.to;
+    state.rmtReports = supportsMonthlyArchive && Array.isArray(data.reports)
+      ? data.reports.filter(isRmtReport)
+      : await loadRmtReportsFromDailyArchive(range);
+    renderRmtCalendar(); renderRmtReports();
   } catch (error) {
     console.error(error);
     state.rmtReports = [];
     $("#rmtSharedGallery").innerHTML = "";
     $("#rmtSharedStatus").textContent = error.message || "Gambar RMT tidak dapat dibuka.";
+    $("#rmtCalendarStatus").textContent = error.message || "Kalendar RMT tidak dapat dibuka.";
   } finally { state.rmtLoading = false; }
 }
 
@@ -820,6 +952,7 @@ async function saveRmtPhotos() {
     if (!response.ok) throw new Error(result.error || "Gambar RMT gagal disimpan.");
     clearRmtPreview();
     $("#rmtPhotoStatus").textContent = "Gambar RMT berjaya disimpan dan boleh dilihat oleh guru lain.";
+    state.rmtMonth = String(payload.date).slice(0, 7); $("#rmtCalendarMonth").value = state.rmtMonth; state.rmtShowAll = true;
     await loadRmtReports();
   } catch (error) {
     console.error(error);
@@ -845,7 +978,7 @@ async function saveRmtReport(event) {
     const response = await fetch(SAFETY_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     const result = await responseJson(response, "Laporan RMT gagal disimpan.");
     if (!response.ok) throw new Error(result.error || "Laporan RMT gagal disimpan.");
-    form.reset(); form.querySelector("[data-rmt-preview]").innerHTML = ""; status.textContent = "Laporan RMT berjaya disimpan dan tersedia pada semua peranti."; await loadRmtReports();
+    form.reset(); form.querySelector("[data-rmt-preview]").innerHTML = ""; status.textContent = "Laporan RMT berjaya disimpan dan tersedia pada semua peranti."; state.rmtMonth = state.date.slice(0, 7); $("#rmtCalendarMonth").value = state.rmtMonth; state.rmtShowAll = true; await loadRmtReports();
   } catch (error) { status.textContent = error.message || "Laporan RMT gagal disimpan."; }
   finally { button.disabled = false; }
 }
@@ -2042,7 +2175,7 @@ function activateViewFromHash() {
   if (requested === "duty") loadWeeklyDuty();
   if (requested === "completion") loadCompletionView();
   if (requested === "calendar") loadCalendarRecord();
-  if (requested === "rmt") loadRmtReports();
+  if (requested === "rmt") { loadRmtWeek(); loadRmtReports(); }
   if (requested === "opr") loadOprReports();
   setSidebar(false);
   window.scrollTo({ top: 0, behavior: "smooth" });
@@ -2071,9 +2204,20 @@ $("#calendarRefresh").addEventListener("click", loadCalendarRecord);
 $("#rmtPhotos").addEventListener("change", (event) => renderRmtImagePreview(event.target.files));
 $("#rmtMorningCount").addEventListener("input", updateRmtTotal);
 $("#rmtAfternoonCount").addEventListener("input", updateRmtTotal);
+$("#rmtDutySave").addEventListener("click", saveRmtWeek);
 $("#rmtPhotoSave").addEventListener("click", saveRmtPhotos);
 $("#rmtPhotoRefresh").addEventListener("click", loadRmtReports);
-$("#rmtFrom").addEventListener("change", loadRmtReports);
+$("#rmtFrom").addEventListener("change", changeRmtWeekStart);
+$("#rmtCalendarMonth").addEventListener("change", () => { state.rmtMonth = $("#rmtCalendarMonth").value; state.rmtShowAll = true; state.rmtSelectedDate = ""; loadRmtReports(); });
+$("#rmtShowAll").addEventListener("click", () => { state.rmtShowAll = true; state.rmtSelectedDate = ""; renderRmtCalendar(); renderRmtReports(); });
+$("#rmtCalendarGrid").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-rmt-date]");
+  if (!button) return;
+  state.rmtSelectedDate = button.dataset.rmtDate;
+  state.rmtShowAll = false;
+  renderRmtCalendar(); renderRmtReports();
+  $("#rmtSharedGallery").scrollIntoView({ behavior: "smooth", block: "start" });
+});
 $("#menuToggle").addEventListener("click", () => setSidebar(!document.body.classList.contains("sidebar-open")));
 $("#sidebarBackdrop").addEventListener("click", () => setSidebar(false));
 document.querySelectorAll("[data-view-link]").forEach((link) => link.addEventListener("click", () => setSidebar(false)));
