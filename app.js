@@ -1169,42 +1169,85 @@ function monitoringLocationOptions(selected = "") {
   return `<option value="">Pilih kawasan / kategori</option>${MONITORING_LOCATIONS.map((location) => `<option value="${safe(location)}"${location === selected ? " selected" : ""}>${safe(location)}</option>`).join("")}`;
 }
 
-function addMonitoringItem() {
+function monitoringStatusLabel(value) {
+  return value === "controlled" ? "Baik" : value === "attention" ? "Perlu Tindakan" : "Memuaskan";
+}
+
+function monitoringSessionLabel(value) {
+  return value === "morning" ? "Sidang Pagi" : value === "afternoon" ? "Sidang Petang" : "Sidang belum ditetapkan";
+}
+
+function cleanMonitoringText(value = "") {
+  return String(value).replace(/^\[smart-report:[^\]]+\]\s*/i, "").trim();
+}
+
+function monitoringBatchId(report) {
+  const match = String(report.issue || "").match(/^\[smart-report:([^\]]+)\]/i);
+  if (match) return match[1];
+  return `${report.session || "legacy"}-${String(report.updatedBy || "tanpa-nama").trim().toLowerCase().replace(/\s+/g, "-")}`;
+}
+
+function groupedMonitoringReports() {
+  const reports = state.monitoring.reports.filter((report) => !isRmtReport(report) && !isRmtScheduleReport(report) && report.category !== "opr");
+  const groups = new Map();
+  for (const report of reports) {
+    const key = monitoringBatchId(report);
+    if (!groups.has(key)) groups.set(key, { id: key, session: report.session || "legacy", updatedBy: report.updatedBy || "—", createdAt: report.createdAt, items: [] });
+    const group = groups.get(key);
+    group.items.push(report);
+    if (new Date(report.createdAt || 0) > new Date(group.createdAt || 0)) group.createdAt = report.createdAt;
+  }
+  return Array.from(groups.values()).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+}
+
+function setMonitoringTab(tab) {
+  document.querySelectorAll("[data-monitoring-tab]").forEach((button) => {
+    const active = button.dataset.monitoringTab === tab;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-selected", String(active));
+  });
+  document.querySelectorAll("[data-monitoring-panel]").forEach((panel) => { panel.hidden = panel.dataset.monitoringPanel !== tab; });
+}
+
+function addMonitoringItem(selectedLocation = "") {
   const container = $("#monitoringItems");
+  const location = selectedLocation || $("#monitoringLocationPicker")?.value || "";
+  if (!location) { $("#monitoringFormStatus").textContent = "Pilih kawasan yang dipantau dahulu."; return; }
+  const duplicate = Array.from(container.querySelectorAll('[data-monitoring-field="location"]')).some((field) => field.value === location);
+  if (duplicate) { $("#monitoringFormStatus").textContent = `${location} sudah dimasukkan dalam laporan ini.`; return; }
   container.querySelector(".monitoring-empty")?.remove();
+  container.querySelectorAll(".monitoring-item-card").forEach((item) => { item.open = false; });
   const index = container.querySelectorAll(".monitoring-item-card").length + 1;
-  const card = document.createElement("article");
+  const card = document.createElement("details");
   card.className = "monitoring-item-card";
-  card.innerHTML = `<div class="monitoring-item-heading"><h4>Pemantauan ${index}</h4><button class="monitoring-remove" type="button" aria-label="Buang pemantauan ${index}">Buang</button></div><div class="monitoring-item-grid"><label>Kategori / lokasi<select data-monitoring-field="location" required>${monitoringLocationOptions()}</select></label><label class="other-location" hidden>Nama lokasi lain<input data-monitoring-field="otherLocation" maxlength="180"></label><label>Status<select data-monitoring-field="status" required><option value="controlled">Baik</option><option value="not_applicable">Memuaskan</option><option value="attention">Perlu Tindakan</option></select></label></div><label>Gambar<input data-monitoring-field="photos" type="file" accept="image/*,.heic,.heif" multiple required></label><label>Laporan ringkas / catatan — Pilihan<textarea data-monitoring-field="note" rows="3" maxlength="1500"></textarea></label><label class="follow-up" hidden>Tindakan susulan / cadangan tindakan<textarea data-monitoring-field="action" rows="3" maxlength="1500"></textarea></label><div class="monitoring-preview" data-monitoring-preview></div>`;
+  card.open = true;
+  card.innerHTML = `<summary><span class="monitoring-step">${index}</span><span><strong data-monitoring-item-title>${safe(location)}</strong><small data-monitoring-item-status>Baik • Gambar belum dipilih</small></span><button class="monitoring-remove" type="button" aria-label="Buang ${safe(location)}">Buang</button></summary><div class="monitoring-item-content"><input data-monitoring-field="location" type="hidden" value="${safe(location)}"><label class="other-location"${location === "Lain-lain" ? "" : " hidden"}>Nama kawasan<input data-monitoring-field="otherLocation" maxlength="180" placeholder="Contoh: Bilik Kesihatan"></label><div class="monitoring-item-grid"><label>Status<select data-monitoring-field="status" required><option value="controlled">🟢 Baik</option><option value="not_applicable">🟡 Memuaskan</option><option value="attention">🔴 Perlu Tindakan</option></select></label><label class="monitoring-photo-control">Gambar kawasan<input data-monitoring-field="photos" type="file" accept="image/*,.heic,.heif" multiple required></label></div><div class="monitoring-preview" data-monitoring-preview></div><label>Catatan ringkas — pilihan<textarea data-monitoring-field="note" rows="2" maxlength="1500" placeholder="Catat perkara penting sahaja"></textarea></label><label class="follow-up" hidden>Tindakan susulan<textarea data-monitoring-field="action" rows="2" maxlength="1500" placeholder="Nyatakan tindakan yang perlu dibuat"></textarea></label></div>`;
   container.appendChild(card);
+  if ($("#monitoringLocationPicker")) $("#monitoringLocationPicker").value = "";
+  $("#monitoringFormStatus").textContent = `${container.querySelectorAll(".monitoring-item-card").length} kawasan dimasukkan dalam satu laporan.`;
 }
 
 function renderMonitoringReports() {
-  const reports = state.monitoring.reports.filter((report) => !isRmtReport(report) && !isRmtScheduleReport(report) && report.category !== "opr");
-  const renderReport = (report) => {
-    const created = formatDisplayDateTime(report.createdAt);
-    const photos = (Array.isArray(report.photos) ? report.photos : []).map((photo, index) =>
-      `<a href="${safe(photo.url)}" target="_blank" rel="noopener"><img src="${safe(photo.url)}" loading="lazy" alt="${safe(MONITORING_CATEGORY_LABELS[report.category] || "Pemantauan")} di ${safe(report.location)}, gambar ${index + 1}"></a>`
-    ).join("");
-    return `<article class="monitoring-report">
-      <div class="monitoring-photo-grid">${photos}</div>
-      <div class="monitoring-report-body">
-        <div class="monitoring-report-top"><span class="category-badge">${safe(MONITORING_CATEGORY_LABELS[report.category] || report.category)}</span><time>${safe(created)}</time></div>
-        <h3>${safe(report.location)}</h3>
-        <p class="monitoring-by">Diisi oleh <strong>${safe(report.updatedBy)}</strong></p>
-        <div class="monitoring-statuses"><span class="${monitoringStatusClass(report.routeStatus)}">Status: <strong>${report.routeStatus === "controlled" ? "Baik" : report.routeStatus === "attention" ? "Perlu Tindakan" : "Memuaskan"}</strong></span></div>
-        <dl><div><dt>Laporan ringkas / catatan</dt><dd>${safe(report.issue || "Tiada catatan tambahan")}</dd></div>${report.routeStatus === "attention" ? `<div><dt>Tindakan susulan</dt><dd>${safe(report.action)}</dd></div>` : ""}</dl>
-      </div>
-    </article>`;
+  const groups = groupedMonitoringReports();
+  const allItems = groups.flatMap((group) => group.items);
+  const statusCount = (status) => allItems.filter((item) => item.routeStatus === status).length;
+  const issues = allItems.filter((item) => item.routeStatus === "attention");
+  $("#monitoringSmartSummary").innerHTML = `<div class="monitoring-summary-title"><div><span>${safe($("#monitoringDateLabel").textContent)}</span><h3>Ringkasan Pemantauan</h3></div><button class="secondary-button" type="button" data-monitoring-open="archive">Lihat arkib</button></div><div class="monitoring-summary-metrics"><article><span>📍</span><strong>${allItems.length}</strong><small>Kawasan</small></article><article class="good"><span>✓</span><strong>${statusCount("controlled")}</strong><small>Baik</small></article><article class="fair"><span>●</span><strong>${statusCount("not_applicable")}</strong><small>Memuaskan</small></article><article class="alert"><span>!</span><strong>${statusCount("attention")}</strong><small>Perlu tindakan</small></article></div>${issues.length ? `<div class="monitoring-alert-list"><strong>Perhatian pentadbir</strong>${issues.map((item) => `<span><b>${safe(item.location)}</b> — ${safe(cleanMonitoringText(item.issue) || "Memerlukan tindakan")}</span>`).join("")}</div>` : `<p class="monitoring-summary-empty">${groups.length ? "Tiada kawasan berstatus perlu tindakan pada tarikh ini." : "Belum ada laporan pada tarikh ini."}</p>`}`;
+  const renderGroup = (group) => {
+    const items = group.items.map((report) => {
+      const photos = (Array.isArray(report.photos) ? report.photos : []).map((photo, index) => `<a href="${safe(photo.url)}" target="_blank" rel="noopener"><img src="${safe(photo.url)}" loading="lazy" alt="${safe(report.location)}, gambar ${index + 1}"></a>`).join("");
+      return `<details class="monitoring-location-result"><summary><span class="monitoring-result-status ${monitoringStatusClass(report.routeStatus)}">${report.routeStatus === "controlled" ? "✓" : report.routeStatus === "attention" ? "!" : "●"}</span><strong>${safe(report.location)}</strong><small>${safe(monitoringStatusLabel(report.routeStatus))}</small></summary><div class="monitoring-location-result-body"><div class="monitoring-photo-grid">${photos}</div><dl><div><dt>Catatan</dt><dd>${safe(cleanMonitoringText(report.issue) || "Tiada catatan tambahan")}</dd></div>${report.routeStatus === "attention" ? `<div><dt>Tindakan susulan</dt><dd>${safe(report.action || "Belum dinyatakan")}</dd></div>` : ""}</dl></div></details>`;
+    }).join("");
+    return `<article class="monitoring-master-report"><header><div><span class="category-badge">${safe(monitoringSessionLabel(group.session))}</span><h3>${group.items.length} kawasan dipantau</h3><p>Diisi oleh <strong>${safe(group.updatedBy)}</strong></p></div><time>${safe(formatDisplayDateTime(group.createdAt))}</time></header><div class="monitoring-report-status-line"><span class="controlled">${group.items.filter((item) => item.routeStatus === "controlled").length} baik</span><span class="neutral">${group.items.filter((item) => item.routeStatus === "not_applicable").length} memuaskan</span><span class="attention">${group.items.filter((item) => item.routeStatus === "attention").length} perlu tindakan</span></div><div class="monitoring-location-results">${items}</div></article>`;
   };
   $("#monitoringGallery").innerHTML = [
     ["morning", "Sidang Pagi"], ["afternoon", "Sidang Petang"], ["legacy", "Laporan lama — sidang belum ditetapkan"],
   ].map(([session, label]) => {
-    const grouped = reports.filter((report) => (report.session || "legacy") === session);
+    const grouped = groups.filter((report) => report.session === session);
     if (session === "legacy" && !grouped.length) return "";
-    return `<section class="monitoring-session-group"><h4>${label} <span>${grouped.length} laporan</span></h4>${grouped.length ? grouped.map(renderReport).join("") : '<p class="monitoring-empty">Belum ada laporan untuk sidang ini.</p>'}</section>`;
+    return `<section class="monitoring-session-group"><h4>${label} <span>${grouped.length} laporan lengkap</span></h4>${grouped.length ? grouped.map(renderGroup).join("") : '<p class="monitoring-empty">Belum ada laporan untuk sidang ini.</p>'}</section>`;
   }).join("");
-  $("#monitoringListStatus").textContent = reports.length ? `${reports.length} laporan bergambar ditemui.` : "Belum ada laporan bergambar pada tarikh ini.";
+  $("#monitoringListStatus").textContent = groups.length ? `${groups.length} laporan lengkap • ${allItems.length} kawasan dipantau.` : "Belum ada laporan bergambar pada tarikh ini.";
 }
 
 async function loadMonitoringReports() {
@@ -1239,8 +1282,9 @@ async function saveMonitoringReport(event) {
   if (!session) { $("#monitoringFormStatus").textContent = "Sila pilih sidang laporan."; return; }
   if (!cards.length) { $("#monitoringFormStatus").textContent = "Tambah sekurang-kurangnya satu pemantauan."; return; }
   $("#monitoringSave").disabled = true;
-  $("#monitoringFormStatus").textContent = `Menyimpan ${cards.length} pemantauan…`;
+  $("#monitoringFormStatus").textContent = `Menyediakan satu laporan lengkap dengan ${cards.length} kawasan…`;
   try {
+    const batchId = `${state.date}-${session}-${Date.now().toString(36)}`;
     for (const card of cards) {
       const field = (name) => card.querySelector(`[data-monitoring-field="${name}"]`);
       const locationChoice = field("location").value;
@@ -1251,14 +1295,16 @@ async function saveMonitoringReport(event) {
       if (status === "attention" && !action) throw new Error("Sila nyatakan tindakan susulan bagi status Perlu Tindakan.");
       const files = validateMonitoringFiles(field("photos").files);
       const photos = await Promise.all(files.map(prepareMonitoringPhoto));
-      const payload = { date: state.date, updatedBy: editorName(), category: "both", session, location, routeStatus: status, parkingStatus: "not_applicable", issue: field("note").value.trim() || (status === "controlled" ? "Kawasan dalam keadaan baik." : status === "not_applicable" ? "Kawasan dalam keadaan memuaskan." : "Pemantauan memerlukan tindakan."), action: action || "Tiada tindakan susulan diperlukan.", photos };
+      const note = field("note").value.trim() || (status === "controlled" ? "Kawasan dalam keadaan baik." : status === "not_applicable" ? "Kawasan dalam keadaan memuaskan." : "Pemantauan memerlukan tindakan.");
+      const payload = { date: state.date, updatedBy: editorName(), category: "both", session, location, routeStatus: status, parkingStatus: "not_applicable", issue: `[smart-report:${batchId}] ${note}`, action: action || "Tiada tindakan susulan diperlukan.", photos, reportGroupId: batchId };
       const response = await fetch(SAFETY_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const result = await responseJson(response, "Laporan gagal disimpan.");
       if (!response.ok) throw new Error(result.error || "Laporan gagal disimpan.");
     }
-    $("#monitoringItems").innerHTML = '<p class="monitoring-empty">Tekan “+ Tambah Kategori Pemantauan” dan pilih kawasan yang dipantau.</p>';
-    $("#monitoringFormStatus").textContent = `${cards.length} pemantauan berjaya disimpan dan boleh dilihat oleh semua guru.`;
+    $("#monitoringItems").innerHTML = '<p class="monitoring-empty">Belum ada kawasan dipilih. Pilih kawasan di atas dan tekan “Masukkan”.</p>';
+    $("#monitoringFormStatus").textContent = `Satu laporan lengkap dengan ${cards.length} kawasan berjaya disimpan.`;
     await loadMonitoringReports();
+    setMonitoringTab("summary");
   } catch (error) {
     console.error(error);
     $("#monitoringFormStatus").textContent = error.message || "Laporan gagal disimpan. Cuba lagi.";
@@ -2312,13 +2358,15 @@ document.addEventListener("keydown", (event) => { if (event.key === "Escape") { 
 $("#monitoringRefresh").addEventListener("click", loadMonitoringReports);
 $("#monitoringPhotos").addEventListener("change", (event) => renderMonitoringPreview(event.target.files));
 $("#monitoringForm").addEventListener("submit", saveMonitoringReport);
-$("#addMonitoringItem").addEventListener("click", addMonitoringItem);
-$("#monitoringItems").addEventListener("click", (event) => { const button = event.target.closest(".monitoring-remove"); if (!button) return; button.closest(".monitoring-item-card").remove(); if (!$("#monitoringItems").children.length) $("#monitoringItems").innerHTML = '<p class="monitoring-empty">Tekan “+ Tambah Kategori Pemantauan” dan pilih kawasan yang dipantau.</p>'; });
+$("#monitoringLocationPicker").innerHTML = monitoringLocationOptions();
+$("#addMonitoringItem").addEventListener("click", () => addMonitoringItem());
+document.querySelectorAll("[data-monitoring-tab]").forEach((button) => button.addEventListener("click", () => setMonitoringTab(button.dataset.monitoringTab)));
+$("#monitoringReports").addEventListener("click", (event) => { const button = event.target.closest("[data-monitoring-open]"); if (button) setMonitoringTab(button.dataset.monitoringOpen); });
+$("#monitoringItems").addEventListener("click", (event) => { const button = event.target.closest(".monitoring-remove"); if (!button) return; event.preventDefault(); button.closest(".monitoring-item-card").remove(); const count = $("#monitoringItems").querySelectorAll(".monitoring-item-card").length; if (!count) $("#monitoringItems").innerHTML = '<p class="monitoring-empty">Belum ada kawasan dipilih. Pilih kawasan di atas dan tekan “Masukkan”.</p>'; $("#monitoringFormStatus").textContent = count ? `${count} kawasan dalam laporan ini.` : ""; });
 $("#monitoringItems").addEventListener("change", (event) => {
   const card = event.target.closest(".monitoring-item-card"); if (!card) return;
-  if (event.target.matches('[data-monitoring-field="location"]')) card.querySelector(".other-location").hidden = event.target.value !== "Lain-lain";
-  if (event.target.matches('[data-monitoring-field="status"]')) { const follow = card.querySelector(".follow-up"); follow.hidden = event.target.value !== "attention"; follow.querySelector("textarea").required = event.target.value === "attention"; }
-  if (event.target.matches('[data-monitoring-field="photos"]')) { const preview = card.querySelector("[data-monitoring-preview]"); try { const files = validateMonitoringFiles(event.target.files); preview.innerHTML = files.map((file, index) => `<figure><img src="${URL.createObjectURL(file)}" alt="Pratonton ${index + 1}"><figcaption>Gambar ${index + 1}</figcaption></figure>`).join(""); } catch (error) { event.target.value = ""; preview.textContent = error.message; } }
+  if (event.target.matches('[data-monitoring-field="status"]')) { const follow = card.querySelector(".follow-up"); follow.hidden = event.target.value !== "attention"; follow.querySelector("textarea").required = event.target.value === "attention"; card.querySelector("[data-monitoring-item-status]").textContent = `${monitoringStatusLabel(event.target.value)} • ${card.querySelector('[data-monitoring-field="photos"]').files.length ? "Gambar tersedia" : "Gambar belum dipilih"}`; }
+  if (event.target.matches('[data-monitoring-field="photos"]')) { const preview = card.querySelector("[data-monitoring-preview]"); try { const files = validateMonitoringFiles(event.target.files); preview.innerHTML = files.map((file, index) => `<figure><img src="${URL.createObjectURL(file)}" alt="Pratonton ${index + 1}"><figcaption>Gambar ${index + 1}</figcaption></figure>`).join(""); card.querySelector("[data-monitoring-item-status]").textContent = `${monitoringStatusLabel(card.querySelector('[data-monitoring-field="status"]').value)} • ${files.length} gambar`; } catch (error) { event.target.value = ""; preview.textContent = error.message; } }
 });
 $("#oprPhotos").addEventListener("change", (event) => renderOprPreview(event.target.files));
 $("#oprForm").addEventListener("submit", saveOprReport);

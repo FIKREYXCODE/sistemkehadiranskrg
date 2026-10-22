@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="HEM SMARTTRACK">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="manifest" href="manifest.webmanifest?v=113">
+  <link rel="manifest" href="manifest.webmanifest?v=114">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=113">
+  <link rel="stylesheet" href="styles.css?v=114">
 </head>
 <body>
   <header class="topbar no-print">
@@ -289,36 +289,48 @@
       <div class="analysis-table-wrap"><table class="analysis-table calendar-table"><thead><tr><th>Kelas</th><th>Guru kelas</th><th>Peratus hadir</th><th>Status</th><th>Nama pengisi terakhir</th><th>Masa simpanan</th></tr></thead><tbody id="calendarTableBody"></tbody></table></div>
     </section>
 
-    <section id="monitoringReports" class="monitoring-card app-view no-print" data-view-panel="monitoring" aria-labelledby="monitoringTitle" hidden>
-      <div class="monitoring-head">
+    <section id="monitoringReports" class="monitoring-card smart-monitoring app-view no-print" data-view-panel="monitoring" aria-labelledby="monitoringTitle" hidden>
+      <div class="monitoring-head smart-monitoring-head">
         <div>
-          <p class="eyebrow">Pemantauan sekolah</p>
-          <h2 id="monitoringTitle">Laporan Bergambar Kebersihan &amp; Keselamatan</h2>
-          <p>Guru boleh memuat naik gambar dan merekod keadaan, isu serta cadangan tindakan. Laporan disimpan bersama mengikut tarikh yang dipilih.</p>
+          <p class="eyebrow">07 • Pemantauan sekolah</p>
+          <h2 id="monitoringTitle">Smart Monitor Kebersihan &amp; Keselamatan</h2>
+          <p>Satu pelaporan lengkap untuk semua kawasan yang dipantau.</p>
         </div>
-        <div class="monitoring-date-tools">
-          <span class="monitoring-date-label">Tarikh laporan: <strong id="monitoringDateLabel">—</strong></span>
-          <label>Pilih tarikh<input id="monitoringDate" type="date" required></label>
-        </div>
+        <label class="smart-date-control"><span>Tarikh</span><input id="monitoringDate" type="date" required></label>
+        <span class="monitoring-date-label" hidden>Tarikh laporan: <strong id="monitoringDateLabel">—</strong></span>
       </div>
+      <nav class="monitoring-tabs" aria-label="Pilihan pemantauan sekolah">
+        <button class="active" type="button" data-monitoring-tab="summary">7.1 Ringkasan</button>
+        <button type="button" data-monitoring-tab="form">7.2 Isi Laporan</button>
+        <button type="button" data-monitoring-tab="archive">7.3 Arkib &amp; Tindakan</button>
+      </nav>
+      <section id="monitoringSummaryPanel" class="monitoring-tab-panel" data-monitoring-panel="summary">
+        <div id="monitoringSmartSummary" class="monitoring-smart-summary" aria-live="polite"></div>
+        <button class="primary-button monitoring-start-button" type="button" data-monitoring-open="form">＋ Isi satu laporan lengkap</button>
+      </section>
+      <section class="monitoring-tab-panel" data-monitoring-panel="form" hidden>
       <form id="monitoringForm" class="monitoring-form dynamic-monitoring-form">
         <div class="monitoring-session-header">
           <label>Sidang laporan<select id="monitoringSession" required><option value="">Pilih sidang</option><option value="morning">🌅 Sidang Pagi</option><option value="afternoon">🌇 Sidang Petang</option></select></label>
-          <button id="addMonitoringItem" class="secondary-button" type="button">+ Tambah Kategori Pemantauan</button>
+          <div class="monitoring-location-adder"><label>Pilih kawasan<select id="monitoringLocationPicker"><option value="">Pilih kawasan dipantau</option></select></label><button id="addMonitoringItem" class="secondary-button" type="button">＋ Masukkan</button></div>
         </div>
-        <div id="monitoringItems" class="monitoring-items"><p class="monitoring-empty">Tekan “+ Tambah Kategori Pemantauan” dan pilih kawasan yang dipantau.</p></div>
+        <p class="monitoring-form-hint">Pilih semua kawasan yang sempat dipantau. Setiap kawasan akan digabungkan dalam satu laporan.</p>
+        <div id="monitoringItems" class="monitoring-items"><p class="monitoring-empty">Belum ada kawasan dipilih. Pilih kawasan di atas dan tekan “Masukkan”.</p></div>
         <div hidden aria-hidden="true"><select id="monitoringCategory"><option value="both">Kebersihan dan keselamatan</option></select><input id="monitoringLocation"><select id="routeStatus"><option value="not_applicable">Tidak berkaitan</option></select><select id="parkingStatus"><option value="not_applicable">Tidak berkaitan</option></select><textarea id="monitoringIssue"></textarea><textarea id="monitoringAction"></textarea><input id="monitoringPhotos" type="file"><div id="monitoringPreview"></div></div>
         <div class="monitoring-submit-row">
-          <button id="monitoringSave" class="primary-button" type="submit">Simpan laporan bergambar</button>
+          <button id="monitoringSave" class="primary-button" type="submit">Simpan satu laporan lengkap</button>
           <p id="monitoringFormStatus" class="form-message" role="status" aria-live="polite"></p>
         </div>
       </form>
-      <div class="monitoring-gallery-head">
+      </section>
+      <section class="monitoring-tab-panel" data-monitoring-panel="archive" hidden>
+      <div class="monitoring-gallery-head smart-gallery-head">
         <div><h3>Laporan pada tarikh dipilih</h3><p>Gambar dan catatan boleh dilihat oleh semua guru yang membuka sistem.</p></div>
         <button id="monitoringRefresh" class="secondary-button" type="button">Muat semula</button>
       </div>
       <div id="monitoringListStatus" class="monitoring-list-status" role="status" aria-live="polite">Memuatkan laporan…</div>
       <div id="monitoringGallery" class="monitoring-gallery"></div>
+      </section>
     </section>
 
     <section id="oprView" class="monitoring-card app-view no-print" data-view-panel="opr" aria-labelledby="oprTitle" hidden>
@@ -601,7 +613,7 @@
     <div class="news-ticker-viewport"><div id="newsTickerTrack" class="news-ticker-track"></div></div>
   </aside>
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="class-demographics.js?v=113" defer></script>
-  <script src="app.js?v=113" defer></script>
+  <script src="class-demographics.js?v=114" defer></script>
+  <script src="app.js?v=114" defer></script>
 </body>
 </html>
