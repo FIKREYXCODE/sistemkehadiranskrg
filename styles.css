@@ -834,6 +834,8 @@ body{background:#fff;color:#000}
 #viewAttendance .attendance-completion-badge .completion-check{display:inline-grid;place-items:center;width:18px;height:18px;border:2px solid currentColor;border-radius:50%;box-shadow:inset 0 0 0 1px #d8ac35;font-size:.7rem;font-weight:950;line-height:1}
 #viewAttendance .attendance-completion-badge em{font-family:"Segoe Script","Brush Script MT",cursive;font-size:.67rem;font-weight:800;line-height:1}
 #viewAttendance .attendance-completion-badge.incomplete{padding:2px 5px;border-radius:999px;background:#fff0f2;color:#a61f32;font-size:.52rem;font-weight:900}
+#viewAttendance .attendance-table tr.class-complete .attendance-teacher{background:#c9f7dc;color:#075c34;box-shadow:inset 4px 0 #10ad62}
+#viewAttendance .attendance-table tr.class-incomplete .attendance-teacher{background:#ffdce2;color:#8f1f32;box-shadow:inset 4px 0 #df4760}
 @media(max-width:700px){
   #viewAttendance .table-section{padding:14px 10px 5px}
   #viewAttendance .table-scroll{overflow:visible;border:0}
@@ -929,6 +931,8 @@ body{background:#fff;color:#000}
   #viewAttendance .attendance-table tbody .attendance-index{display:none}
   #viewAttendance .attendance-table .name-col,
   #viewAttendance .attendance-table .attendance-teacher{position:sticky;left:0;z-index:4;width:145px;min-width:145px;max-width:145px;background:#fff;text-align:left}
+  #viewAttendance .attendance-table tr.class-complete .attendance-teacher{background:#bff4d5;color:#075c34;box-shadow:inset 4px 0 #0dab60}
+  #viewAttendance .attendance-table tr.class-incomplete .attendance-teacher{background:#ffd6dd;color:#8f1f32;box-shadow:inset 4px 0 #dc3f59}
   #viewAttendance .attendance-table thead .name-col{z-index:7;background:var(--navy)}
   #viewAttendance .attendance-table thead tr:first-child th:nth-child(3),
   #viewAttendance .attendance-table .attendance-class{position:sticky;left:145px;z-index:4;width:58px;min-width:58px;max-width:58px;background:#f7fbff}

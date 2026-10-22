@@ -1,4 +1,4 @@
-const CACHE_NAME = "hem-smarttrack-v111";
+const CACHE_NAME = "hem-smarttrack-v112";
 const APP_SHELL = [
   "./",
   "./index.html",
