@@ -2377,6 +2377,18 @@ document.querySelectorAll("[data-rmt-session]").forEach((form) => {
   });
 });
 
+document.querySelectorAll("[data-rmt-tab]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const session = button.dataset.rmtTab;
+    document.querySelectorAll("[data-rmt-tab]").forEach((tab) => {
+      const selected = tab.dataset.rmtTab === session;
+      tab.classList.toggle("active", selected);
+      tab.setAttribute("aria-selected", String(selected));
+    });
+    document.querySelectorAll(".rmt-report-card").forEach((card) => card.classList.toggle("mobile-session-hidden", card.dataset.rmtSession !== session));
+  });
+});
+
 $("#editorName").addEventListener("input", (event) => {
   const name = event.target.value.trim();
   try {
@@ -2456,7 +2468,7 @@ window.addEventListener("beforeunload", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=73", { scope: "./", updateViaCache: "none" })
+    navigator.serviceWorker.register("./service-worker.js?v=79", { scope: "./", updateViaCache: "none" })
       .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
   });
 }
