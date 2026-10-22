@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="HEM SMARTTRACK">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="manifest" href="manifest.webmanifest?v=79">
+  <link rel="manifest" href="manifest.webmanifest?v=80">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=79">
+  <link rel="stylesheet" href="styles.css?v=80">
 </head>
 <body>
   <header class="topbar no-print">
@@ -445,31 +445,18 @@
         <div class="rmt-calendar-footer"><p id="rmtCalendarStatus" role="status">Memuatkan rekod RMT…</p><button id="rmtShowAll" class="secondary-button" type="button" hidden>Tutup Laporan Dipilih</button></div>
       </section>
       <section class="rmt-photo-section" aria-labelledby="rmtPhotoTitle">
-        <div><p class="eyebrow">Laporan RMT harian</p><h3 id="rmtPhotoTitle">Laporan Mengikut Sidang</h3><p>Setiap sidang mempunyai laporan dan gambar berasingan.</p></div>
-        <div class="rmt-mobile-tabs" role="tablist" aria-label="Pilih sidang laporan RMT">
-          <button class="active" type="button" role="tab" aria-selected="true" data-rmt-tab="morning">🌅 Sidang Pagi</button>
-          <button type="button" role="tab" aria-selected="false" data-rmt-tab="afternoon">🌇 Sidang Petang</button>
-        </div>
+        <div><p class="eyebrow">Laporan RMT harian</p><h3 id="rmtPhotoTitle">Isi Satu Laporan RMT</h3><p>Pilih sidang yang bertugas, kemudian lengkapkan satu borang sahaja.</p></div>
         <div class="rmt-report-grid">
-          <form class="rmt-report-card morning-card" data-rmt-session="morning">
-            <h4>🌅 Sidang Pagi</h4>
+          <form class="rmt-report-card single-card" data-rmt-session="single">
+            <h4>📝 Pengisian Laporan Harian</h4>
+            <label class="rmt-field-wide rmt-session-choice">Pilih sidang<select data-rmt-field="session" required><option value="morning">🌅 Sidang Pagi</option><option value="afternoon">🌇 Sidang Petang</option></select></label>
             <label>Bilangan Penerima RMT<input data-rmt-field="recipients" type="number" inputmode="numeric" min="0" required></label>
             <label>Bilangan RMT Dibekalkan<input data-rmt-field="supplied" type="number" inputmode="numeric" min="0" required></label>
             <label class="rmt-field-wide">Menu RMT<textarea data-rmt-field="menu" rows="2" required></textarea></label>
             <label class="rmt-field-wide">Penilaian / Keadaan RMT<select data-rmt-field="rating" required><option value="Baik">Baik</option><option value="Memuaskan">Memuaskan</option><option value="Kurang Memuaskan">Kurang Memuaskan</option></select></label>
             <label class="rmt-field-wide">Catatan Guru Bertugas — Pilihan<textarea data-rmt-field="notes" rows="2"></textarea></label>
             <label class="photo-uploader rmt-field-wide">Gambar laporan<input data-rmt-field="photos" type="file" accept="image/*,.heic,.heif" multiple required><span>Pilih 1 hingga 4 gambar.</span></label>
-            <div class="monitoring-preview rmt-field-wide" data-rmt-preview></div><button class="primary-button rmt-field-wide" type="submit">Simpan Laporan RMT Pagi</button><p class="form-message rmt-field-wide" data-rmt-status></p>
-          </form>
-          <form class="rmt-report-card afternoon-card mobile-session-hidden" data-rmt-session="afternoon">
-            <h4>🌇 Sidang Petang</h4>
-            <label>Bilangan Penerima RMT<input data-rmt-field="recipients" type="number" inputmode="numeric" min="0" required></label>
-            <label>Bilangan RMT Dibekalkan<input data-rmt-field="supplied" type="number" inputmode="numeric" min="0" required></label>
-            <label class="rmt-field-wide">Menu RMT<textarea data-rmt-field="menu" rows="2" required></textarea></label>
-            <label class="rmt-field-wide">Penilaian / Keadaan RMT<select data-rmt-field="rating" required><option value="Baik">Baik</option><option value="Memuaskan">Memuaskan</option><option value="Kurang Memuaskan">Kurang Memuaskan</option></select></label>
-            <label class="rmt-field-wide">Catatan Guru Bertugas — Pilihan<textarea data-rmt-field="notes" rows="2"></textarea></label>
-            <label class="photo-uploader rmt-field-wide">Gambar laporan<input data-rmt-field="photos" type="file" accept="image/*,.heic,.heif" multiple required><span>Pilih 1 hingga 4 gambar.</span></label>
-            <div class="monitoring-preview rmt-field-wide" data-rmt-preview></div><button class="primary-button rmt-field-wide" type="submit">Simpan Laporan RMT Petang</button><p class="form-message rmt-field-wide" data-rmt-status></p>
+            <div class="monitoring-preview rmt-field-wide" data-rmt-preview></div><button class="primary-button rmt-field-wide" type="submit">Simpan Laporan RMT</button><p class="form-message rmt-field-wide" data-rmt-status></p>
           </form>
         </div>
         <div hidden aria-hidden="true"><select id="rmtPhotoSession"><option value="morning">Pagi</option></select><input id="rmtPhotos" type="file"><button id="rmtPhotoSave" type="button"></button><p id="rmtPhotoStatus"></p><div id="rmtImagePreview"></div></div>
@@ -602,7 +589,7 @@
     <div class="news-ticker-viewport"><div id="newsTickerTrack" class="news-ticker-track"></div></div>
   </aside>
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="class-demographics.js?v=79" defer></script>
-  <script src="app.js?v=79" defer></script>
+  <script src="class-demographics.js?v=80" defer></script>
+  <script src="app.js?v=80" defer></script>
 </body>
 </html>
