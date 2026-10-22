@@ -733,3 +733,11 @@ body{background:#fff;color:#000}
 .idme-icon span{display:grid;justify-items:start;line-height:1}
 .idme-icon strong{color:#fff;font-size:.9rem}.idme-icon small{margin-top:4px;color:#23abc2;font-size:.37rem;letter-spacing:.06em}
 @media(max-width:800px){.idme-icon{width:74px;height:44px;padding:4px 6px}.idme-icon img{width:23px;height:31px}.idme-icon strong{font-size:.82rem}.idme-icon small{font-size:.34rem}}
+
+/* v97: pintasan idMe berbentuk ikon aplikasi yang ringan dan seimbang. */
+.idme-icon{position:relative;display:grid;place-items:center;width:48px;height:48px;padding:0;border:2px solid #9ee7f5;border-radius:50%;background:#fff;text-decoration:none;box-shadow:0 6px 16px #001d4a3d}
+.idme-icon .idme-word{display:flex;align-items:baseline;justify-content:center;line-height:1;letter-spacing:-.08em;transform:translateX(-1px)}
+.idme-icon .idme-word b{font-size:.78rem;font-weight:950}.idme-icon .idme-word b:first-child{color:#103d79}.idme-icon .idme-word b:last-child{color:#10a8c5}
+.idme-icon .idme-launch{position:absolute;top:-3px;right:-3px;display:grid;width:16px;height:16px;place-items:center;border:2px solid #fff;border-radius:50%;background:#0755b5;color:#fff;font-size:.52rem;font-weight:900;line-height:1}
+.idme-icon:hover{transform:translateY(-1px);box-shadow:0 8px 19px #001d4a4d}
+@media(max-width:800px){.idme-icon{width:43px;height:43px;padding:0}.idme-icon .idme-word b{font-size:.72rem}.idme-icon .idme-launch{width:15px;height:15px;font-size:.48rem}}
