@@ -867,3 +867,35 @@ body{background:#fff;color:#000}
   #viewAttendance .attendance-table tfoot .attendance-total-percent::before{display:inline;margin:0}
   #viewAttendance .attendance-table tfoot .attendance-total-note{display:none}
 }
+
+/* v105: kepala e-JKM padat — semua identiti, alamat dan tarikh kekal dipaparkan. */
+@media(max-width:700px){
+  body[data-active-view="attendance"] #identityBar{display:block;padding:6px 9px;border-radius:11px}
+  body[data-active-view="attendance"] #identityBar .user-picker{display:grid;grid-template-columns:76px minmax(0,1fr);align-items:center;gap:6px;width:100%;font-size:.61rem}
+  body[data-active-view="attendance"] #identityBar .user-picker select{height:34px;margin-top:0;padding:5px 8px;font-size:.68rem}
+  #viewAttendance .date-panel{gap:7px;padding:9px 10px;border-radius:14px}
+  #viewAttendance .date-panel>div:first-child{display:flex;align-items:center;gap:8px;min-width:0}
+  #viewAttendance .date-panel .eyebrow{flex:0 0 auto;margin:0;font-size:.45rem;letter-spacing:.11em}
+  #viewAttendance .date-panel h1{min-width:0;font-size:.72rem;line-height:1.1;white-space:nowrap}
+  #viewAttendance .entry-controls{gap:7px}
+  #viewAttendance .entry-controls label{font-size:.55rem}
+  #viewAttendance .entry-controls .localized-date-control,
+  #viewAttendance .entry-controls .date-picker input,
+  #viewAttendance .entry-controls .session-picker select{margin-top:3px}
+  #viewAttendance .entry-controls .localized-date-display{min-height:37px;padding:0 7px;font-size:.62rem;border-radius:8px}
+  #viewAttendance .entry-controls .localized-date-display b{font-size:.65rem}
+  #viewAttendance .entry-controls .session-picker select{min-height:37px;height:37px;padding:5px 21px 5px 7px;font-size:.62rem;border-radius:8px}
+  #viewAttendance .report-card{margin-top:10px;border-radius:15px}
+  #viewAttendance .report-head{grid-template-columns:66px minmax(0,1fr) 76px;gap:7px;padding:9px 10px}
+  #viewAttendance .logo-pair{width:66px;min-height:60px;padding:3px;gap:3px;border-radius:10px}
+  #viewAttendance .crest-kpm{width:38px;max-height:49px}
+  #viewAttendance .crest-school{width:24px;max-height:50px}
+  #viewAttendance .report-kicker{font-size:.43rem!important;line-height:1.1;letter-spacing:.12em}
+  #viewAttendance .report-head h2{margin:2px 0 3px;font-size:.72rem;line-height:1.13}
+  #viewAttendance .report-head p:not(.report-kicker){font-size:.5rem;line-height:1.25}
+  #viewAttendance .session-report-label{margin-top:4px;padding:3px 5px;border-radius:5px;font-size:.46rem;letter-spacing:.06em}
+  #viewAttendance .report-date-block{grid-column:auto;align-self:stretch;display:grid;align-content:center;text-align:right;padding:0 0 0 7px;border-top:0;border-left:1px solid var(--line)}
+  #viewAttendance .report-date-block span,
+  #viewAttendance .report-date-block small{font-size:.48rem;line-height:1.2}
+  #viewAttendance .report-date-block strong{margin:3px 0;font-size:.62rem;line-height:1.2}
+}
