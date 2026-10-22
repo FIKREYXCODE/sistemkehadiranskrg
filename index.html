@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="HEM SMARTTRACK">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="manifest" href="manifest.webmanifest?v=76">
+  <link rel="manifest" href="manifest.webmanifest?v=77">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=76">
+  <link rel="stylesheet" href="styles.css?v=77">
 </head>
 <body>
   <header class="topbar no-print">
@@ -437,12 +437,12 @@
         <div class="rmt-template-actions"><button id="rmtDutySave" class="primary-button" type="button">Simpan Senarai Guru Mingguan</button><p id="rmtDutyStatus" class="form-message" role="status">Senarai ini akan disimpan mengikut minggu dan boleh dilihat pada semua peranti.</p></div>
       </div>
       <section class="rmt-calendar-panel" aria-labelledby="rmtCalendarTitle">
-        <div class="rmt-calendar-heading"><div><p class="eyebrow">Status pengisian RMT</p><h3 id="rmtCalendarTitle">Kalendar Laporan RMT</h3><p>Klik tarikh untuk melihat laporan dan gambar. Hijau bermaksud kedua-dua sidang lengkap.</p></div><label>Bulan laporan<input id="rmtCalendarMonth" type="month"></label></div>
+        <div class="rmt-calendar-heading"><div><p class="eyebrow">Status pengisian RMT</p><h3 id="rmtCalendarTitle">Kalendar Laporan RMT</h3><p>Klik tarikh untuk membuka laporan dan gambar. Nama pengisi ditunjukkan secara ringkas dalam petak.</p></div><label>Bulan laporan<input id="rmtCalendarMonth" type="month"></label></div>
         <div class="rmt-summary-grid"><div><span>Jumlah laporan</span><strong id="rmtSummaryTotal">0</strong></div><div class="morning"><span>Sidang pagi</span><strong id="rmtSummaryMorning">0</strong></div><div class="afternoon"><span>Sidang petang</span><strong id="rmtSummaryAfternoon">0</strong></div><div class="complete"><span>Hari lengkap</span><strong id="rmtSummaryComplete">0</strong></div></div>
-        <div class="rmt-calendar-legend" aria-label="Petunjuk warna kalendar"><span class="complete">Hijau: pagi dan petang lengkap</span><span class="partial">Kuning: satu sidang sahaja</span><span class="missing">Merah: belum ada laporan</span><span class="future">Kelabu: hujung minggu / tarikh akan datang</span></div>
+        <div class="rmt-calendar-legend" aria-label="Petunjuk warna kalendar"><span class="morning-only">Kuning: laporan pagi</span><span class="afternoon-only">Hijau terang: laporan petang</span><span class="both">Kuning + hijau: kedua-dua sidang</span><span class="missing">Merah muda: belum diisi</span><span class="weekend">Merah: Sabtu/Ahad — Tiada RMT</span><span class="future">Kelabu: tarikh akan datang</span></div>
         <div class="rmt-calendar-weekdays" aria-hidden="true"><span>Isn</span><span>Sel</span><span>Rab</span><span>Kha</span><span>Jum</span><span>Sab</span><span>Ahd</span></div>
         <div id="rmtCalendarGrid" class="rmt-calendar-grid" aria-live="polite"></div>
-        <div class="rmt-calendar-footer"><p id="rmtCalendarStatus" role="status">Memuatkan rekod RMT…</p><button id="rmtShowAll" class="secondary-button" type="button">Lihat Semua Laporan Bulan Ini</button></div>
+        <div class="rmt-calendar-footer"><p id="rmtCalendarStatus" role="status">Memuatkan rekod RMT…</p><button id="rmtShowAll" class="secondary-button" type="button" hidden>Tutup Laporan Dipilih</button></div>
       </section>
       <section class="rmt-photo-section" aria-labelledby="rmtPhotoTitle">
         <div><p class="eyebrow">Laporan RMT harian</p><h3 id="rmtPhotoTitle">Laporan Mengikut Sidang</h3><p>Setiap sidang mempunyai laporan dan gambar berasingan.</p></div>
@@ -451,7 +451,7 @@
           <form class="rmt-report-card afternoon-card" data-rmt-session="afternoon"><h4>🌇 Sidang Petang</h4><label>Bilangan Penerima RMT<input data-rmt-field="recipients" type="number" inputmode="numeric" min="0" required></label><label>Bilangan RMT Dibekalkan<input data-rmt-field="supplied" type="number" inputmode="numeric" min="0" required></label><label>Menu RMT<textarea data-rmt-field="menu" rows="3" required></textarea></label><label>Penilaian / Keadaan RMT<select data-rmt-field="rating" required><option value="Baik">Baik</option><option value="Memuaskan">Memuaskan</option><option value="Kurang Memuaskan">Kurang Memuaskan</option></select></label><label>Catatan Guru Bertugas — Pilihan<textarea data-rmt-field="notes" rows="2"></textarea></label><label class="photo-uploader">Gambar laporan<input data-rmt-field="photos" type="file" accept="image/*,.heic,.heif" multiple required><span>Pilih 1 hingga 4 gambar.</span></label><div class="monitoring-preview" data-rmt-preview></div><button class="primary-button" type="submit">Simpan Laporan RMT Petang</button><p class="form-message" data-rmt-status></p></form>
         </div>
         <div hidden aria-hidden="true"><select id="rmtPhotoSession"><option value="morning">Pagi</option></select><input id="rmtPhotos" type="file"><button id="rmtPhotoSave" type="button"></button><p id="rmtPhotoStatus"></p><div id="rmtImagePreview"></div></div>
-        <div class="rmt-shared-heading"><div><h3 id="rmtGalleryTitle">Laporan RMT Tersimpan</h3><small id="rmtGallerySubtitle">Semua laporan bulan dipaparkan.</small></div><button id="rmtPhotoRefresh" class="secondary-button" type="button">Muat semula</button></div>
+        <div class="rmt-shared-heading"><div><h3 id="rmtGalleryTitle">Pilih Tarikh pada Kalendar</h3><small id="rmtGallerySubtitle">Gambar hanya dipaparkan selepas tarikh dipilih.</small></div><button id="rmtPhotoRefresh" class="secondary-button" type="button">Muat semula</button></div>
         <p id="rmtSharedStatus" class="monitoring-list-status" role="status">Memuatkan gambar RMT…</p>
         <div id="rmtSharedGallery" class="rmt-shared-gallery" aria-live="polite"></div>
       </section>
@@ -580,7 +580,7 @@
     <div class="news-ticker-viewport"><div id="newsTickerTrack" class="news-ticker-track"></div></div>
   </aside>
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="class-demographics.js?v=76" defer></script>
-  <script src="app.js?v=76" defer></script>
+  <script src="class-demographics.js?v=77" defer></script>
+  <script src="app.js?v=77" defer></script>
 </body>
 </html>

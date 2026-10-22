@@ -846,15 +846,23 @@ async function saveRmtWeek() {
 }
 
 function rmtReportsForDisplay() {
-  if (state.rmtShowAll || !state.rmtSelectedDate) return state.rmtReports;
+  if (state.rmtShowAll) return state.rmtReports;
+  if (!state.rmtSelectedDate) return [];
   return state.rmtReports.filter((report) => report.reportDate === state.rmtSelectedDate);
+}
+
+function rmtTeacherShortName(value) {
+  const words = String(value || "").trim().split(/\s+/).filter(Boolean);
+  const relationIndex = words.findIndex((word) => ["BIN", "BINTI", "BTE", "BT", "A/L", "A/P"].includes(word.toUpperCase()));
+  const firstName = (relationIndex > 0 ? words.slice(0, relationIndex) : words.slice(0, 2)).slice(0, words[0]?.toUpperCase() === "AG" ? 3 : 2);
+  return firstName.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(" ") || "Guru";
 }
 
 function renderRmtReports() {
   const sessionLabel = (value) => value === "afternoon" ? "Sidang Petang" : "Sidang Pagi";
   const reports = rmtReportsForDisplay();
-  $("#rmtGalleryTitle").textContent = state.rmtShowAll ? "Semua Laporan RMT Bulan Ini" : `Laporan ${formatDisplayDate(state.rmtSelectedDate)}`;
-  $("#rmtGallerySubtitle").textContent = state.rmtShowAll ? `${state.rmtReports.length} laporan ditemui dalam bulan pilihan.` : `${reports.length} laporan ditemui pada tarikh ini.`;
+  $("#rmtGalleryTitle").textContent = state.rmtSelectedDate ? `Laporan ${formatDisplayDate(state.rmtSelectedDate)}` : "Pilih Tarikh pada Kalendar";
+  $("#rmtGallerySubtitle").textContent = state.rmtSelectedDate ? `${reports.length} laporan ditemui pada tarikh ini.` : "Gambar hanya dipaparkan selepas pentadbir memilih tarikh.";
   $("#rmtSharedGallery").innerHTML = reports.map((report) => {
     const created = formatDisplayDateTime(report.createdAt);
     const displayLocation = formatEmbeddedDates(report.location);
@@ -864,21 +872,21 @@ function renderRmtReports() {
     const content = details ? `<dl class="rmt-report-details"><div><dt>Penerima</dt><dd>${safe(details.recipients)} orang</dd></div><div><dt>Dibekalkan</dt><dd>${safe(details.supplied)} hidangan</dd></div><div><dt>Menu</dt><dd>${safe(details.menu)}</dd></div><div><dt>Penilaian</dt><dd>${safe(details.rating)}</dd></div>${details.notes ? `<div><dt>Catatan</dt><dd>${safe(details.notes)}</dd></div>` : ""}</dl>` : `<p>${safe(formatEmbeddedDates(report.action))}</p>`;
     return `<article class="rmt-shared-report"><div class="monitoring-photo-grid">${photos}</div><div><span class="category-badge">${sessionLabel(report.session)}</span><h4>${safe(displayLocation)}</h4><p>Diisi oleh <strong>${safe(report.updatedBy || "—")}</strong></p><small>${safe(created)}</small>${content}</div></article>`;
   }).join("");
-  if (!reports.length) $("#rmtSharedGallery").innerHTML = '<p class="monitoring-empty">Belum ada laporan RMT bagi pilihan ini.</p>';
-  $("#rmtSharedStatus").textContent = reports.length ? `${reports.length} laporan RMT dipaparkan.` : "Belum ada laporan RMT bagi pilihan ini.";
+  if (!reports.length) $("#rmtSharedGallery").innerHTML = `<p class="monitoring-empty">${state.rmtSelectedDate ? "Belum ada laporan RMT pada tarikh ini." : "Klik satu tarikh pada kalendar untuk membuka laporan dan gambar."}</p>`;
+  $("#rmtSharedStatus").textContent = reports.length ? `${reports.length} laporan RMT dipaparkan.` : state.rmtSelectedDate ? "Belum ada laporan RMT pada tarikh ini." : "Menunggu tarikh dipilih.";
 }
 
 function renderRmtCalendar() {
   const range = rmtMonthRange();
-  const sessionsByDate = new Map();
+  const reportsByDate = new Map();
   for (const report of state.rmtReports) {
-    const sessions = sessionsByDate.get(report.reportDate) || new Set();
-    sessions.add(report.session === "afternoon" ? "afternoon" : "morning");
-    sessionsByDate.set(report.reportDate, sessions);
+    const sessions = reportsByDate.get(report.reportDate) || { morning: [], afternoon: [] };
+    sessions[report.session === "afternoon" ? "afternoon" : "morning"].push(report);
+    reportsByDate.set(report.reportDate, sessions);
   }
   const totalMorning = state.rmtReports.filter((item) => item.session === "morning").length;
   const totalAfternoon = state.rmtReports.filter((item) => item.session === "afternoon").length;
-  const completeDays = Array.from(sessionsByDate.values()).filter((sessions) => sessions.has("morning") && sessions.has("afternoon")).length;
+  const completeDays = Array.from(reportsByDate.values()).filter((sessions) => sessions.morning.length && sessions.afternoon.length).length;
   $("#rmtSummaryTotal").textContent = state.rmtReports.length;
   $("#rmtSummaryMorning").textContent = totalMorning;
   $("#rmtSummaryAfternoon").textContent = totalAfternoon;
@@ -888,17 +896,23 @@ function renderRmtCalendar() {
   for (let day = 1; day <= range.lastDay; day++) {
     const date = `${range.month}-${String(day).padStart(2, "0")}`;
     const dateObjectValue = new Date(`${date}T00:00:00Z`), weekday = dateObjectValue.getUTCDay();
-    const sessions = sessionsByDate.get(date) || new Set();
-    const hasMorning = sessions.has("morning"), hasAfternoon = sessions.has("afternoon");
+    const sessions = reportsByDate.get(date) || { morning: [], afternoon: [] };
+    const hasMorning = sessions.morning.length > 0, hasAfternoon = sessions.afternoon.length > 0;
+    const morningTeacher = hasMorning ? rmtTeacherShortName(sessions.morning[0].updatedBy) : "";
+    const afternoonTeacher = hasAfternoon ? rmtTeacherShortName(sessions.afternoon[0].updatedBy) : "";
     let status = "missing", label = "Belum ada laporan";
-    if (hasMorning && hasAfternoon) { status = "complete"; label = "Pagi dan petang lengkap"; }
-    else if (hasMorning || hasAfternoon) { status = "partial"; label = hasMorning ? "Sidang pagi sahaja" : "Sidang petang sahaja"; }
-    else if (weekday === 0 || weekday === 6 || date > localDateValue()) { status = "future"; label = "Tiada pengisian diperlukan"; }
+    if (weekday === 0 || weekday === 6) { status = "weekend"; label = "Tiada RMT"; }
+    else if (date > localDateValue()) { status = "future"; label = "Tarikh akan datang"; }
+    else if (hasMorning && hasAfternoon) { status = "both"; label = `Pagi: ${morningTeacher}; Petang: ${afternoonTeacher}`; }
+    else if (hasMorning) { status = "morning-only"; label = `Sidang pagi: ${morningTeacher}`; }
+    else if (hasAfternoon) { status = "afternoon-only"; label = `Sidang petang: ${afternoonTeacher}`; }
     const selected = !state.rmtShowAll && state.rmtSelectedDate === date ? " selected" : "";
-    cells.push(`<button class="rmt-calendar-day ${status}${selected}" type="button" data-rmt-date="${date}" aria-label="${safe(formatDisplayDate(date))}: ${safe(label)}"><span>${day}</span><small>${hasMorning ? "P" : ""}${hasMorning && hasAfternoon ? " + " : ""}${hasAfternoon ? "PTG" : ""}</small></button>`);
+    const details = status === "weekend" ? '<small class="rmt-day-note">Tiada RMT</small>' : `${hasMorning ? `<small class="rmt-day-session morning-name" title="${safe(sessions.morning[0].updatedBy || "")}">P: ${safe(morningTeacher)}</small>` : ""}${hasAfternoon ? `<small class="rmt-day-session afternoon-name" title="${safe(sessions.afternoon[0].updatedBy || "")}">PTG: ${safe(afternoonTeacher)}</small>` : ""}${status === "missing" ? '<small class="rmt-day-note">Belum diisi</small>' : ""}`;
+    cells.push(`<button class="rmt-calendar-day ${status}${selected}" type="button" data-rmt-date="${date}" aria-label="${safe(formatDisplayDate(date))}: ${safe(label)}"><span>${day}</span>${details}</button>`);
   }
   $("#rmtCalendarGrid").innerHTML = cells.join("");
   $("#rmtCalendarStatus").textContent = state.rmtReports.length ? `${state.rmtReports.length} laporan berjaya dipulihkan dan dipaparkan bagi bulan ini.` : "Belum ada laporan RMT dalam bulan pilihan.";
+  $("#rmtShowAll").hidden = !state.rmtSelectedDate;
 }
 
 async function loadRmtReportsFromDailyArchive(range) {
@@ -928,7 +942,7 @@ async function loadRmtReports() {
       ? data.reports.filter(isRmtReport)
       : await loadRmtReportsFromDailyArchive(range);
     state.rmtReports.sort((a, b) => String(b.reportDate || "").localeCompare(String(a.reportDate || "")) || Number(b.createdAt || 0) - Number(a.createdAt || 0));
-    if (!state.rmtShowAll && (!state.rmtSelectedDate || !state.rmtSelectedDate.startsWith(`${range.month}-`))) state.rmtSelectedDate = state.rmtReports[0]?.reportDate || "";
+    if (state.rmtSelectedDate && !state.rmtSelectedDate.startsWith(`${range.month}-`)) state.rmtSelectedDate = "";
     renderRmtCalendar(); renderRmtReports();
   } catch (error) {
     console.error(error);
@@ -2228,7 +2242,7 @@ $("#rmtPhotoSave").addEventListener("click", saveRmtPhotos);
 $("#rmtPhotoRefresh").addEventListener("click", loadRmtReports);
 $("#rmtFrom").addEventListener("change", changeRmtWeekStart);
 $("#rmtCalendarMonth").addEventListener("change", () => { state.rmtMonth = $("#rmtCalendarMonth").value; state.rmtShowAll = false; state.rmtSelectedDate = ""; loadRmtReports(); });
-$("#rmtShowAll").addEventListener("click", () => { state.rmtShowAll = true; state.rmtSelectedDate = ""; renderRmtCalendar(); renderRmtReports(); });
+$("#rmtShowAll").addEventListener("click", () => { state.rmtShowAll = false; state.rmtSelectedDate = ""; renderRmtCalendar(); renderRmtReports(); });
 $("#rmtCalendarGrid").addEventListener("click", (event) => {
   const button = event.target.closest("[data-rmt-date]");
   if (!button) return;
