@@ -269,10 +269,16 @@ function renderOrganization() {
   const levels = [...new Set(leadership.map((item) => Number(item.hierarchyLevel)))].sort((a, b) => a - b);
   $("#hemLeadershipChart").innerHTML = levels.map((level, index) => {
     const cards = leadership.filter((item) => Number(item.hierarchyLevel) === level).map((item) => organizationPersonCard(item, level === 2 ? "primary" : "")).join("");
-    return `<div class="hem-hierarchy-level">${cards}</div>${index < levels.length - 1 ? '<div class="hem-hierarchy-arrow" aria-hidden="true">↓</div>' : ""}`;
+    return `<div class="hem-hierarchy-level level-${level}">${cards}</div>${index < levels.length - 1 ? '<div class="hem-hierarchy-connector" aria-hidden="true"><span></span></div>' : ""}`;
   }).join("");
+  const unitGroups = new Map();
+  for (const item of unitPeople) {
+    const fieldName = String(item.fieldName || "Unit HEM").trim() || "Unit HEM";
+    if (!unitGroups.has(fieldName)) unitGroups.set(fieldName, []);
+    unitGroups.get(fieldName).push(item);
+  }
   $("#hemUnitChart").innerHTML = unitPeople.length
-    ? `<div class="hem-unit-heading"><span>UNIT DAN BIDANG HEM</span><small>${unitPeople.length} pegawai aktif</small></div><div class="hem-unit-grid">${unitPeople.map((item) => organizationPersonCard(item, "unit")).join("")}</div>`
+    ? `<div class="hem-unit-heading"><span>UNIT DAN BIDANG HEM</span><small>${unitGroups.size} unit • ${unitPeople.length} pegawai</small></div><div class="hem-unit-grid">${Array.from(unitGroups, ([fieldName, people]) => `<section class="hem-unit-branch"><h4>${safe(fieldName)}</h4><div class="hem-unit-people">${people.map((item) => organizationPersonCard(item, "unit")).join("")}</div></section>`).join("")}</div>`
     : "";
   $("#hemOrganizationStatus").textContent = items.length ? "Carta ini dikemas kini melalui Tetapan Sistem." : "Belum ada organisasi HEM aktif untuk dipaparkan.";
 }

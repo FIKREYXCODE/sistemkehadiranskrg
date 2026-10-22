@@ -636,3 +636,68 @@ body{background:#fff;color:#000}
   #rmtArchiveView .rmt-shared-heading small{font-size:.58rem}
   #rmtArchiveView .rmt-shared-heading .secondary-button{padding:6px 8px;font-size:.64rem}
 }
+
+/* v93: laman utama padat, peta terus kelihatan dan carta HEM bercabang. */
+.home-view .school-location{display:block;position:relative}
+.school-location-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:11px 14px;background:linear-gradient(110deg,#062f69,#0877c9);color:#fff}
+.school-location-bar .eyebrow{margin:0 0 2px;font-size:.56rem}
+.school-location-bar h2{margin:0;font-size:1.04rem}
+.idme-icon{display:grid;place-items:center;flex:none;width:58px;height:48px;border:1px solid #ffffff8f;border-radius:12px;background:#fff;color:#0755b5;text-decoration:none;box-shadow:0 5px 13px #001c4930}
+.idme-icon strong{font-size:.9rem;line-height:1}.idme-icon small{margin-top:2px;font-size:.43rem;font-weight:950;letter-spacing:.08em}
+.home-view .school-map-frame,.home-view .school-map-frame iframe{min-height:220px;height:220px}
+.home-summary-card{margin-top:12px;border-radius:17px}
+.home-summary-card .home-summary-heading{padding:12px 16px 7px}
+.home-summary-card .home-summary-heading h2{font-size:1.08rem}
+.home-summary-card .summary-grid{gap:7px;padding:7px 12px 12px}
+.home-summary-card .summary-grid div{min-height:60px;padding:8px 10px;border-left-width:4px;border-radius:10px}
+.home-summary-card .summary-grid span{font-size:.66rem}.home-summary-card .summary-grid strong{font-size:1.15rem}
+.enrolment-overview{margin-top:12px;padding:14px 16px;border-radius:17px}
+.enrolment-overview-heading h2{font-size:1.08rem}.enrolment-overview-heading>small{font-size:.64rem}
+.enrolment-kpis{gap:7px;margin-top:9px}.enrolment-kpis article{padding:8px 10px;border-radius:10px}.enrolment-kpis span{font-size:.62rem}.enrolment-kpis strong{font-size:1.12rem}
+.year-enrol-totals{gap:5px;margin-top:7px}.year-enrol-totals span{padding:6px 8px;font-size:.63rem}.year-enrol-totals strong{font-size:.8rem}
+.enrolment-demographics{gap:5px;margin-top:7px}.enrolment-demographics span{padding:5px 8px;font-size:.61rem}
+.home-hem-panel{margin-top:14px;padding:17px;border-radius:18px}
+.home-hem-panel>.home-summary-heading{padding:0 0 8px}
+.hem-leadership-chart{position:relative;margin:10px auto 0}
+.hem-hierarchy-level{position:relative;z-index:1}
+.hem-hierarchy-level .hem-person-card{width:min(100%,410px)}
+.hem-hierarchy-connector{display:grid;place-items:center;height:28px;margin:0}
+.hem-hierarchy-connector span{display:block;width:3px;height:100%;border-radius:3px;background:#78b8e8}
+.hem-unit-chart{position:relative;margin-top:0;padding-top:38px;border-top:0}
+.hem-unit-chart:before{content:"";position:absolute;top:0;left:50%;width:3px;height:26px;border-radius:3px;background:#78b8e8;transform:translateX(-50%)}
+.hem-unit-heading{position:relative;z-index:1;align-items:center;margin:0 auto 17px;padding:7px 12px;border:1px solid #9fc9eb;border-radius:10px;background:#eaf5ff}
+.hem-unit-grid{position:relative;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;padding-top:18px}
+.hem-unit-grid:before{content:"";position:absolute;top:0;left:8%;right:8%;height:2px;background:#78b8e8}
+.hem-unit-branch{position:relative;min-width:0;padding:11px;border:1px solid #c9dcf0;border-radius:14px;background:#f8fbff}
+.hem-unit-branch:before{content:"";position:absolute;top:-19px;left:50%;width:2px;height:19px;background:#78b8e8}
+.hem-unit-branch h4{margin:0 0 8px;padding-bottom:7px;border-bottom:1px solid #dbe7f4;color:#0755b5;font-size:.72rem;line-height:1.2;text-align:center;text-transform:uppercase}
+.hem-unit-people{display:grid;gap:7px}
+.hem-unit-people .hem-person-card{padding:8px!important;border-radius:10px!important;box-shadow:none}
+.hem-unit-people .hem-person-photo{width:45px;height:45px;border-radius:11px}
+.hem-unit-people .hem-person-copy small{display:none}.hem-unit-people .hem-person-copy span{display:none}.hem-unit-people .hem-person-copy strong{font-size:.66rem}.hem-unit-people .hem-person-copy em{font-size:.58rem}
+.community-stats{grid-template-columns:1fr 130px 130px;gap:9px;margin-top:12px;padding:13px 15px;border-radius:17px}
+.community-stats h2{font-size:1.05rem}.community-stats>div>small{font-size:.6rem}.community-stats article{gap:8px;padding:8px 10px;border-radius:11px}.community-stats article>span{font-size:1.25rem}.community-stats article strong{font-size:1.25rem}.community-stats article small{font-size:.62rem}
+
+@media(max-width:800px){
+  .school-location-bar{padding:9px 11px}.school-location-bar h2{font-size:.93rem}.idme-icon{width:52px;height:42px;border-radius:10px}
+  .home-view .school-map-frame,.home-view .school-map-frame iframe{min-height:205px;height:205px}
+  .home-summary-card .home-summary-heading{align-items:center;flex-direction:row;gap:7px;padding:10px 12px 5px}.home-summary-card .home-summary-heading time{font-size:.59rem;text-align:right}
+  .home-summary-card .summary-grid{display:flex;gap:7px;overflow-x:auto;padding:6px 10px 10px;scroll-snap-type:x mandatory;scrollbar-width:thin}
+  .home-summary-card .summary-grid div{display:grid;flex:0 0 128px;align-content:center;min-height:58px;scroll-snap-align:start}.home-summary-card .summary-grid strong{margin-top:2px}
+  .enrolment-overview{padding:12px}.enrolment-overview-heading{display:block}.enrolment-overview-heading>small{display:none}
+  .enrolment-kpis,.year-enrol-totals,.enrolment-demographics{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;flex-wrap:nowrap;scrollbar-width:thin}
+  .enrolment-kpis article{flex:0 0 118px;scroll-snap-align:start}.enrolment-kpis article:nth-child(3){grid-column:auto}.year-enrol-totals span{flex:0 0 105px;scroll-snap-align:start}.year-enrol-totals span:first-child{grid-column:auto}.enrolment-demographics span{flex:0 0 auto;scroll-snap-align:start}
+  .home-session-panel{padding:12px}.home-session-panel>.home-summary-heading{align-items:center;flex-direction:row;padding:0 2px 8px}.home-session-panel>.home-summary-heading h2{font-size:1.05rem}
+  .home-session-grid{display:flex;gap:9px;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:thin}
+  .home-session-grid article{flex:0 0 min(88vw,330px);gap:8px;padding:11px;scroll-snap-align:start}.home-session-head{gap:8px}.home-session-head>span{font-size:1.35rem}.home-session-head strong{font-size:.82rem}.home-session-head small{margin-top:2px;font-size:.61rem}
+  .home-class-totals{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.home-class-totals>p{display:none}.home-class-total summary{padding:6px 7px}.home-class-total{font-size:.66rem}.home-class-total summary>b{min-width:26px;padding:2px 5px;font-size:.66rem}
+  .home-hem-panel>.home-summary-heading{align-items:center;flex-direction:row;gap:8px}.home-hem-panel>.home-summary-heading h2{font-size:1.03rem}.hem-organization-status{font-size:.61rem}
+  .hem-person-card{padding:9px!important}.hem-person-photo{width:50px;height:50px;border-radius:12px}.hem-person-copy small{font-size:.57rem}.hem-person-copy strong{font-size:.68rem}.hem-person-copy span{font-size:.61rem}.hem-person-copy em{font-size:.58rem}
+  .hem-hierarchy-connector{height:20px}.hem-unit-chart{padding-top:29px}.hem-unit-chart:before{height:21px}
+  .hem-unit-heading{margin-bottom:10px;font-size:.62rem}.hem-unit-heading small{font-size:.56rem}
+  .hem-unit-grid{display:flex;gap:9px;overflow-x:auto;padding:15px 2px 8px;scroll-snap-type:x mandatory;scrollbar-width:thin}
+  .hem-unit-grid:before{display:none}.hem-unit-branch{flex:0 0 min(78vw,275px);scroll-snap-align:start}.hem-unit-branch:before{top:-16px;height:16px}
+  .community-stats{display:grid;grid-template-columns:minmax(0,1fr) 84px 84px;gap:6px;padding:10px}.community-stats>div>small{display:none}.community-stats article{display:grid;justify-items:center;gap:1px;padding:6px}.community-stats article>span{font-size:1rem}.community-stats article strong{font-size:1rem}.community-stats article small{font-size:.54rem}
+}
+
+@media(max-width:430px){.home-class-totals{grid-template-columns:repeat(2,minmax(0,1fr))}}
