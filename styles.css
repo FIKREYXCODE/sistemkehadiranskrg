@@ -905,12 +905,12 @@ body{background:#fff;color:#000}
 
 /* v107: kembalikan e-JKM kepada jadual padat; status digabungkan dengan nama guru. */
 @media(max-width:700px){
-  #viewAttendance .class-completion-lists{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:0 0 8px}
+  #viewAttendance .class-completion-lists{display:grid;grid-template-columns:1fr;gap:6px;margin:0 0 8px}
   #viewAttendance .completion-list{min-width:0;padding:6px 7px;border-radius:9px}
   #viewAttendance .completion-list h4{gap:4px;margin:0 0 5px;font-size:.56rem;line-height:1.15}
   #viewAttendance .completion-list h4 strong{min-width:21px;height:21px;padding:0 5px;font-size:.56rem}
-  #viewAttendance .class-chip-list{display:flex;flex-wrap:nowrap;gap:4px;max-width:100%;padding-bottom:2px;overflow-x:auto;scrollbar-width:thin}
-  #viewAttendance .class-chip{flex:0 0 auto;padding:3px 5px;border-radius:6px;font-size:.5rem;line-height:1.1}
+  #viewAttendance .class-chip-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:3px;max-width:100%;overflow:visible}
+  #viewAttendance .class-chip{display:grid;place-items:center;min-width:0;padding:3px 2px;border-radius:6px;font-size:.48rem;line-height:1.12;text-align:center;white-space:normal}
   #viewAttendance .class-list-empty{font-size:.5rem}
   #viewAttendance .table-section{padding:10px 8px 4px}
   #viewAttendance .table-scroll{overflow-x:auto;overflow-y:visible;border:1px solid #bfcfe0;border-radius:9px;scroll-padding-right:10px;scrollbar-width:thin}
