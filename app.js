@@ -704,22 +704,20 @@ function isoWeekNumber(value) {
 function setupRmtTemplate() {
   const inputs = (target, count) => { $(target).innerHTML = Array.from({ length: count }, (_, index) => `<label><span>${index + 1}.</span><input class="rmt-name-input" type="text" list="staffNames" placeholder="Pilih nama guru"></label>`).join(""); };
   inputs("#rmtMorningNames", 4); inputs("#rmtAfternoonNames", 4);
-  const today = dateObject(state.date), day = today.getUTCDay();
-  const rmtAnchor = day === 0 ? dateValue(addDays(today, 1)) : day === 6 ? dateValue(addDays(today, 2)) : state.date;
-  const dates = schoolWeekDates(rmtAnchor);
-  $("#rmtWeek").value = isoWeekNumber(rmtAnchor); $("#rmtFrom").value = dates[0]; $("#rmtTo").value = dates[4];
+  const entryDate = state.date;
+  const dates = schoolWeekDates(entryDate);
+  $("#rmtWeek").value = isoWeekNumber(entryDate); $("#rmtFrom").value = entryDate; $("#rmtTo").value = dates[4];
   state.rmtMonth = state.date.slice(0, 7);
   $("#rmtCalendarMonth").value = state.rmtMonth;
   syncAllLocalizedDateInputs();
   updateRmtTotal();
 }
 
-async function changeRmtWeekStart() {
-  const selected = $("#rmtFrom").value || state.date;
-  const dates = schoolWeekDates(selected);
-  $("#rmtFrom").value = dates[0];
+async function changeRmtEntryDate() {
+  const entryDate = $("#rmtFrom").value || state.date;
+  const dates = schoolWeekDates(entryDate);
   $("#rmtTo").value = dates[4];
-  $("#rmtWeek").value = isoWeekNumber(dates[0]);
+  $("#rmtWeek").value = isoWeekNumber(entryDate);
   syncAllLocalizedDateInputs();
   await loadRmtWeek();
 }
@@ -812,15 +810,17 @@ async function loadRmtWeek() {
       $("#rmtDutyStatus").textContent = "Belum ada senarai guru RMT disimpan bagi minggu ini.";
       return;
     }
-    $("#rmtWeek").value = schedule.weekNumber;
-    $("#rmtFrom").value = schedule.weekStart;
-    $("#rmtTo").value = schedule.weekEnd;
+    const filledDate = schedule.filledDate || date || state.date;
+    const weekDates = schoolWeekDates(filledDate);
+    $("#rmtWeek").value = schedule.weekNumber || isoWeekNumber(filledDate);
+    $("#rmtFrom").value = filledDate;
+    $("#rmtTo").value = schedule.weekEnd || weekDates[4];
     $("#rmtMorningCount").value = schedule.morningCount;
     $("#rmtAfternoonCount").value = schedule.afternoonCount;
     setRmtNameValues("#rmtMorningNames", schedule.morningNames);
     setRmtNameValues("#rmtAfternoonNames", schedule.afternoonNames);
     updateRmtTotal(); syncAllLocalizedDateInputs();
-    $("#rmtDutyStatus").textContent = `Senarai minggu ${schedule.weekNumber} tersimpan oleh ${schedule.updatedBy || "guru bertugas"}.`;
+    $("#rmtDutyStatus").textContent = `Senarai minggu ${schedule.weekNumber || isoWeekNumber(filledDate)} diisi oleh ${schedule.updatedBy || "guru bertugas"} pada ${formatDisplayDate(filledDate)}.`;
   } catch (error) {
     $("#rmtDutyStatus").textContent = error.message || "Senarai guru RMT tidak dapat dibuka.";
   } finally { state.rmtScheduleLoading = false; }
@@ -831,16 +831,18 @@ async function saveRmtWeek() {
   const morningNames = rmtNameValues("#rmtMorningNames"), afternoonNames = rmtNameValues("#rmtAfternoonNames");
   const button = $("#rmtDutySave"); button.disabled = true; $("#rmtDutyStatus").textContent = "Menyimpan senarai guru mingguan…";
   try {
-    const payload = { action: "saveRmtWeek", weekStart: $("#rmtFrom").value, weekEnd: $("#rmtTo").value, weekNumber: count($("#rmtWeek").value, 53), morningCount: count($("#rmtMorningCount").value, 9999), afternoonCount: count($("#rmtAfternoonCount").value, 9999), morningNames, afternoonNames, updatedBy: editorName() };
+    const filledDate = $("#rmtFrom").value || state.date;
+    const weekDates = schoolWeekDates(filledDate);
+    const payload = { action: "saveRmtWeek", weekStart: weekDates[0], weekEnd: weekDates[4], filledDate, weekNumber: isoWeekNumber(filledDate), morningCount: count($("#rmtMorningCount").value, 9999), afternoonCount: count($("#rmtAfternoonCount").value, 9999), morningNames, afternoonNames, updatedBy: editorName() };
     let response = await fetch(SAFETY_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     let data = await responseJson(response, "Senarai guru RMT gagal disimpan.");
     if (!response.ok || !data.schedule) {
-      const legacySchedule = { weekStart: payload.weekStart, weekEnd: payload.weekEnd, weekNumber: payload.weekNumber, morningCount: payload.morningCount, afternoonCount: payload.afternoonCount, morningNames, afternoonNames, updatedBy: payload.updatedBy, updatedAt: Date.now() };
+      const legacySchedule = { weekStart: payload.weekStart, weekEnd: payload.weekEnd, filledDate: payload.filledDate, weekNumber: payload.weekNumber, morningCount: payload.morningCount, afternoonCount: payload.afternoonCount, morningNames, afternoonNames, updatedBy: payload.updatedBy, updatedAt: Date.now() };
       response = await fetch(SAFETY_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ date: payload.weekStart, updatedBy: payload.updatedBy, category: "both", session: "morning", location: `RMT • Senarai Guru Mingguan • Minggu ${payload.weekNumber}`, routeStatus: "not_applicable", parkingStatus: "not_applicable", issue: `[rmt-week]${JSON.stringify(legacySchedule)}`, action: "Senarai guru bertugas RMT mingguan", photos: [] }) });
       data = await responseJson(response, "Senarai guru RMT gagal disimpan.");
     }
     if (!response.ok) throw new Error(data.error || "Senarai guru RMT gagal disimpan.");
-    $("#rmtDutyStatus").textContent = "Senarai guru RMT berjaya disimpan dan boleh dilihat pada semua peranti.";
+    $("#rmtDutyStatus").textContent = `Senarai guru RMT berjaya disimpan pada ${formatDisplayDate(filledDate)} dan boleh dilihat pada semua peranti.`;
   } catch (error) { $("#rmtDutyStatus").textContent = error.message || "Senarai guru RMT gagal disimpan."; }
   finally { button.disabled = false; }
 }
@@ -977,7 +979,7 @@ async function saveRmtPhotos() {
       routeStatus: "not_applicable",
       parkingStatus: "not_applicable",
       issue: `Bukti laporan Guru Bertugas RMT ${$("#rmtPhotoSession").value === "afternoon" ? "Sidang Petang" : "Sidang Pagi"}`,
-      action: `Jumlah murid RMT — Pagi: ${morning} • Petang: ${afternoon} • Tempoh: ${formatDisplayDate($("#rmtFrom").value)} hingga ${formatDisplayDate($("#rmtTo").value)}`,
+      action: `Jumlah murid RMT — Pagi: ${morning} • Petang: ${afternoon} • Tarikh pengisian: ${formatDisplayDate($("#rmtFrom").value)}`,
       photos,
     };
     const response = await fetch(SAFETY_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
@@ -2240,7 +2242,7 @@ $("#rmtAfternoonCount").addEventListener("input", updateRmtTotal);
 $("#rmtDutySave").addEventListener("click", saveRmtWeek);
 $("#rmtPhotoSave").addEventListener("click", saveRmtPhotos);
 $("#rmtPhotoRefresh").addEventListener("click", loadRmtReports);
-$("#rmtFrom").addEventListener("change", changeRmtWeekStart);
+$("#rmtFrom").addEventListener("change", changeRmtEntryDate);
 $("#rmtCalendarMonth").addEventListener("change", () => { state.rmtMonth = $("#rmtCalendarMonth").value; state.rmtShowAll = false; state.rmtSelectedDate = ""; loadRmtReports(); });
 $("#rmtShowAll").addEventListener("click", () => { state.rmtShowAll = false; state.rmtSelectedDate = ""; renderRmtCalendar(); renderRmtReports(); });
 $("#rmtCalendarGrid").addEventListener("click", (event) => {
