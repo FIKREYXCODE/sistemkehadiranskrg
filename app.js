@@ -706,7 +706,7 @@ function setupRmtTemplate() {
   inputs("#rmtMorningNames", 4); inputs("#rmtAfternoonNames", 4);
   const entryDate = state.date;
   const dates = schoolWeekDates(entryDate);
-  $("#rmtWeek").value = isoWeekNumber(entryDate); $("#rmtFrom").value = entryDate; $("#rmtTo").value = dates[4];
+  $("#rmtWeek").value = ""; $("#rmtFrom").value = entryDate; $("#rmtTo").value = dates[4];
   state.rmtMonth = state.date.slice(0, 7);
   $("#rmtCalendarMonth").value = state.rmtMonth;
   syncAllLocalizedDateInputs();
@@ -717,7 +717,6 @@ async function changeRmtEntryDate() {
   const entryDate = $("#rmtFrom").value || state.date;
   const dates = schoolWeekDates(entryDate);
   $("#rmtTo").value = dates[4];
-  $("#rmtWeek").value = isoWeekNumber(entryDate);
   syncAllLocalizedDateInputs();
   await loadRmtWeek();
 }
@@ -806,6 +805,7 @@ async function loadRmtWeek() {
       }
     }
     if (!schedule) {
+      $("#rmtWeek").value = "";
       setRmtNameValues("#rmtMorningNames"); setRmtNameValues("#rmtAfternoonNames");
       $("#rmtDutyStatus").textContent = "Belum ada senarai guru RMT disimpan bagi minggu ini.";
       return;
@@ -828,12 +828,13 @@ async function loadRmtWeek() {
 
 async function saveRmtWeek() {
   if (!editorName()) { $("#rmtDutyStatus").textContent = "Pilih nama pengisi di bahagian atas dahulu."; $("#editorName").focus(); return; }
+  if (!$("#rmtWeek").checkValidity()) { $("#rmtDutyStatus").textContent = "Masukkan nombor minggu sekolah yang betul antara 1 hingga 53."; $("#rmtWeek").reportValidity(); return; }
   const morningNames = rmtNameValues("#rmtMorningNames"), afternoonNames = rmtNameValues("#rmtAfternoonNames");
   const button = $("#rmtDutySave"); button.disabled = true; $("#rmtDutyStatus").textContent = "Menyimpan senarai guru mingguan…";
   try {
     const filledDate = $("#rmtFrom").value || state.date;
     const weekDates = schoolWeekDates(filledDate);
-    const payload = { action: "saveRmtWeek", weekStart: weekDates[0], weekEnd: weekDates[4], filledDate, weekNumber: isoWeekNumber(filledDate), morningCount: count($("#rmtMorningCount").value, 9999), afternoonCount: count($("#rmtAfternoonCount").value, 9999), morningNames, afternoonNames, updatedBy: editorName() };
+    const payload = { action: "saveRmtWeek", weekStart: weekDates[0], weekEnd: weekDates[4], filledDate, weekNumber: count($("#rmtWeek").value, 53), morningCount: count($("#rmtMorningCount").value, 9999), afternoonCount: count($("#rmtAfternoonCount").value, 9999), morningNames, afternoonNames, updatedBy: editorName() };
     let response = await fetch(SAFETY_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     let data = await responseJson(response, "Senarai guru RMT gagal disimpan.");
     if (!response.ok || !data.schedule) {
@@ -2456,7 +2457,7 @@ window.addEventListener("beforeunload", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=80", { scope: "./", updateViaCache: "none" })
+    navigator.serviceWorker.register("./service-worker.js?v=81", { scope: "./", updateViaCache: "none" })
       .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
   });
 }
