@@ -726,3 +726,10 @@ body{background:#fff;color:#000}
   .hem-unit-row .hem-unit-people .hem-person-photo{width:38px;height:38px;border-radius:9px}
   .hem-unit-row .hem-unit-people .hem-person-copy strong{font-size:.56rem;line-height:1.15}.hem-unit-row .hem-unit-people .hem-person-copy em{font-size:.5rem}
 }
+
+/* v96: ikon pintasan rasmi idMe menggunakan identiti visual KPM. */
+.idme-icon{display:flex;align-items:center;justify-content:center;gap:6px;width:82px;height:50px;padding:5px 7px;border-color:#ffffff70;background:#161918;color:#fff}
+.idme-icon img{display:block;width:27px;height:35px;object-fit:contain}
+.idme-icon span{display:grid;justify-items:start;line-height:1}
+.idme-icon strong{color:#fff;font-size:.9rem}.idme-icon small{margin-top:4px;color:#23abc2;font-size:.37rem;letter-spacing:.06em}
+@media(max-width:800px){.idme-icon{width:74px;height:44px;padding:4px 6px}.idme-icon img{width:23px;height:31px}.idme-icon strong{font-size:.82rem}.idme-icon small{font-size:.34rem}}
