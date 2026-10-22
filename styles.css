@@ -828,9 +828,12 @@ body{background:#fff;color:#000}
 #viewAttendance .attendance-table td{padding-left:5px;padding-right:5px}
 #viewAttendance .attendance-table .status-col,
 #viewAttendance .attendance-table .attendance-status{display:none}
-#viewAttendance .attendance-table .attendance-teacher::after{display:inline-flex;align-items:center;width:max-content;margin-left:7px;padding:4px 7px;border-radius:999px;font-size:.56rem;font-weight:950;vertical-align:middle}
-#viewAttendance .attendance-table tr.class-complete .attendance-teacher::after{content:"✓ Selesai";background:#dff7ea;color:#08733d}
-#viewAttendance .attendance-table tr.class-incomplete .attendance-teacher::after{content:"Belum selesai";background:#fff0f2;color:#a61f32}
+#viewAttendance .attendance-table .attendance-teacher::after{display:none;content:none}
+#viewAttendance .attendance-completion-badge{display:inline-flex;align-items:center;gap:3px;width:max-content;margin-left:6px;vertical-align:middle;white-space:nowrap}
+#viewAttendance .attendance-completion-badge.complete{color:#08733d}
+#viewAttendance .attendance-completion-badge .completion-check{display:inline-grid;place-items:center;width:18px;height:18px;border:2px solid currentColor;border-radius:50%;box-shadow:inset 0 0 0 1px #d8ac35;font-size:.7rem;font-weight:950;line-height:1}
+#viewAttendance .attendance-completion-badge em{font-family:"Segoe Script","Brush Script MT",cursive;font-size:.67rem;font-weight:800;line-height:1}
+#viewAttendance .attendance-completion-badge.incomplete{padding:2px 5px;border-radius:999px;background:#fff0f2;color:#a61f32;font-size:.52rem;font-weight:900}
 @media(max-width:700px){
   #viewAttendance .table-section{padding:14px 10px 5px}
   #viewAttendance .table-scroll{overflow:visible;border:0}
@@ -843,10 +846,8 @@ body{background:#fff;color:#000}
   #viewAttendance .attendance-table .attendance-index{position:absolute;top:8px;right:8px;z-index:2;display:grid;width:25px;height:25px;min-height:0;padding:0;border:0;border-radius:999px;background:#e6f2ff;color:#0755b5;font-size:.64rem;font-weight:950}
   #viewAttendance .attendance-table .attendance-index::before{display:none}
   #viewAttendance .attendance-table .attendance-teacher{grid-column:1/3;align-content:start;padding-right:6px;border-left:4px solid #efacb5;text-align:left;font-size:.68rem;line-height:1.25}
-  #viewAttendance .attendance-table .attendance-teacher::after{align-self:start;margin-top:6px;margin-left:0;font-size:.54rem}
+  #viewAttendance .attendance-completion-badge{align-self:start;margin-top:5px;margin-left:0}
   #viewAttendance .attendance-table tr.class-complete .attendance-teacher{border-left-color:#0db76f;background:#f2fbf6}
-  #viewAttendance .attendance-table tr.class-complete .attendance-teacher::after{content:"✓ Selesai";background:#dff7ea;color:#08733d}
-  #viewAttendance .attendance-table tr.class-incomplete .attendance-teacher::after{content:"Belum selesai";background:#fff0f2;color:#a61f32}
   #viewAttendance .attendance-table .attendance-class{grid-column:3;padding-right:30px;background:#eef6ff;color:#073876;font-size:.72rem}
   #viewAttendance .attendance-table .attendance-status{display:none}
   #viewAttendance .attendance-table .attendance-percent{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;min-height:38px;padding:7px 10px;background:#edf8f3;color:#08733d;font-weight:900}
@@ -926,9 +927,10 @@ body{background:#fff;color:#000}
   #viewAttendance .attendance-table thead tr:first-child th:nth-child(3),
   #viewAttendance .attendance-table .attendance-class{position:sticky;left:145px;z-index:4;width:58px;min-width:58px;max-width:58px;background:#f7fbff}
   #viewAttendance .attendance-table thead tr:first-child th:nth-child(3){z-index:7;background:var(--navy)}
-  #viewAttendance .attendance-table .attendance-teacher::after{margin-left:4px;padding:2px 4px;font-size:.47rem}
-  #viewAttendance .attendance-table tr.class-complete .attendance-teacher::after{content:"✓"}
-  #viewAttendance .attendance-table tr.class-incomplete .attendance-teacher::after{content:"Belum"}
+  #viewAttendance .attendance-completion-badge{gap:2px;margin:0 0 0 4px}
+  #viewAttendance .attendance-completion-badge .completion-check{width:14px;height:14px;border-width:1.5px;font-size:.52rem}
+  #viewAttendance .attendance-completion-badge em{font-size:.54rem}
+  #viewAttendance .attendance-completion-badge.incomplete{padding:1px 4px;font-size:.46rem}
   #viewAttendance .attendance-table .attendance-class{padding:4px 2px;font-size:.56rem}
   #viewAttendance .attendance-table .attendance-status{display:none}
   #viewAttendance .attendance-table .attendance-metric,

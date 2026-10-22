@@ -180,6 +180,13 @@ function classStatusMarkup(classId) {
   return `<span class="class-status ${complete ? "complete" : "incomplete"}" title="${complete ? "Pengisian kelas telah diterima" : "Kelas belum membuat pengisian"}">${complete ? "Selesai" : "Belum selesai"}</span>`;
 }
 
+function teacherCompletionBadgeMarkup(classId) {
+  const complete = classIsCompleted(classId);
+  return complete
+    ? '<span class="attendance-completion-badge complete" title="Pengisian kelas telah diterima"><span class="completion-check" aria-hidden="true">✓</span><em>Selesai</em></span>'
+    : '<span class="attendance-completion-badge incomplete" title="Kelas belum membuat pengisian">Belum</span>';
+}
+
 function renderClassCompletionLists() {
   const target = $("#classCompletionLists");
   if (!target) return;
@@ -203,6 +210,8 @@ function updateClassCompletionStatus(classId) {
   row.classList.toggle("class-incomplete", !complete);
   const cell = row.querySelector("[data-class-status]");
   if (cell) cell.innerHTML = classStatusMarkup(classId);
+  const teacherBadge = row.querySelector(".attendance-completion-badge");
+  if (teacherBadge) teacherBadge.outerHTML = teacherCompletionBadgeMarkup(classId);
   renderClassCompletionLists();
 }
 
@@ -1615,7 +1624,7 @@ function renderAttendance() {
     const f = classFigures(row);
     const complete = classIsCompleted(row.id);
     return `<tr class="${complete ? "class-complete" : "class-incomplete"}" data-class-id="${safe(row.id)}">
-      <td class="attendance-index" data-label="Bil">${index + 1}</td><td class="attendance-teacher" data-label="Guru kelas">${safe(row.teacherName || "—")}</td><td class="attendance-class" data-label="Kelas"><strong>${safe(row.name)}</strong></td><td class="attendance-status" data-class-status>${classStatusMarkup(row.id)}</td>
+      <td class="attendance-index" data-label="Bil">${index + 1}</td><td class="attendance-teacher" data-label="Guru kelas">${safe(row.teacherName || "—")}${teacherCompletionBadgeMarkup(row.id)}</td><td class="attendance-class" data-label="Kelas"><strong>${safe(row.name)}</strong></td><td class="attendance-status" data-class-status>${classStatusMarkup(row.id)}</td>
       <td class="attendance-metric" data-label="Daftar L">${f.enrolMale}</td><td class="attendance-metric" data-label="Daftar P">${f.enrolFemale}</td><td class="attendance-metric" data-label="Daftar Jumlah"><strong>${f.enrolTotal}</strong></td>
       <td class="attendance-metric" data-label="Hadir L">${f.presentMale}</td><td class="attendance-metric" data-label="Hadir P">${f.presentFemale}</td><td class="attendance-metric" data-label="Hadir Jumlah"><strong>${f.presentTotal}</strong></td><td class="attendance-percent" data-label="Peratus hadir"><strong>${percent(f.presentTotal, f.enrolTotal)}</strong></td>
       <td class="attendance-metric attendance-edit" data-label="Tidak hadir L"><input class="cell-input num-input${auditDetails("attendance", row.id, "absentMale").className}" type="number" inputmode="numeric" min="0" max="${f.enrolMale}" value="${f.absentMale}" data-field="absentMale" aria-label="Lelaki tidak hadir ${safe(row.name)}" title="${safe(auditDetails("attendance", row.id, "absentMale").title)}"></td>
