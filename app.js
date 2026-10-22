@@ -764,8 +764,12 @@ function clearRmtPreview() {
   $("#rmtImagePreview").innerHTML = "";
 }
 
+function isRmtScheduleReport(report) {
+  return String(report?.location || "").startsWith("RMT • Senarai Guru Mingguan");
+}
+
 function isRmtReport(report) {
-  return String(report?.location || "").startsWith("RMT •");
+  return String(report?.location || "").startsWith("RMT •") && !isRmtScheduleReport(report);
 }
 
 function rmtMonthRange(month = state.rmtMonth || state.date.slice(0, 7)) {
@@ -794,7 +798,15 @@ async function loadRmtWeek() {
     const response = await fetch(`${SAFETY_API_URL}?mode=rmt-week&date=${encodeURIComponent(date)}`, { cache: "no-store" });
     const data = await responseJson(response, "Senarai guru RMT tidak dapat dibuka.");
     if (!response.ok) throw new Error(data.error || "Senarai guru RMT tidak dapat dibuka.");
-    const schedule = data.schedule;
+    let schedule = data.schedule;
+    if (!Object.prototype.hasOwnProperty.call(data, "schedule")) {
+      const legacyResponse = await fetch(`${SAFETY_API_URL}?date=${encodeURIComponent(date)}&limit=20`, { cache: "no-store" });
+      const legacyData = await responseJson(legacyResponse, "Senarai guru RMT tidak dapat dibuka.");
+      const savedRecord = (Array.isArray(legacyData.reports) ? legacyData.reports : []).find(isRmtScheduleReport);
+      if (savedRecord && String(savedRecord.issue || "").startsWith("[rmt-week]")) {
+        try { schedule = JSON.parse(String(savedRecord.issue).slice(10)); } catch { schedule = null; }
+      }
+    }
     if (!schedule) {
       setRmtNameValues("#rmtMorningNames"); setRmtNameValues("#rmtAfternoonNames");
       $("#rmtDutyStatus").textContent = "Belum ada senarai guru RMT disimpan bagi minggu ini.";
@@ -820,8 +832,13 @@ async function saveRmtWeek() {
   const button = $("#rmtDutySave"); button.disabled = true; $("#rmtDutyStatus").textContent = "Menyimpan senarai guru mingguan…";
   try {
     const payload = { action: "saveRmtWeek", weekStart: $("#rmtFrom").value, weekEnd: $("#rmtTo").value, weekNumber: count($("#rmtWeek").value, 53), morningCount: count($("#rmtMorningCount").value, 9999), afternoonCount: count($("#rmtAfternoonCount").value, 9999), morningNames, afternoonNames, updatedBy: editorName() };
-    const response = await fetch(SAFETY_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-    const data = await responseJson(response, "Senarai guru RMT gagal disimpan.");
+    let response = await fetch(SAFETY_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    let data = await responseJson(response, "Senarai guru RMT gagal disimpan.");
+    if (!response.ok || !data.schedule) {
+      const legacySchedule = { weekStart: payload.weekStart, weekEnd: payload.weekEnd, weekNumber: payload.weekNumber, morningCount: payload.morningCount, afternoonCount: payload.afternoonCount, morningNames, afternoonNames, updatedBy: payload.updatedBy, updatedAt: Date.now() };
+      response = await fetch(SAFETY_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ date: payload.weekStart, updatedBy: payload.updatedBy, category: "both", session: "morning", location: `RMT • Senarai Guru Mingguan • Minggu ${payload.weekNumber}`, routeStatus: "not_applicable", parkingStatus: "not_applicable", issue: `[rmt-week]${JSON.stringify(legacySchedule)}`, action: "Senarai guru bertugas RMT mingguan", photos: [] }) });
+      data = await responseJson(response, "Senarai guru RMT gagal disimpan.");
+    }
     if (!response.ok) throw new Error(data.error || "Senarai guru RMT gagal disimpan.");
     $("#rmtDutyStatus").textContent = "Senarai guru RMT berjaya disimpan dan boleh dilihat pada semua peranti.";
   } catch (error) { $("#rmtDutyStatus").textContent = error.message || "Senarai guru RMT gagal disimpan."; }
@@ -1117,7 +1134,7 @@ function addMonitoringItem() {
 }
 
 function renderMonitoringReports() {
-  const reports = state.monitoring.reports.filter((report) => !isRmtReport(report) && report.category !== "opr");
+  const reports = state.monitoring.reports.filter((report) => !isRmtReport(report) && !isRmtScheduleReport(report) && report.category !== "opr");
   const renderReport = (report) => {
     const created = formatDisplayDateTime(report.createdAt);
     const photos = (Array.isArray(report.photos) ? report.photos : []).map((photo, index) =>
