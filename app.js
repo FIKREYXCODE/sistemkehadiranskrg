@@ -854,6 +854,16 @@ function rmtReportsForDisplay() {
   return state.rmtReports.filter((report) => report.reportDate === state.rmtSelectedDate);
 }
 
+function ensureRmtArchiveDefaultDate() {
+  const archiveDate = $("#rmtArchiveDate");
+  const defaultDate = archiveDate.value || state.date || localDateValue();
+  if (!state.rmtSelectedDate) state.rmtSelectedDate = defaultDate;
+  state.rmtMonth = state.rmtSelectedDate.slice(0, 7);
+  archiveDate.value = state.rmtSelectedDate;
+  $("#rmtCalendarMonth").value = state.rmtMonth;
+  syncAllLocalizedDateInputs();
+}
+
 function rmtTeacherShortName(value) {
   const words = String(value || "").trim().split(/\s+/).filter(Boolean);
   const relationIndex = words.findIndex((word) => ["BIN", "BINTI", "BTE", "BT", "A/L", "A/P"].includes(word.toUpperCase()));
@@ -2218,6 +2228,7 @@ function activateViewFromHash() {
   if (requested === "completion") loadCompletionView();
   if (requested === "calendar") loadCalendarRecord();
   if (requested === "rmtInfo") loadRmtWeek();
+  if (requested === "rmtArchive") ensureRmtArchiveDefaultDate();
   if (["rmtStatus", "rmtArchive"].includes(requested)) loadRmtReports();
   if (requested === "opr") loadOprReports();
   setSidebar(false);
