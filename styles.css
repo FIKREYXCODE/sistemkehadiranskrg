@@ -911,8 +911,8 @@ body{background:#fff;color:#000}
   #viewAttendance .class-chip{flex:0 0 auto;padding:3px 5px;border-radius:6px;font-size:.5rem;line-height:1.1}
   #viewAttendance .class-list-empty{font-size:.5rem}
   #viewAttendance .table-section{padding:10px 8px 4px}
-  #viewAttendance .table-scroll{overflow-x:auto;overflow-y:visible;border:1px solid #bfcfe0;border-radius:9px;scrollbar-width:thin}
-  #viewAttendance .attendance-table{display:table;min-width:900px;table-layout:fixed;font-size:.59rem}
+  #viewAttendance .table-scroll{overflow-x:auto;overflow-y:visible;border:1px solid #bfcfe0;border-radius:9px;scroll-padding-right:10px;scrollbar-width:thin}
+  #viewAttendance .attendance-table{display:table;min-width:970px;table-layout:fixed;font-size:.59rem}
   #viewAttendance .attendance-table thead{display:table-header-group}
   #viewAttendance .attendance-table tbody{display:table-row-group}
   #viewAttendance .attendance-table tfoot{display:table-footer-group;margin:0}
@@ -942,9 +942,11 @@ body{background:#fff;color:#000}
   #viewAttendance .attendance-table .attendance-metric,
   #viewAttendance .attendance-table .attendance-percent,
   #viewAttendance .attendance-table .attendance-note{display:table-cell;min-height:0;padding:4px 3px;background:transparent;color:inherit;font-weight:inherit;text-align:center}
-  #viewAttendance .attendance-table .attendance-note{width:112px;min-width:112px;text-align:left}
+  #viewAttendance .attendance-table .note-col,
+  #viewAttendance .attendance-table .attendance-note{width:164px;min-width:164px;max-width:164px;text-align:left}
+  #viewAttendance .attendance-table .note-col{padding:5px 6px;line-height:1.12;white-space:normal}
   #viewAttendance .attendance-table .cell-input{min-width:36px;min-height:0;height:28px;padding:3px 2px;border-radius:5px;font-size:.6rem}
-  #viewAttendance .attendance-table .note-input{min-width:100px;text-align:left}
+  #viewAttendance .attendance-table .note-input{display:block;width:100%;min-width:0;max-width:100%;padding-left:6px;padding-right:6px;text-align:left}
   #viewAttendance .attendance-table tfoot .attendance-total-title,
   #viewAttendance .attendance-table tfoot .attendance-total-percent{display:table-cell;min-height:0;padding:4px 3px;border-radius:0;background:#dfeaf4;color:var(--ink);font-weight:900}
   #viewAttendance .attendance-table tfoot .attendance-total-note{display:table-cell}
