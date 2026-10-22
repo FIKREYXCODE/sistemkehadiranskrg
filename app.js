@@ -277,8 +277,12 @@ function renderOrganization() {
     if (!unitGroups.has(fieldName)) unitGroups.set(fieldName, []);
     unitGroups.get(fieldName).push(item);
   }
+  const unitEntries = Array.from(unitGroups);
+  const unitRows = [];
+  for (let index = 0; index < unitEntries.length; index += 2) unitRows.push(unitEntries.slice(index, index + 2));
+  const unitBranch = ([fieldName, people], side) => `<section class="hem-unit-branch ${side}"><h4>${safe(fieldName)}</h4><div class="hem-unit-people">${people.map((item) => organizationPersonCard(item, "unit")).join("")}</div></section>`;
   $("#hemUnitChart").innerHTML = unitPeople.length
-    ? `<div class="hem-unit-heading"><span>UNIT DAN BIDANG HEM</span><small>${unitGroups.size} unit • ${unitPeople.length} pegawai</small></div><div class="hem-unit-grid">${Array.from(unitGroups, ([fieldName, people]) => `<section class="hem-unit-branch"><h4>${safe(fieldName)}</h4><div class="hem-unit-people">${people.map((item) => organizationPersonCard(item, "unit")).join("")}</div></section>`).join("")}</div>`
+    ? `<div class="hem-unit-heading"><span>UNIT DAN BIDANG HEM</span><small>${unitGroups.size} unit • ${unitPeople.length} pegawai</small></div><div class="hem-unit-rows">${unitRows.map((row) => `<div class="hem-unit-row">${unitBranch(row[0], "left")}${row[1] ? unitBranch(row[1], "right") : '<span class="hem-unit-empty" aria-hidden="true"></span>'}</div>`).join("")}</div>`
     : "";
   $("#hemOrganizationStatus").textContent = items.length ? "Carta ini dikemas kini melalui Tetapan Sistem." : "Belum ada organisasi HEM aktif untuk dipaparkan.";
 }

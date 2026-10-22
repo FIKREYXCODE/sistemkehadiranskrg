@@ -701,3 +701,28 @@ body{background:#fff;color:#000}
 }
 
 @media(max-width:430px){.home-class-totals{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* v95: carta organisasi bercabang kiri dan kanan seperti carta hierarki rasmi. */
+.hem-unit-rows{position:relative;display:grid;gap:12px;padding-top:18px}
+.hem-unit-rows:before{content:"";position:absolute;top:0;bottom:0;left:50%;width:2px;background:#78b8e8;transform:translateX(-50%)}
+.hem-unit-row{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 54px minmax(0,1fr);align-items:start;gap:0}
+.hem-unit-row:before{content:"";position:absolute;top:30px;left:calc(50% - 27px);width:54px;height:2px;background:#78b8e8}
+.hem-unit-row .hem-unit-branch.left{grid-column:1}.hem-unit-row .hem-unit-branch.right{grid-column:3}.hem-unit-empty{grid-column:3}
+.hem-unit-row .hem-unit-branch{margin:0;padding:9px;border-color:#a9c9e8;background:#fff;box-shadow:0 7px 18px #123f7610}
+.hem-unit-row .hem-unit-branch:before{display:none}
+.hem-unit-row .hem-unit-branch h4{margin:-9px -9px 7px;padding:8px 9px;border:0;border-radius:13px 13px 0 0;background:linear-gradient(105deg,#073876,#0b63bd);color:#fff;font-size:.68rem}
+.hem-unit-row .hem-unit-people{gap:5px}
+.hem-unit-row .hem-unit-people .hem-person-card{min-height:58px;background:#f7fbff}
+
+@media(max-width:800px){
+  .hem-unit-rows{display:flex;gap:9px;overflow-x:auto;padding:14px 2px 7px;scroll-snap-type:x mandatory;scrollbar-width:thin}
+  .hem-unit-rows:before{display:none}
+  .hem-unit-row{display:grid;flex:0 0 min(90vw,340px);grid-template-columns:1fr 1fr;gap:7px;scroll-snap-align:start}
+  .hem-unit-row:before{display:none}
+  .hem-unit-row .hem-unit-branch.left,.hem-unit-row .hem-unit-branch.right{grid-column:auto}
+  .hem-unit-row .hem-unit-branch{min-width:0;padding:7px}
+  .hem-unit-row .hem-unit-branch h4{margin:-7px -7px 6px;padding:7px 5px;font-size:.54rem}
+  .hem-unit-row .hem-unit-people .hem-person-card{display:grid;grid-template-columns:38px minmax(0,1fr);min-height:52px;padding:6px!important}
+  .hem-unit-row .hem-unit-people .hem-person-photo{width:38px;height:38px;border-radius:9px}
+  .hem-unit-row .hem-unit-people .hem-person-copy strong{font-size:.56rem;line-height:1.15}.hem-unit-row .hem-unit-people .hem-person-copy em{font-size:.5rem}
+}
