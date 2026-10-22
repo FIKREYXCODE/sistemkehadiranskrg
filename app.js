@@ -11,7 +11,7 @@ const state = {
   analytics: { period: "week", date: "", loading: false, filtersReady: false, filterPromise: null, annualLoadingYear: "", annualCache: new Map() },
   monitoring: { reports: [], loading: false, previewUrls: [] },
   weeklyDuty: { loading: false }, completion: { loading: false }, calendar: { loading: false }, rmtPreviewUrls: [], rmtReports: [], rmtLoading: false,
-  rmtMonth: "", rmtSelectedDate: "", rmtShowAll: true, rmtScheduleLoading: false,
+  rmtMonth: "", rmtSelectedDate: "", rmtShowAll: false, rmtScheduleLoading: false,
   opr: { reports: [], loading: false, previewUrls: [] }, editingRecord: null,
   organization: { items: [], adminItems: [], deletedIds: [], loading: false },
   content: { announcements: [], adminAnnouncements: [], deletedAnnouncementIds: [], latestLetters: [], letters: [], loading: false },
@@ -910,6 +910,8 @@ async function loadRmtReports() {
     state.rmtReports = supportsMonthlyArchive && Array.isArray(data.reports)
       ? data.reports.filter(isRmtReport)
       : await loadRmtReportsFromDailyArchive(range);
+    state.rmtReports.sort((a, b) => String(b.reportDate || "").localeCompare(String(a.reportDate || "")) || Number(b.createdAt || 0) - Number(a.createdAt || 0));
+    if (!state.rmtShowAll && (!state.rmtSelectedDate || !state.rmtSelectedDate.startsWith(`${range.month}-`))) state.rmtSelectedDate = state.rmtReports[0]?.reportDate || "";
     renderRmtCalendar(); renderRmtReports();
   } catch (error) {
     console.error(error);
@@ -952,7 +954,7 @@ async function saveRmtPhotos() {
     if (!response.ok) throw new Error(result.error || "Gambar RMT gagal disimpan.");
     clearRmtPreview();
     $("#rmtPhotoStatus").textContent = "Gambar RMT berjaya disimpan dan boleh dilihat oleh guru lain.";
-    state.rmtMonth = String(payload.date).slice(0, 7); $("#rmtCalendarMonth").value = state.rmtMonth; state.rmtShowAll = true;
+    state.rmtMonth = String(payload.date).slice(0, 7); $("#rmtCalendarMonth").value = state.rmtMonth; state.rmtSelectedDate = payload.date; state.rmtShowAll = false;
     await loadRmtReports();
   } catch (error) {
     console.error(error);
@@ -978,7 +980,7 @@ async function saveRmtReport(event) {
     const response = await fetch(SAFETY_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     const result = await responseJson(response, "Laporan RMT gagal disimpan.");
     if (!response.ok) throw new Error(result.error || "Laporan RMT gagal disimpan.");
-    form.reset(); form.querySelector("[data-rmt-preview]").innerHTML = ""; status.textContent = "Laporan RMT berjaya disimpan dan tersedia pada semua peranti."; state.rmtMonth = state.date.slice(0, 7); $("#rmtCalendarMonth").value = state.rmtMonth; state.rmtShowAll = true; await loadRmtReports();
+    form.reset(); form.querySelector("[data-rmt-preview]").innerHTML = ""; status.textContent = "Laporan RMT berjaya disimpan dan tersedia pada semua peranti."; state.rmtMonth = state.date.slice(0, 7); $("#rmtCalendarMonth").value = state.rmtMonth; state.rmtSelectedDate = state.date; state.rmtShowAll = false; await loadRmtReports();
   } catch (error) { status.textContent = error.message || "Laporan RMT gagal disimpan."; }
   finally { button.disabled = false; }
 }
@@ -2208,7 +2210,7 @@ $("#rmtDutySave").addEventListener("click", saveRmtWeek);
 $("#rmtPhotoSave").addEventListener("click", saveRmtPhotos);
 $("#rmtPhotoRefresh").addEventListener("click", loadRmtReports);
 $("#rmtFrom").addEventListener("change", changeRmtWeekStart);
-$("#rmtCalendarMonth").addEventListener("change", () => { state.rmtMonth = $("#rmtCalendarMonth").value; state.rmtShowAll = true; state.rmtSelectedDate = ""; loadRmtReports(); });
+$("#rmtCalendarMonth").addEventListener("change", () => { state.rmtMonth = $("#rmtCalendarMonth").value; state.rmtShowAll = false; state.rmtSelectedDate = ""; loadRmtReports(); });
 $("#rmtShowAll").addEventListener("click", () => { state.rmtShowAll = true; state.rmtSelectedDate = ""; renderRmtCalendar(); renderRmtReports(); });
 $("#rmtCalendarGrid").addEventListener("click", (event) => {
   const button = event.target.closest("[data-rmt-date]");
