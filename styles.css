@@ -597,3 +597,42 @@ body{background:#fff;color:#000}
 
 @media(max-width:390px){#rmtInfoView .rmt-name-list{grid-template-columns:1fr}}
 @media(max-height:820px) and (min-width:701px){#rmtInfoView .utility-head>div>p:last-child,#rmtArchiveView .utility-head>div>p:last-child{display:none}.app-content .page-shell{margin-top:12px}}
+
+/* v91: semua petunjuk kalendar kelihatan dan header RMT lebih padat. */
+.rmt-view-active .identity-bar{gap:10px;padding:7px 12px;border-radius:11px}
+.rmt-view-active .identity-bar .user-picker{display:grid;grid-template-columns:auto minmax(210px,330px);align-items:center;gap:9px;width:auto;font-size:.67rem}
+.rmt-view-active .identity-bar .user-picker select{height:34px;margin-top:0;padding:5px 9px}
+.rmt-view-active .identity-bar>div strong{font-size:.7rem}
+.rmt-view-active .identity-bar>div small{margin-top:1px;font-size:.61rem}
+#rmtStatusView .rmt-calendar-legend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+#rmtStatusView .rmt-calendar-legend span{display:flex;align-items:center;justify-content:center;min-height:25px;border-radius:7px;text-align:center;line-height:1.15}
+#rmtArchiveView .rmt-archive-head{gap:12px}
+#rmtArchiveView .rmt-archive-head .eyebrow{margin-bottom:1px;font-size:.6rem}
+#rmtArchiveView .rmt-archive-head h2{margin:0;font-size:1.12rem}
+#rmtArchiveView .rmt-archive-head>div>p:last-child{margin:2px 0 0;font-size:.66rem}
+#rmtArchiveView .rmt-archive-head label{min-width:185px;font-size:.66rem}
+#rmtArchiveView .rmt-archive-head label>input{height:36px;margin-top:3px;padding:6px 9px}
+
+@media(max-width:700px){
+  .rmt-view-active .identity-bar{display:block;padding:6px 9px}
+  .rmt-view-active .identity-bar .user-picker{grid-template-columns:78px minmax(0,1fr);gap:6px;width:100%;font-size:.61rem}
+  .rmt-view-active .identity-bar .user-picker select{height:32px;font-size:.7rem}
+  #rmtStatusView .rmt-calendar-heading{align-items:end;flex-direction:row;gap:6px}
+  #rmtStatusView .rmt-calendar-heading>div{min-width:0;flex:1}
+  #rmtStatusView .rmt-calendar-heading .eyebrow{margin-bottom:0;font-size:.55rem}
+  #rmtStatusView .rmt-calendar-heading h3{font-size:1rem;line-height:1.1}
+  #rmtStatusView .rmt-calendar-heading label{flex:0 0 132px;width:132px;min-width:0;font-size:.58rem}
+  #rmtStatusView .rmt-calendar-heading input{height:32px;margin-top:2px;padding:4px 6px;font-size:.7rem}
+  #rmtStatusView .rmt-calendar-legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px;margin:5px 0;overflow:visible}
+  #rmtStatusView .rmt-calendar-legend span{min-width:0;min-height:23px;padding:3px 4px;white-space:normal;font-size:.5rem}
+  #rmtArchiveView .rmt-archive-head{display:grid;grid-template-columns:minmax(0,1fr) 132px;align-items:end;gap:6px}
+  #rmtArchiveView .rmt-archive-head>div{min-width:0}
+  #rmtArchiveView .rmt-archive-head>div>p:last-child{display:none}
+  #rmtArchiveView .rmt-archive-head h2{font-size:.98rem;line-height:1.12}
+  #rmtArchiveView .rmt-archive-head label{width:132px;min-width:0;font-size:.58rem}
+  #rmtArchiveView .rmt-archive-head label>input{height:32px;margin-top:2px;padding:4px 6px;font-size:.7rem}
+  #rmtArchiveView .rmt-shared-heading{margin-top:7px;padding-top:7px}
+  #rmtArchiveView .rmt-shared-heading h3{font-size:.86rem}
+  #rmtArchiveView .rmt-shared-heading small{font-size:.58rem}
+  #rmtArchiveView .rmt-shared-heading .secondary-button{padding:6px 8px;font-size:.64rem}
+}

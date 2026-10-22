@@ -2199,6 +2199,8 @@ HASH_VIEWS["status-kelas"] = "attendance";
 function activateViewFromHash() {
   const requested = HASH_VIEWS[window.location.hash.replace(/^#/, "")] || "home";
   const isRmtView = RMT_VIEWS.includes(requested);
+  document.body.classList.toggle("rmt-view-active", isRmtView);
+  document.body.dataset.activeView = requested;
   document.querySelectorAll("[data-view-panel]").forEach((panel) => {
     panel.hidden = panel.dataset.viewPanel !== requested;
   });

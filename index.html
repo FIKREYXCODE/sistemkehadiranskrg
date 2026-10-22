@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="HEM SMARTTRACK">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="manifest" href="manifest.webmanifest?v=90">
+  <link rel="manifest" href="manifest.webmanifest?v=91">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=90">
+  <link rel="stylesheet" href="styles.css?v=91">
 </head>
 <body>
   <header class="topbar no-print">
@@ -47,7 +47,7 @@
     <details id="rmtNavGroup" class="sidebar-group">
       <summary><span>05</span><span class="sidebar-group-copy"><strong>Guru Bertugas RMT</strong><small>Buka pilihan pengurusan RMT</small></span></summary>
       <div class="sidebar-submenu">
-        <a href="#guru-rmt-maklumat" data-view-link="rmtInfo"><span>5.1</span><strong>Senarai Guru Mingguan</strong></a>
+        <a href="#guru-rmt-maklumat" data-view-link="rmtInfo"><span>5.1</span><strong>Senarai Guru Bertugas Mingguan</strong></a>
         <a href="#guru-rmt-status" data-view-link="rmtStatus"><span>5.2</span><strong>Status Pengisian RMT</strong></a>
         <a href="#guru-rmt-laporan" data-view-link="rmtReport"><span>5.3</span><strong>Laporan RMT Harian</strong></a>
         <a href="#guru-rmt-arkib" data-view-link="rmtArchive"><span>5.4</span><strong>Arkib &amp; Gambar</strong></a>
@@ -443,7 +443,7 @@
         <div class="rmt-count-grid"><label>Jumlah Murid RMT Pagi<input id="rmtMorningCount" type="number" min="0" value="142"></label><label>Jumlah Murid RMT Petang<input id="rmtAfternoonCount" type="number" min="0" value="119"></label><div class="rmt-total-display"><span>Jumlah keseluruhan RMT</span><strong id="rmtComputedTotal">261</strong><small>Dikira secara automatik</small></div></div>
         <div class="rmt-duty-session-picker"><label>Paparan sidang<select id="rmtDutySessionView"><option value="morning">🌅 Sidang Pagi</option><option value="afternoon">🌇 Sidang Petang</option></select></label><small>Hanya satu senarai dipaparkan pada satu masa.</small></div>
         <div class="rmt-session-grid single-session"><fieldset data-rmt-duty-panel="morning"><legend>📗 Guru sesi pagi</legend><div id="rmtMorningNames" class="rmt-name-list"></div></fieldset><fieldset data-rmt-duty-panel="afternoon" hidden><legend>📕 Guru sesi petang</legend><div id="rmtAfternoonNames" class="rmt-name-list"></div></fieldset></div>
-        <div class="rmt-template-actions"><button id="rmtDutySave" class="primary-button" type="button">Simpan Senarai Guru Mingguan</button><p id="rmtDutyStatus" class="form-message" role="status">Senarai ini akan disimpan mengikut minggu dan boleh dilihat pada semua peranti.</p></div>
+        <div class="rmt-template-actions"><button id="rmtDutySave" class="primary-button" type="button">Simpan Senarai Guru Bertugas Mingguan</button><p id="rmtDutyStatus" class="form-message" role="status">Senarai ini akan disimpan mengikut minggu dan boleh dilihat pada semua peranti.</p></div>
       </div>
     </section>
 
@@ -451,7 +451,7 @@
       <section class="rmt-calendar-panel" aria-labelledby="rmtCalendarTitle">
         <div class="rmt-calendar-heading"><div><p class="eyebrow">Kalendar bulanan</p><h3 id="rmtCalendarTitle">Status Pengisian RMT</h3><p>Klik tarikh untuk membuka laporan dan gambar. Nama pengisi ditunjukkan secara ringkas dalam petak.</p></div><label>Bulan laporan<input id="rmtCalendarMonth" type="month"></label></div>
         <div class="rmt-summary-grid"><div><span>Jumlah laporan</span><strong id="rmtSummaryTotal">0</strong></div><div class="morning"><span>Sidang pagi</span><strong id="rmtSummaryMorning">0</strong></div><div class="afternoon"><span>Sidang petang</span><strong id="rmtSummaryAfternoon">0</strong></div><div class="complete"><span>Hari lengkap</span><strong id="rmtSummaryComplete">0</strong></div></div>
-        <div class="rmt-calendar-legend" aria-label="Petunjuk warna kalendar"><span class="morning-only">Kuning: laporan pagi</span><span class="afternoon-only">Hijau terang: laporan petang</span><span class="both">Kuning + hijau: kedua-dua sidang</span><span class="missing">Merah muda: belum diisi</span><span class="weekend">Merah: Sabtu/Ahad — Tiada RMT</span><span class="future">Kelabu: tarikh akan datang</span></div>
+        <div class="rmt-calendar-legend" aria-label="Petunjuk warna kalendar"><span class="morning-only">Kuning: laporan pagi</span><span class="afternoon-only">Hijau terang: laporan petang</span><span class="both">Kuning + hijau: dua sidang</span><span class="missing">Merah muda: belum diisi</span><span class="weekend">Merah: Sabtu/Ahad — Tiada RMT</span><span class="future">Kelabu: tarikh akan datang</span></div>
         <div class="rmt-calendar-weekdays" aria-hidden="true"><span>Isn</span><span>Sel</span><span>Rab</span><span>Kha</span><span>Jum</span><span>Sab</span><span>Ahd</span></div>
         <div id="rmtCalendarGrid" class="rmt-calendar-grid" aria-live="polite"></div>
         <div class="rmt-calendar-footer"><p id="rmtCalendarStatus" role="status">Memuatkan rekod RMT…</p><button id="rmtShowAll" class="secondary-button" type="button" hidden>Tutup Laporan Dipilih</button></div>
@@ -607,7 +607,7 @@
     <div class="news-ticker-viewport"><div id="newsTickerTrack" class="news-ticker-track"></div></div>
   </aside>
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="class-demographics.js?v=90" defer></script>
-  <script src="app.js?v=90" defer></script>
+  <script src="class-demographics.js?v=91" defer></script>
+  <script src="app.js?v=91" defer></script>
 </body>
 </html>
