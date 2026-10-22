@@ -2246,6 +2246,11 @@ $("#rmtPhotos").addEventListener("change", (event) => renderRmtImagePreview(even
 $("#rmtMorningCount").addEventListener("input", updateRmtTotal);
 $("#rmtAfternoonCount").addEventListener("input", updateRmtTotal);
 $("#rmtDutySave").addEventListener("click", saveRmtWeek);
+function updateRmtDutySessionView() {
+  const selected = $("#rmtDutySessionView").value;
+  document.querySelectorAll("[data-rmt-duty-panel]").forEach((panel) => { panel.hidden = panel.dataset.rmtDutyPanel !== selected; });
+}
+$("#rmtDutySessionView").addEventListener("change", updateRmtDutySessionView);
 $("#rmtPhotoSave").addEventListener("click", saveRmtPhotos);
 $("#rmtPhotoRefresh").addEventListener("click", loadRmtReports);
 $("#rmtFrom").addEventListener("change", changeRmtEntryDate);
@@ -2421,6 +2426,7 @@ $("#completionDate").value = state.date;
 $("#calendarDate").value = state.date;
 $("#letterDate").value = state.date;
 setupRmtTemplate();
+updateRmtDutySessionView();
 enhanceLocalizedDateInputs();
 setupKpiFilters();
 refreshStaffNameChoices();
@@ -2471,7 +2477,7 @@ window.addEventListener("beforeunload", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=83", { scope: "./", updateViaCache: "none" })
+    navigator.serviceWorker.register("./service-worker.js?v=89", { scope: "./", updateViaCache: "none" })
       .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
   });
 }

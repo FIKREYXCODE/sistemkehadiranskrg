@@ -484,3 +484,116 @@ body{background:#fff;color:#000}
 .rmt-archive-head label{min-width:220px;color:var(--muted);font-size:.76rem;font-weight:900}
 .rmt-archive-head label>input{display:block;width:100%;margin-top:6px}
 @media(max-width:700px){.sidebar-submenu{padding-left:12px}.rmt-archive-head label{width:100%;min-width:0}}
+
+/* v84: paparan RMT padat, satu sidang pada satu masa dan mesra skrin telefon. */
+#rmtInfoView,#rmtStatusView,#rmtReportView,#rmtArchiveView{padding:18px 22px}
+#rmtReportView{padding-top:6px;padding-bottom:6px}
+#rmtInfoView .utility-head h2,#rmtArchiveView .utility-head h2{margin-bottom:3px;font-size:clamp(1.18rem,2vw,1.58rem)}
+#rmtInfoView .utility-head>div>p:last-child,#rmtArchiveView .utility-head>div>p:last-child{font-size:.76rem}
+#rmtInfoView .rmt-portal-button{min-height:36px;padding:7px 11px;border-radius:9px;font-size:.72rem}
+#rmtInfoView .rmt-template-form{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px;margin-top:10px;padding:11px 13px}
+#rmtInfoView .rmt-meta-grid,#rmtInfoView .rmt-count-grid{display:contents}
+#rmtInfoView .rmt-template-form input{height:37px;margin-top:4px;padding:0 9px}
+#rmtInfoView .rmt-meta-grid label small{margin-top:3px;font-size:.62rem}
+#rmtInfoView .rmt-total-display{min-height:58px;padding:8px 11px}
+#rmtInfoView .rmt-total-display strong{font-size:1.18rem}
+.rmt-duty-session-picker{grid-column:1/-1;display:flex;align-items:end;gap:12px;margin-top:1px;padding-top:7px;border-top:1px solid var(--line)}
+.rmt-duty-session-picker label{width:min(270px,100%)}
+.rmt-duty-session-picker select{display:block;width:100%;height:38px;margin-top:4px;padding:0 10px;border:1px solid #9fc3e7;border-radius:9px;background:#edf7ff;color:var(--navy);font:inherit;font-weight:900}
+.rmt-duty-session-picker small{padding-bottom:7px;color:var(--muted);font-size:.66rem}
+#rmtInfoView .rmt-session-grid.single-session{grid-column:1/-1;grid-template-columns:1fr;margin-top:0}
+#rmtInfoView .rmt-session-grid fieldset{padding:9px 12px}
+#rmtInfoView .rmt-session-grid fieldset[hidden]{display:none!important}
+#rmtInfoView .rmt-session-grid legend{font-size:.82rem}
+#rmtInfoView .rmt-name-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 10px}
+#rmtInfoView .rmt-name-list label{grid-template-columns:20px 1fr}
+#rmtInfoView .rmt-template-actions{grid-column:1/-1;margin-top:0;padding-top:7px}
+#rmtInfoView .rmt-template-actions .primary-button{padding:9px 12px}
+#rmtInfoView .rmt-template-actions .form-message{font-size:.68rem}
+
+#rmtStatusView .rmt-calendar-panel{padding:0;border:0}
+#rmtStatusView .rmt-calendar-heading{align-items:center}
+#rmtStatusView .rmt-calendar-heading h3{margin:1px 0 2px;font-size:1.18rem}
+#rmtStatusView .rmt-calendar-heading p:last-child{font-size:.7rem}
+#rmtStatusView .rmt-calendar-heading label{min-width:180px}
+#rmtStatusView .rmt-calendar-heading input{height:36px;margin-top:4px}
+#rmtStatusView .rmt-summary-grid{gap:7px;margin-top:9px}
+#rmtStatusView .rmt-summary-grid>div{padding:7px 10px;border-left-width:4px;border-radius:9px}
+#rmtStatusView .rmt-summary-grid span{font-size:.64rem}
+#rmtStatusView .rmt-summary-grid strong{font-size:1.05rem}
+#rmtStatusView .rmt-calendar-legend{gap:5px;margin:8px 0 7px}
+#rmtStatusView .rmt-calendar-legend span{padding:4px 7px;font-size:.57rem}
+#rmtStatusView .rmt-calendar-weekdays,#rmtStatusView .rmt-calendar-grid{gap:4px}
+#rmtStatusView .rmt-calendar-weekdays{margin-bottom:4px}
+#rmtStatusView .rmt-calendar-day{min-height:44px;padding:2px 3px;border-radius:8px}
+#rmtStatusView .rmt-calendar-day span{font-size:.82rem}
+#rmtStatusView .rmt-day-session,#rmtStatusView .rmt-day-note{padding:1px 3px;font-size:.42rem!important}
+#rmtStatusView .rmt-calendar-footer{margin-top:7px}
+#rmtStatusView .rmt-calendar-footer p{font-size:.64rem}
+
+#rmtReportView .rmt-photo-section{padding:0;border:0}
+#rmtReportView .rmt-photo-section h3{margin:1px 0 2px;font-size:1.18rem}
+#rmtReportView .rmt-photo-section>div:first-child p:last-child{font-size:.7rem}
+#rmtReportView .rmt-report-grid{max-width:680px;margin-top:9px}
+#rmtReportView .rmt-report-card{gap:8px 10px;padding:12px 14px;border-radius:15px}
+#rmtReportView .rmt-report-card h4{font-size:.95rem}
+#rmtReportView .rmt-report-card label{gap:4px;font-size:.68rem}
+#rmtReportView .rmt-report-card input,#rmtReportView .rmt-report-card select,#rmtReportView .rmt-report-card textarea{min-height:38px;padding:8px 9px;border-radius:8px;font-size:.82rem}
+#rmtReportView .rmt-report-card textarea{min-height:48px}
+#rmtReportView .rmt-paired-field{grid-template-rows:minmax(2.15em,auto) auto}
+#rmtReportView .rmt-number-field{grid-template-rows:minmax(2.15em,auto) 38px}
+#rmtReportView .photo-uploader{padding:9px 11px}
+#rmtReportView .photo-uploader span{font-size:.64rem}
+#rmtReportView .rmt-report-card>.primary-button{min-height:40px;padding:8px 12px}
+#rmtReportView .rmt-submit-inline{align-self:end;width:100%}
+
+#rmtArchiveView .rmt-archive-head{align-items:center}
+#rmtArchiveView .rmt-shared-heading{margin-top:12px;padding-top:11px}
+#rmtArchiveView .rmt-shared-heading h3{font-size:1rem}
+#rmtArchiveView .rmt-shared-heading small{font-size:.66rem}
+#rmtArchiveView .monitoring-list-status{margin:8px 0;padding:8px 11px;font-size:.7rem}
+#rmtArchiveView .rmt-shared-gallery{grid-template-columns:repeat(auto-fit,minmax(500px,1fr));gap:10px;margin-top:8px}
+#rmtArchiveView .rmt-shared-report{gap:11px;padding:10px}
+#rmtArchiveView .rmt-shared-report .monitoring-photo-grid{min-height:145px}
+#rmtArchiveView .rmt-shared-report h4{margin:6px 0 3px;font-size:.9rem}
+#rmtArchiveView .rmt-shared-report p{margin:4px 0;font-size:.7rem}
+#rmtArchiveView .rmt-report-details{gap:5px;margin:7px 0}
+#rmtArchiveView .rmt-report-details div{padding:6px}
+#rmtArchiveView .rmt-report-details dt{font-size:.62rem}
+#rmtArchiveView .rmt-report-details dd{font-size:.72rem}
+
+@media(max-width:700px){
+  #rmtInfoView,#rmtStatusView,#rmtArchiveView{padding:13px 10px}
+  #rmtReportView{padding:7px 10px}
+  #rmtInfoView .utility-head,#rmtArchiveView .utility-head{gap:8px}
+  #rmtInfoView .rmt-portal-button{align-self:flex-start;width:auto;min-height:33px;padding:6px 10px}
+  #rmtInfoView .rmt-template-form{display:block;margin-top:9px;padding:10px}
+  #rmtInfoView .rmt-meta-grid,#rmtInfoView .rmt-count-grid{display:grid}
+  #rmtInfoView .rmt-meta-grid,#rmtInfoView .rmt-count-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  #rmtInfoView .rmt-total-display{grid-column:1/-1;min-height:42px;display:grid;grid-template-columns:1fr auto;align-items:center}
+  #rmtInfoView .rmt-total-display small{display:none}
+  .rmt-duty-session-picker{align-items:stretch;flex-direction:column;gap:3px;margin-top:7px;padding-top:7px}
+  .rmt-duty-session-picker label{width:100%}.rmt-duty-session-picker small{display:none}
+  #rmtInfoView .rmt-session-grid.single-session{grid-template-columns:1fr}
+  #rmtInfoView .rmt-name-list{grid-template-columns:1fr 1fr;gap:5px 7px}
+  #rmtInfoView .rmt-template-actions{align-items:stretch;gap:6px}
+  #rmtInfoView .rmt-template-actions .form-message{line-height:1.3}
+  #rmtStatusView .rmt-calendar-heading{gap:8px}
+  #rmtStatusView .rmt-calendar-heading p:last-child{display:none}
+  #rmtStatusView .rmt-summary-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}
+  #rmtStatusView .rmt-summary-grid>div{display:grid;justify-items:center;padding:5px 3px;border-left:0;border-top:3px solid var(--blue);text-align:center}
+  #rmtStatusView .rmt-summary-grid span{font-size:.52rem}
+  #rmtStatusView .rmt-summary-grid strong{font-size:.9rem}
+  #rmtStatusView .rmt-calendar-legend{display:flex;gap:4px;margin:6px 0;overflow-x:auto;flex-wrap:nowrap}
+  #rmtStatusView .rmt-calendar-legend span{flex:0 0 auto;white-space:nowrap}
+  #rmtStatusView .rmt-calendar-day{min-height:42px;padding:2px 1px}
+  #rmtReportView .rmt-photo-section{padding:0}
+  #rmtReportView .rmt-report-card{grid-template-columns:minmax(0,1fr) minmax(0,1fr);padding:10px;gap:7px}
+  #rmtReportView .rmt-number-field{grid-template-rows:minmax(2.25em,auto) 38px}
+  #rmtArchiveView .rmt-shared-gallery{display:flex;gap:9px;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x mandatory}
+  #rmtArchiveView .rmt-shared-report{flex:0 0 min(88vw,560px);grid-template-columns:1fr;scroll-snap-align:start}
+  #rmtArchiveView .rmt-shared-report .monitoring-photo-grid{height:135px;min-height:135px}
+}
+
+@media(max-width:390px){#rmtInfoView .rmt-name-list{grid-template-columns:1fr}}
+@media(max-height:820px) and (min-width:701px){#rmtInfoView .utility-head>div>p:last-child,#rmtArchiveView .utility-head>div>p:last-child{display:none}.app-content .page-shell{margin-top:12px}}
