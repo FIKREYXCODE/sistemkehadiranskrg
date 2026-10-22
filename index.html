@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="HEM SMARTTRACK">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="manifest" href="manifest.webmanifest?v=114">
+  <link rel="manifest" href="manifest.webmanifest?v=115">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=114">
+  <link rel="stylesheet" href="styles.css?v=115">
 </head>
 <body>
   <header class="topbar no-print">
@@ -312,10 +312,11 @@
       <form id="monitoringForm" class="monitoring-form dynamic-monitoring-form">
         <div class="monitoring-session-header">
           <label>Sidang laporan<select id="monitoringSession" required><option value="">Pilih sidang</option><option value="morning">🌅 Sidang Pagi</option><option value="afternoon">🌇 Sidang Petang</option></select></label>
-          <div class="monitoring-location-adder"><label>Pilih kawasan<select id="monitoringLocationPicker"><option value="">Pilih kawasan dipantau</option></select></label><button id="addMonitoringItem" class="secondary-button" type="button">＋ Masukkan</button></div>
         </div>
-        <p class="monitoring-form-hint">Pilih semua kawasan yang sempat dipantau. Setiap kawasan akan digabungkan dalam satu laporan.</p>
-        <div id="monitoringItems" class="monitoring-items"><p class="monitoring-empty">Belum ada kawasan dipilih. Pilih kawasan di atas dan tekan “Masukkan”.</p></div>
+        <div class="monitoring-location-picker-head"><div><strong>Pilih kawasan yang dipantau</strong><small>Scroll dan tekan semua kawasan yang berkenaan.</small></div><span id="monitoringSelectedCount">0 dipilih</span></div>
+        <div id="monitoringLocationChecklist" class="monitoring-location-checklist" role="group" aria-label="Senarai kawasan pemantauan"></div>
+        <p class="monitoring-form-hint">Hanya kawasan yang dipilih akan dimasukkan dalam satu laporan lengkap.</p>
+        <div id="monitoringItems" class="monitoring-items"><p class="monitoring-empty">Belum ada kawasan dipilih. Scroll senarai di atas dan tekan kawasan yang dipantau.</p></div>
         <div hidden aria-hidden="true"><select id="monitoringCategory"><option value="both">Kebersihan dan keselamatan</option></select><input id="monitoringLocation"><select id="routeStatus"><option value="not_applicable">Tidak berkaitan</option></select><select id="parkingStatus"><option value="not_applicable">Tidak berkaitan</option></select><textarea id="monitoringIssue"></textarea><textarea id="monitoringAction"></textarea><input id="monitoringPhotos" type="file"><div id="monitoringPreview"></div></div>
         <div class="monitoring-submit-row">
           <button id="monitoringSave" class="primary-button" type="submit">Simpan satu laporan lengkap</button>
@@ -613,7 +614,7 @@
     <div class="news-ticker-viewport"><div id="newsTickerTrack" class="news-ticker-track"></div></div>
   </aside>
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="class-demographics.js?v=114" defer></script>
-  <script src="app.js?v=114" defer></script>
+  <script src="class-demographics.js?v=115" defer></script>
+  <script src="app.js?v=115" defer></script>
 </body>
 </html>
