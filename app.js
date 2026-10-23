@@ -60,7 +60,26 @@ function administratorTitle(name, fallback = "") {
   if (normalized.includes("EMRAN")) return "Penyelia Petang";
   return String(fallback || "").trim();
 }
-const ABSENCE_REASONS = ["Kursus / Bengkel", "Mesyuarat / Taklimat", "Urusan Rasmi", "Program / Aktiviti Rasmi", "Tugas Rasmi di Luar Sekolah", "Cuti Sakit / MC", "Cuti Rehat Khas / CRK", "Cuti Tanpa Rekod / CTR", "Cuti Bersalin", "Cuti Kuarantin", "Cuti / Kebenaran Khas", "Lain-lain"];
+const ABSENCE_REASONS = [
+  "Kursus / Bengkel",
+  "Mesyuarat / Taklimat",
+  "Urusan Rasmi",
+  "Program / Aktiviti Rasmi",
+  "Tugas Rasmi di Luar Sekolah",
+  "Cuti Sakit / MC",
+  "Cuti Rehat Khas / CRK",
+  "Cuti Rehat / CR",
+  "Cuti Tanpa Rekod / CTR",
+  "Cuti Bersalin",
+  "Cuti Kuarantin",
+  "Cuti Haji",
+  "Cuti Umrah",
+  "Cuti Menjaga Anak",
+  "Cuti Separuh Gaji",
+  "Cuti Tanpa Gaji",
+  "Cuti / Kebenaran Khas",
+  "Lain-lain"
+];
 const KPI_TARGET = 96;
 const MONITORING_LOCATIONS = ["Kawasan Perhimpunan", "Bilik Darjah", "Koridor", "Tangga", "Padang", "Dewan", "Tandas Murid Lelaki", "Tandas Murid Perempuan", "Tandas Guru", "Surau / Bilik Solat", "Kantin", "Kawasan RMT", "Penyediaan Makanan RMT", "Pengendalian Makanan RMT", "Pintu Pagar", "Laluan Keluar / Masuk", "Kawasan Letak Kenderaan", "Laluan Pejalan Kaki", "Kawasan Sekitar Sekolah", "Longkang & Saliran", "Tempat Pembuangan Sampah", "Landskap / Kawasan Hijau", "Bilik UBK", "Makmal Komputer", "Pusat Sumber", "Bilik Sains", "Bilik Muzik", "Stor", "Bilik khas lain", "Lain-lain"];
 const CLASS_ETHNICITY_COUNTS = window.CLASS_ETHNICITY_COUNTS || {};
@@ -2681,7 +2700,8 @@ function renderStaff() {
       const decoded = row.reasonCategory !== undefined ? row : decodeAbsenceReason(row.reason);
       row.reasonCategory = decoded.reasonCategory || ""; row.reasonNote = decoded.reasonNote || "";
       const required = row.reasonCategory === "Lain-lain" ? " required" : "";
-      return `<tr data-staff-session="${session}" data-staff-index="${index}"><td>${index + 1}</td><td><select class="cell-input staff-name-select${staffAudit.className}" data-field="staffName" aria-label="Nama guru atau AKP ${SESSION_LABELS[session]} ${index + 1}" title="${safe(staffAudit.title)}">${staffSelectOptions(savedName)}</select></td><td><input class="cell-input absence-reason" data-field="reasonCategory" list="absenceReasons" value="${safe(row.reasonCategory)}" placeholder="Pilih atau taip sebab" aria-label="Sebab ${SESSION_LABELS[session]} ${index + 1}"></td><td><input class="cell-input" data-field="reasonNote" value="${safe(row.reasonNote || "")}" placeholder="${row.reasonCategory === "Lain-lain" ? "Nyatakan sebab (wajib)" : "Pilihan"}"${required}></td></tr>`;
+      const reasonOptions = [`<option value="">Pilih sebab</option>`, ...ABSENCE_REASONS.map((reason) => `<option value="${safe(reason)}"${row.reasonCategory === reason ? " selected" : ""}>${safe(reason)}</option>`)].join("");
+      return `<tr data-staff-session="${session}" data-staff-index="${index}"><td>${index + 1}</td><td><select class="cell-input staff-name-select${staffAudit.className}" data-field="staffName" aria-label="Nama guru atau AKP ${SESSION_LABELS[session]} ${index + 1}" title="${safe(staffAudit.title)}">${staffSelectOptions(savedName)}</select></td><td><select class="cell-input absence-reason" data-field="reasonCategory" aria-label="Sebab ${SESSION_LABELS[session]} ${index + 1}">${reasonOptions}</select></td><td><input class="cell-input" data-field="reasonNote" value="${safe(row.reasonNote || "")}" placeholder="${row.reasonCategory === "Lain-lain" ? "Nyatakan sebab (wajib)" : "Catatan tambahan (pilihan)"}"${required}></td></tr>`;
     }).join("");
     syncStaffCompactUI(session);
   }
