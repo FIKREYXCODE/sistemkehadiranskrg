@@ -15,6 +15,7 @@ const state = {
   opr: { reports: [], loading: false, previewUrls: [] }, editingRecord: null,
   organization: { items: [], adminItems: [], deletedIds: [], loading: false },
   content: { announcements: [], adminAnnouncements: [], deletedAnnouncementIds: [], latestLetters: [], letters: [], loading: false },
+  staffVisibleRows: { morning: 1, afternoon: 1 },
 };
 const DRAFT_PREFIX = "skrg-pending-v1:";
 const EDITOR_KEY = "skrg-editor-name-v1";
@@ -1829,10 +1830,12 @@ function syncStaffCompactUI(session) {
   countTarget.title = `${filledCount} rekod diisi`;
   let lastFilledIndex = -1;
   rows.forEach((row, index) => { if (staffAbsenceRowHasValue(row)) lastFilledIndex = index; });
-  const visibleThrough = Math.min(rows.length - 1, Math.max(0, lastFilledIndex + 1));
-  Array.from(target.querySelectorAll("tr[data-staff-index]")).forEach((row, index) => { row.hidden = index > visibleThrough; });
+  const requestedCount = Math.max(1, Number(state.staffVisibleRows[session]) || 1);
+  const visibleCount = Math.min(rows.length, Math.max(requestedCount, lastFilledIndex + 1));
+  state.staffVisibleRows[session] = visibleCount;
+  Array.from(target.querySelectorAll("tr[data-staff-index]")).forEach((row, index) => { row.hidden = index >= visibleCount; });
   const addButton = document.querySelector(`[data-staff-add="${session}"]`);
-  if (addButton) addButton.hidden = visibleThrough >= rows.length - 1;
+  if (addButton) addButton.hidden = visibleCount >= rows.length;
 }
 
 function renderStaff() {
@@ -2136,6 +2139,7 @@ async function loadReport(silent = false) {
     if (!response.ok) throw new Error(data.error || "Data tidak dapat dibuka");
     state.classes = Array.isArray(data.classes) ? data.classes : [];
     state.staffAbsences = { morning: [], afternoon: [] };
+    state.staffVisibleRows = { morning: 1, afternoon: 1 };
     for (const item of Array.isArray(data.staffAbsences) ? data.staffAbsences : []) {
       const session = item.session === "afternoon" ? "afternoon" : "morning";
       state.staffAbsences[session].push({ staffName: item.staffName || "", reason: item.reason || "", ...decodeAbsenceReason(item.reason) });
@@ -2277,12 +2281,14 @@ for (const selector of ["#staffMorningBody", "#staffAfternoonBody"]) {
 
 document.querySelectorAll("[data-staff-session-tab]").forEach((button) => button.addEventListener("click", () => setStaffSessionPanel(button.dataset.staffSessionTab)));
 document.querySelectorAll("[data-staff-add]").forEach((button) => button.addEventListener("click", () => {
-  const panel = document.querySelector(`[data-staff-session-panel="${button.dataset.staffAdd}"]`);
-  const row = panel?.querySelector("tr[hidden]");
-  if (!row) return;
-  row.hidden = false;
+  const session = button.dataset.staffAdd;
+  const panel = document.querySelector(`[data-staff-session-panel="${session}"]`);
+  const rows = panel?.querySelectorAll("tr[data-staff-index]");
+  if (!rows?.length) return;
+  state.staffVisibleRows[session] = Math.min(rows.length, (Number(state.staffVisibleRows[session]) || 1) + 1);
+  syncStaffCompactUI(session);
+  const row = rows[state.staffVisibleRows[session] - 1];
   row.querySelector("select[data-field=\"staffName\"]")?.focus();
-  button.hidden = !panel.querySelector("tr[hidden]");
 }));
 
 for (const selector of ["#dutyMorningBody", "#dutyAfternoonBody"]) {
