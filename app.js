@@ -44,6 +44,18 @@ const ADMIN_APPROVERS = {
   "PUAN WARNAH": "Penolong Kanan Kokurikulum",
   "TUAN HAJI EMRAN": "Penyelia Petang",
 };
+
+function administratorTitle(name, fallback = "") {
+  const normalized = String(name || "").trim().toUpperCase();
+  if (!normalized) return "";
+  if (ADMIN_APPROVERS[normalized]) return ADMIN_APPROVERS[normalized];
+  if (normalized.includes("KOMALA") && normalized.includes("JOSEPH")) return "Penolong Kanan HEM";
+  if (normalized.includes("RAHMATIAH") && normalized.includes("MOJUDA")) return "Penolong Kanan Pentadbiran";
+  if (normalized.includes("YUNUS") && normalized.includes("PATARAI")) return "Guru Besar";
+  if (normalized.includes("WARNAH")) return "Penolong Kanan Kokurikulum";
+  if (normalized.includes("EMRAN")) return "Penyelia Petang";
+  return String(fallback || "").trim();
+}
 const ABSENCE_REASONS = ["Kursus / Bengkel", "Mesyuarat / Taklimat", "Urusan Rasmi", "Program / Aktiviti Rasmi", "Tugas Rasmi di Luar Sekolah", "Cuti Sakit / MC", "Cuti Rehat Khas / CRK", "Cuti Tanpa Rekod / CTR", "Cuti Bersalin", "Cuti Kuarantin", "Cuti / Kebenaran Khas", "Lain-lain"];
 const KPI_TARGET = 96;
 const MONITORING_LOCATIONS = ["Kawasan Perhimpunan", "Bilik Darjah", "Koridor", "Tangga", "Padang", "Dewan", "Tandas Murid Lelaki", "Tandas Murid Perempuan", "Tandas Guru", "Surau / Bilik Solat", "Kantin", "Kawasan RMT", "Penyediaan Makanan RMT", "Pengendalian Makanan RMT", "Pintu Pagar", "Laluan Keluar / Masuk", "Kawasan Letak Kenderaan", "Laluan Pejalan Kaki", "Kawasan Sekitar Sekolah", "Longkang & Saliran", "Tempat Pembuangan Sampah", "Landskap / Kawasan Hijau", "Bilik UBK", "Makmal Komputer", "Pusat Sumber", "Bilik Sains", "Bilik Muzik", "Stor", "Bilik khas lain", "Lain-lain"];
@@ -930,13 +942,15 @@ function buildWeeklyDutyReport(reports, dates, session, stored = null, safetyWee
   });
   const storedMatchesSources = Boolean(stored?.summary) && stored?.sourceFingerprint === sourceFingerprint;
   const latestValue = (field) => reports.map((report) => String(report?.meta?.[field] || "").trim()).filter(Boolean).pop() || "";
+  const approvedBy = String(stored?.approvedBy || "").trim() || String(anchorMeta[fields.approvedBy] || "").trim() || latestValue(fields.approvedBy);
+  const storedApprovedTitle = String(stored?.approvedTitle || "").trim() || String(anchorMeta[fields.approvedTitle] || "").trim() || latestValue(fields.approvedTitle);
   return {
     summary: storedMatchesSources ? String(stored.summary).trim() : generated, generated, sourceFingerprint,
     saved: storedMatchesSources, editing: false, entries, actionItems, analysis,
     sourceCounts: { attendance: attendance.records.length, staffAbsences: staff.absent, rmt: rmt.reports.length, monitoring: monitoring.reports.length, dutyNotes: entries.length, unavailableDays: safetyWeek.failed },
     preparedBy: String(stored?.preparedBy || "").trim() || String(anchorMeta[fields.preparedBy] || "").trim() || latestValue(fields.preparedBy),
-    approvedBy: String(stored?.approvedBy || "").trim() || String(anchorMeta[fields.approvedBy] || "").trim() || latestValue(fields.approvedBy),
-    approvedTitle: String(stored?.approvedTitle || "").trim() || String(anchorMeta[fields.approvedTitle] || "").trim() || latestValue(fields.approvedTitle),
+    approvedBy,
+    approvedTitle: administratorTitle(approvedBy, storedApprovedTitle),
   };
 }
 
@@ -945,6 +959,7 @@ function renderWeeklyDutyReport() {
   const report = state.dutyWeek.summaries[session];
   if (!report) return;
   if (!report.preparedBy && editorName()) report.preparedBy = editorName();
+  report.approvedTitle = administratorTitle(report.approvedBy, report.approvedTitle);
   const names = (state.dutyTeachers[session] || []).filter(Boolean);
   $("#dutyRosterTitle").textContent = SESSION_LABELS[session];
   $("#dutyRosterCount").textContent = `${names.length} orang`;
@@ -1054,10 +1069,11 @@ async function saveWeeklyDutyReport() {
   const preparedBy = $("#weeklyReportPreparedBy").value.trim();
   if (!summary) { setStatus("Lengkapkan rumusan laporan minggu dahulu.", "error"); return; }
   if (!preparedBy) { setStatus("Pilih nama guru yang menyediakan laporan.", "error"); return; }
+  const approvedBy = $("#weeklyReportApprovedBy").value.trim();
   const details = {
     session, anchor: state.dutyWeek.anchor, end: state.dutyWeek.end, summary,
     sourceFingerprint: report.sourceFingerprint,
-    preparedBy, approvedBy: $("#weeklyReportApprovedBy").value.trim(), approvedTitle: $("#weeklyReportApprovedTitle").value.trim(),
+    preparedBy, approvedBy, approvedTitle: administratorTitle(approvedBy, $("#weeklyReportApprovedTitle").value),
   };
   const payload = {
     date: state.dutyWeek.anchor, updatedBy: editorName(), category: "both", session,
@@ -3122,7 +3138,7 @@ $("#weeklyReportApprovedBy").addEventListener("change", (event) => {
   const report = state.dutyWeek.summaries[state.dutyWeek.session || "morning"];
   if (!report) return;
   report.approvedBy = event.target.value;
-  report.approvedTitle = ADMIN_APPROVERS[event.target.value] || "";
+  report.approvedTitle = administratorTitle(event.target.value);
   report.saved = false;
   renderWeeklyDutyReport();
 });
