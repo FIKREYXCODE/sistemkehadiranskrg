@@ -1644,6 +1644,51 @@ function setSidebar(open) {
   $("#menuToggle").textContent = open ? "✕ Tutup" : "☰ Menu";
 }
 
+function setupSidebarSwipe() {
+  let gesture = null;
+  const isMobile = () => window.matchMedia("(max-width: 900px)").matches;
+  const resetGesture = () => { gesture = null; };
+
+  document.addEventListener("touchstart", (event) => {
+    if (!isMobile() || event.touches.length !== 1 || document.body.classList.contains("modal-open")) return;
+    const touch = event.touches[0];
+    const sidebarOpen = document.body.classList.contains("sidebar-open");
+    const sidebarRight = $("#mainSidebar").getBoundingClientRect().right;
+    if (!sidebarOpen && touch.clientX <= 72) {
+      gesture = { mode: "open", startX: touch.clientX, startY: touch.clientY, lastX: touch.clientX, lastY: touch.clientY, startedAt: Date.now(), horizontal: false };
+    } else if (sidebarOpen && touch.clientX <= sidebarRight) {
+      gesture = { mode: "close", startX: touch.clientX, startY: touch.clientY, lastX: touch.clientX, lastY: touch.clientY, startedAt: Date.now(), horizontal: false };
+    }
+  }, { passive: true });
+
+  document.addEventListener("touchmove", (event) => {
+    if (!gesture || event.touches.length !== 1) return;
+    const touch = event.touches[0];
+    gesture.lastX = touch.clientX;
+    gesture.lastY = touch.clientY;
+    const dx = gesture.lastX - gesture.startX;
+    const dy = gesture.lastY - gesture.startY;
+    if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) * 1.15) {
+      gesture.horizontal = true;
+      event.preventDefault();
+    }
+  }, { passive: false });
+
+  document.addEventListener("touchend", (event) => {
+    if (!gesture) return;
+    const touch = event.changedTouches[0];
+    const dx = (touch?.clientX ?? gesture.lastX) - gesture.startX;
+    const dy = (touch?.clientY ?? gesture.lastY) - gesture.startY;
+    const quickEnough = Date.now() - gesture.startedAt <= 900;
+    const deliberateSwipe = gesture.horizontal && quickEnough && Math.abs(dx) >= 64 && Math.abs(dx) > Math.abs(dy) * 1.25;
+    if (deliberateSwipe && gesture.mode === "open" && dx > 0) setSidebar(true);
+    if (deliberateSwipe && gesture.mode === "close" && dx < 0) setSidebar(false);
+    resetGesture();
+  }, { passive: true });
+
+  document.addEventListener("touchcancel", resetGesture, { passive: true });
+}
+
 async function loadAnalytics() {
   if (state.analytics.loading) return;
   state.analytics.loading = true;
@@ -3461,6 +3506,7 @@ $("#calendarDate").value = state.date;
 $("#letterDate").value = state.date;
 setupRmtTemplate();
 setupDraggableIdmeShortcut();
+setupSidebarSwipe();
 updateRmtDutySessionView();
 enhanceLocalizedDateInputs();
 setupKpiFilters();
