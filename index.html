@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest?v=130">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=140">
+  <link rel="stylesheet" href="styles.css?v=141">
 </head>
 <body>
   <header class="topbar no-print">
@@ -46,8 +46,7 @@
       <div class="sidebar-submenu">
         <a href="#guru-bertugas-mingguan" data-view-link="dailyDuty"><span>2.1</span><strong>Senarai &amp; Rumusan Mingguan</strong></a>
         <a href="#keberadaan-guru-akp" data-view-link="staff"><span>2.2</span><strong>Keberadaan Guru &amp; AKP</strong></a>
-        <a href="#laporan-pemantauan" data-view-link="monitoring"><span>2.3</span><strong>Pemantauan Sekolah</strong></a>
-        <a href="#status-guru-bertugas" data-view-link="dutyStatus"><span>2.4</span><strong>Status Pengisian Harian</strong></a>
+        <a href="#status-guru-bertugas" data-view-link="dutyStatus"><span>2.3</span><strong>Status Pengisian Harian</strong></a>
       </div>
     </details>
     <a class="nav-discipline" href="#guru-bertugas" data-view-link="duty"><span class="menu-emblem" aria-hidden="true"><b>3</b><i>!</i></span><strong>HEM SmartDisiplin</strong><small>Sistem pengurusan disiplin murid</small></a>
@@ -268,7 +267,7 @@
 
     <section id="dutyStatusView" class="utility-card app-view no-print duty-status-view" data-view-panel="dutyStatus" hidden>
       <div class="duty-status-head">
-        <div><p class="eyebrow">Guru Bertugas Mingguan · 2.4</p><h2>Status Pengisian Harian</h2><p>Semak pengisian keberadaan dan pemantauan sekolah mengikut tarikh. Klik petak untuk melihat butiran atau menyambung pengisian.</p></div>
+        <div><p class="eyebrow">Guru Bertugas Mingguan · 2.3</p><h2>Status Pengisian Harian</h2><p>Klik tarikh, pilih sidang pagi atau petang, kemudian lihat laporan atau tambah rekod pemantauan.</p></div>
         <label>Bulan pemantauan<input id="dutyStatusMonth" type="month"></label>
       </div>
       <div class="duty-status-summary" aria-label="Ringkasan status bulanan">
@@ -277,11 +276,12 @@
         <article class="partial"><span>Perlu dilengkapkan</span><strong id="dutyStatusPartial">0</strong></article>
         <article class="missing"><span>Belum diisi</span><strong id="dutyStatusMissing">0</strong></article>
       </div>
-      <div class="duty-status-legend" aria-label="Petunjuk warna"><span class="complete">Hijau: lengkap dengan gambar &amp; catatan</span><span class="partial">Kuning: sudah diisi tetapi belum lengkap</span><span class="missing">Merah muda: belum ada pengisian</span><span class="weekend">Kelabu: hujung minggu / akan datang</span></div>
+      <div class="duty-status-legend" aria-label="Petunjuk warna"><span class="complete">Hijau: pagi &amp; petang lengkap</span><span class="partial">Kuning: satu sidang / belum lengkap</span><span class="missing">Merah muda: kedua-dua belum diisi</span><span class="weekend">Kelabu: hujung minggu / akan datang</span></div>
       <div class="duty-status-weekdays" aria-hidden="true"><span>Isn</span><span>Sel</span><span>Rab</span><span>Kha</span><span>Jum</span><span>Sab</span><span>Ahd</span></div>
       <div id="dutyStatusCalendar" class="duty-status-calendar" aria-live="polite"></div>
       <p id="dutyStatusMessage" class="duty-status-message" role="status">Pilih bulan untuk menyemak rekod.</p>
       <section id="dutyStatusDetail" class="duty-status-detail" aria-live="polite"><p>Pilih satu tarikh pada kalendar untuk melihat butiran pengisian.</p></section>
+      <div id="dutyStatusMonitoringWorkspace" class="duty-status-monitoring-workspace" hidden></div>
     </section>
 
     <section id="weeklyDutyView" class="utility-card app-view no-print discipline-one-screen" data-view-panel="duty" hidden>
@@ -335,7 +335,7 @@
     <section id="monitoringReports" class="monitoring-card smart-monitoring app-view no-print" data-view-panel="monitoring" aria-labelledby="monitoringTitle" hidden>
       <div class="monitoring-head smart-monitoring-head">
         <div>
-          <p class="eyebrow">Guru Bertugas Mingguan · 2.3</p>
+          <p class="eyebrow">Pengisian Pemantauan Harian</p>
           <h2 id="monitoringTitle">Kalendar Pemantauan Harian</h2>
           <p>Klik petak tarikh untuk mengisi atau melihat laporan pemantauan.</p>
         </div>
@@ -348,6 +348,7 @@
       <div id="monitoringCalendar" class="duty-status-calendar monitoring-calendar" aria-live="polite"></div>
       <p id="monitoringCalendarStatus" class="duty-status-message" role="status">Memuatkan kalendar pemantauan…</p>
       <div id="monitoringSmartSummary" hidden aria-hidden="true"></div>
+      <div id="monitoringWorkspaceHome">
       <section id="monitoringDayWorkspace" class="monitoring-day-workspace" hidden>
         <header id="monitoringSelectedDayHead" class="monitoring-selected-day-head"></header>
         <details id="monitoringFormDisclosure" class="monitoring-workspace-disclosure">
@@ -380,6 +381,7 @@
           <div id="monitoringGallery" class="monitoring-gallery"></div>
         </section>
       </section>
+      </div>
     </section>
 
     <section id="oprView" class="monitoring-card app-view no-print" data-view-panel="opr" aria-labelledby="oprTitle" hidden>
@@ -663,6 +665,6 @@
   </aside>
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
   <script src="class-demographics.js?v=130" defer></script>
-  <script src="app.js?v=140" defer></script>
+  <script src="app.js?v=141" defer></script>
 </body>
 </html>

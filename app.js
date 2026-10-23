@@ -9,7 +9,7 @@ const state = {
   savePromise: null, pendingAttendance: new Map(), staffDirty: false, dutyDirtySessions: new Set(), pendingMeta: {}, audit: new Map(), adminPin: "", session: "all",
   staffDirectory: [], adminStaffDirectory: [], schoolStats: { teachers: 58, akp: 3 },
   analytics: { period: "week", date: "", loading: false, filtersReady: false, filterPromise: null, annualLoadingYear: "", annualCache: new Map() },
-  monitoring: { reports: [], loading: false, previewUrls: [], filter: "all", month: "", calendarLoading: false, calendarRecords: new Map(), selectedDate: "" },
+  monitoring: { reports: [], loading: false, previewUrls: [], filter: "all", month: "", calendarLoading: false, calendarRecords: new Map(), selectedDate: "", requestedMode: "", requestedSession: "" },
   dutyStatus: { month: "", loading: false, records: new Map(), selectedDate: "" },
   weeklyDuty: { loading: false }, completion: { loading: false }, calendar: { loading: false }, rmtPreviewUrls: [], rmtReports: [], rmtLoading: false,
   rmtMonth: "", rmtSelectedDate: "", rmtShowAll: false, rmtScheduleLoading: false,
@@ -1227,24 +1227,27 @@ function dutyStatusNotePresent(report) {
   return Boolean(details.note || Object.keys(details.aspects).length || String(report?.action || "").trim());
 }
 
+function dutyStatusSessionRecord(monitoring, session) {
+  const items = monitoring.filter((report) => report.session === session);
+  const photos = items.flatMap((report) => Array.isArray(report.photos) ? report.photos : []);
+  const notes = items.filter(dutyStatusNotePresent);
+  const complete = items.length > 0 && items.every((report) => (Array.isArray(report.photos) && report.photos.length > 0) && dutyStatusNotePresent(report));
+  const attention = items.some((report) => report.routeStatus === "attention" || Object.values(monitoringIssueDetails(report.issue).aspects).includes("attention"));
+  return { session, items, photos, notes, attention, status: complete ? "complete" : items.length ? "partial" : "missing" };
+}
+
 function dutyStatusDayRecord(date, school = {}, safetyReports = []) {
   const monitoring = dutyStatusMonitoringReports(safetyReports).map((report) => ({ ...report, reportDate: report.reportDate || date }));
+  const sessions = { morning: dutyStatusSessionRecord(monitoring, "morning"), afternoon: dutyStatusSessionRecord(monitoring, "afternoon") };
   const staffRows = ["morning", "afternoon"].flatMap((session) => (Array.isArray(school?.staffAbsences?.[session]) ? school.staffAbsences[session] : []).filter(staffAbsenceRowHasValue));
-  const audit = Array.isArray(school?.audit) ? school.audit : [];
-  const staffAudit = audit.filter((item) => item.section === "staff");
   const meta = school?.meta || {};
   const dutyNotes = [meta.noteMorning, meta.noteAfternoon].map((value) => String(value || "").trim()).filter(Boolean);
   const photos = monitoring.flatMap((report) => Array.isArray(report.photos) ? report.photos : []);
   const notes = monitoring.filter(dutyStatusNotePresent);
-  const monitoringComplete = monitoring.length > 0 && monitoring.every((report) => (Array.isArray(report.photos) && report.photos.length > 0) && dutyStatusNotePresent(report));
-  const hasStaffRecord = staffRows.length > 0 || staffAudit.length > 0;
-  const hasAny = monitoring.length > 0 || hasStaffRecord || dutyNotes.length > 0;
-  const names = Array.from(new Set([
-    ...monitoring.map((report) => report.updatedBy),
-    ...staffAudit.map((item) => item.updatedBy),
-    meta.preparedByMorning, meta.preparedByAfternoon,
-  ].map((value) => String(value || "").trim()).filter(Boolean)));
-  return { date, status: monitoringComplete ? "complete" : hasAny ? "partial" : "missing", monitoring, staffRows, dutyNotes, photos, notes, names };
+  const hasAny = monitoring.length > 0;
+  const monitoringComplete = sessions.morning.status === "complete" && sessions.afternoon.status === "complete";
+  const names = Array.from(new Set(monitoring.map((report) => String(report.updatedBy || "").trim()).filter(Boolean)));
+  return { date, status: monitoringComplete ? "complete" : hasAny ? "partial" : "missing", monitoring, sessions, staffRows, dutyNotes, photos, notes, names };
 }
 
 function dutyStatusLabel(status) {
@@ -1258,8 +1261,14 @@ function renderDutyStatusDetail() {
   const record = state.dutyStatus.records.get(date);
   if (!record) { target.innerHTML = `<p>Tiada pemantauan diperlukan pada ${safe(formatDisplayDate(date))}.</p>`; return; }
   const nameText = record.names.length ? record.names.map(rmtTeacherShortName).join(", ") : "Belum dikenal pasti";
-  const thumbnails = record.photos.slice(0, 4).map((photo, index) => `<a href="${safe(photo.url)}" target="_blank" rel="noopener"><img src="${safe(photo.url)}" loading="lazy" alt="Gambar pemantauan ${index + 1} pada ${safe(formatDisplayDate(date))}"></a>`).join("");
-  target.innerHTML = `<div class="duty-status-detail-head"><div><span class="duty-status-pill ${record.status}">${safe(dutyStatusLabel(record.status))}</span><h3>${safe(formatDisplayDate(date))}</h3><p>Pengisi: <strong>${safe(nameText)}</strong></p></div><div class="duty-status-actions"><a href="#keberadaan-guru-akp" data-duty-open="staff">Keberadaan Guru &amp; AKP</a><a href="#laporan-pemantauan" data-duty-open="monitoring">Lihat / edit pemantauan</a></div></div><div class="duty-status-detail-grid"><article><span>Keberadaan</span><strong>${record.staffRows.length}</strong><small>${record.staffRows.length ? "pegawai tidak berada direkodkan" : "tiada pegawai tidak berada direkodkan"}</small></article><article><span>Kawasan dipantau</span><strong>${record.monitoring.length}</strong><small>rekod pemantauan sekolah</small></article><article><span>Gambar</span><strong>${record.photos.length}</strong><small>${record.photos.length ? "bukti bergambar" : "belum dilampirkan"}</small></article><article><span>Catatan</span><strong>${record.notes.length + record.dutyNotes.length}</strong><small>${record.notes.length + record.dutyNotes.length ? "catatan tersedia" : "belum dinyatakan"}</small></article></div>${thumbnails ? `<div class="duty-status-thumbnails">${thumbnails}</div>` : ""}`;
+  const sessionCard = (session) => {
+    const item = record.sessions?.[session] || dutyStatusSessionRecord(record.monitoring, session);
+    const label = monitoringSessionLabel(session);
+    const stateLabel = item.status === "complete" ? "Lengkap" : item.status === "partial" ? "Perlu dilengkapkan" : "Belum diisi";
+    const alert = item.attention ? '<b class="duty-session-alert">! Perlu tindakan</b>' : "";
+    return `<article class="duty-session-action-card ${item.status}"><header><div><small>${session === "morning" ? "🌅" : "🌇"} ${safe(label)}</small><strong>${safe(stateLabel)}</strong></div>${alert}</header><p>${item.items.length} kawasan • ${item.photos.length} gambar • ${item.notes.length} catatan</p><div><button type="button" data-duty-monitoring-action="view" data-duty-session="${session}"${item.items.length ? "" : " disabled"}>Lihat laporan</button><button class="primary" type="button" data-duty-monitoring-action="add" data-duty-session="${session}">＋ Tambah rekod</button></div></article>`;
+  };
+  target.innerHTML = `<div class="duty-status-detail-head"><div><span class="duty-status-pill ${record.status}">${safe(dutyStatusLabel(record.status))}</span><h3>${safe(formatDisplayDate(date))}</h3><p>Pengisi: <strong>${safe(nameText)}</strong></p></div><div class="duty-status-actions"><a href="#keberadaan-guru-akp" data-duty-open="staff">Keberadaan Guru &amp; AKP</a></div></div><div class="duty-session-action-grid">${sessionCard("morning")}${sessionCard("afternoon")}</div>`;
 }
 
 function renderDutyStatusCalendar() {
@@ -1280,9 +1289,10 @@ function renderDutyStatusCalendar() {
     const record = state.dutyStatus.records.get(date);
     const status = inactive ? "weekend" : record?.status || "missing";
     const selected = state.dutyStatus.selectedDate === date ? " selected" : "";
-    const names = record?.names?.slice(0, 2).map(rmtTeacherShortName).join(" · ") || "";
+    const sessionMark = (session) => record?.sessions?.[session]?.status === "complete" ? "✓" : record?.sessions?.[session]?.status === "partial" ? "!" : "—";
+    const sessionText = inactive ? "" : `P ${sessionMark("morning")} • PTG ${sessionMark("afternoon")}`;
     const note = inactive ? (date > today ? "Akan datang" : "Tiada tugas") : status === "complete" ? "✓ Lengkap" : status === "partial" ? "Perlu lengkap" : "Belum diisi";
-    cells.push(`<button class="duty-status-day ${status}${selected}" type="button" data-duty-date="${date}"${inactive ? " disabled" : ""} aria-label="${safe(formatDisplayDate(date))}: ${safe(note)}"><strong>${day}</strong><span>${safe(note)}</span>${names ? `<small title="${safe(record.names.join(", "))}">${safe(names)}</small>` : ""}</button>`);
+    cells.push(`<button class="duty-status-day ${status}${selected}" type="button" data-duty-date="${date}"${inactive ? " disabled" : ""} aria-label="${safe(formatDisplayDate(date))}: ${safe(note)}${sessionText ? `, ${safe(sessionText)}` : ""}"><strong>${day}</strong><span>${safe(note)}</span>${sessionText ? `<small title="${safe(record?.names?.join(", ") || "Status sidang")}">${safe(sessionText)}</small>` : ""}</button>`);
   }
   $("#dutyStatusCalendar").innerHTML = cells.join("");
   $("#dutyStatusMessage").textContent = state.dutyStatus.loading ? "Memuatkan status pengisian…" : `${recorded} hari mempunyai rekod bagi bulan ini. Klik tarikh untuk melihat butiran.`;
@@ -1312,6 +1322,27 @@ async function loadDutyStatusCalendar() {
     console.error(error);
     $("#dutyStatusMessage").textContent = "Status pengisian tidak dapat dimuatkan. Cuba lagi sebentar.";
   } finally { state.dutyStatus.loading = false; renderDutyStatusCalendar(); }
+}
+
+async function openDutyStatusMonitoring(action, session) {
+  const date = state.dutyStatus.selectedDate;
+  if (!date) return;
+  state.date = date;
+  state.monitoring.selectedDate = date;
+  state.monitoring.month = date.slice(0, 7);
+  state.monitoring.requestedMode = action;
+  state.monitoring.requestedSession = session;
+  $("#monitoringCalendarMonth").value = state.monitoring.month;
+  syncReportDateInputs();
+  resetMonitoringFormForDate();
+  $("#monitoringSession").value = session;
+  const host = $("#dutyStatusMonitoringWorkspace");
+  host.hidden = false;
+  host.appendChild($("#monitoringDayWorkspace"));
+  await loadMonitoringReports();
+  $("#monitoringSession").value = session;
+  $("#monitoringFormDisclosure").open = action === "add";
+  host.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function rmtNameValues(target) {
@@ -1990,7 +2021,11 @@ async function saveMonitoringReport(event) {
     clearMonitoringPreview();
     syncMonitoringLocationSelection();
     $("#monitoringFormStatus").textContent = `Satu laporan lengkap dengan ${cards.length} kawasan berjaya disimpan.`;
-    await loadMonitoringCalendar();
+    if (document.body.dataset.activeView === "dutyStatus") {
+      await loadMonitoringReports();
+      await loadDutyStatusCalendar();
+      $("#dutyStatusMonitoringWorkspace").hidden = false;
+    } else await loadMonitoringCalendar();
   } catch (error) {
     console.error(error);
     $("#monitoringFormStatus").textContent = error.message || "Laporan gagal disimpan. Cuba lagi.";
@@ -3070,7 +3105,10 @@ function activateViewFromHash() {
   $("#identityBar").hidden = !(["attendance", "staff", "dailyDuty", "monitoring", "dutyStatus"].includes(requested) || isRmtView);
   $("#printButton").hidden = requested !== "attendance";
   if (requested === "analysis") { loadAnalytics(); if (state.classes.length) loadKpiDashboard(); }
-  if (requested === "monitoring") loadMonitoringCalendar();
+  if (requested === "monitoring") {
+    $("#monitoringWorkspaceHome").appendChild($("#monitoringDayWorkspace"));
+    loadMonitoringCalendar();
+  }
   if (requested === "dutyStatus") loadDutyStatusCalendar();
   if (requested === "dailyDuty" && state.classes.length) loadDutyWeekTemplate(null, true);
   if (requested === "duty") loadWeeklyDuty();
@@ -3139,15 +3177,22 @@ $("#menuToggle").addEventListener("click", () => setSidebar(!document.body.class
 $("#dutyStatusMonth").addEventListener("change", () => {
   state.dutyStatus.month = $("#dutyStatusMonth").value;
   state.dutyStatus.selectedDate = "";
+  $("#dutyStatusMonitoringWorkspace").hidden = true;
   loadDutyStatusCalendar();
 });
 $("#dutyStatusCalendar").addEventListener("click", (event) => {
   const button = event.target.closest("[data-duty-date]");
   if (!button) return;
   state.dutyStatus.selectedDate = button.dataset.dutyDate;
+  $("#dutyStatusMonitoringWorkspace").hidden = true;
   renderDutyStatusCalendar();
 });
 $("#dutyStatusDetail").addEventListener("click", (event) => {
+  const monitoringButton = event.target.closest("[data-duty-monitoring-action]");
+  if (monitoringButton) {
+    openDutyStatusMonitoring(monitoringButton.dataset.dutyMonitoringAction, monitoringButton.dataset.dutySession);
+    return;
+  }
   const link = event.target.closest("[data-duty-open]");
   if (!link || !state.dutyStatus.selectedDate) return;
   state.date = state.dutyStatus.selectedDate;
