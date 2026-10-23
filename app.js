@@ -1807,6 +1807,34 @@ function encodeAbsenceReason(row) {
   return reason || note ? `[v2]${reason}|||${note}` : "";
 }
 
+function staffAbsenceRowHasValue(row = {}) {
+  return Boolean(String(row.staffName || "").trim() || String(row.reasonCategory || "").trim() || String(row.reasonNote || "").trim());
+}
+
+function setStaffSessionPanel(session = "morning") {
+  document.querySelectorAll("[data-staff-session-tab]").forEach((button) => {
+    const active = button.dataset.staffSessionTab === session;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+  document.querySelectorAll("[data-staff-session-panel]").forEach((panel) => { panel.hidden = panel.dataset.staffSessionPanel !== session; });
+}
+
+function syncStaffCompactUI(session) {
+  const rows = Array.isArray(state.staffAbsences[session]) ? state.staffAbsences[session] : [];
+  const target = session === "morning" ? $("#staffMorningBody") : $("#staffAfternoonBody");
+  const countTarget = session === "morning" ? $("#staffMorningCount") : $("#staffAfternoonCount");
+  const filledCount = rows.filter(staffAbsenceRowHasValue).length;
+  countTarget.textContent = filledCount;
+  countTarget.title = `${filledCount} rekod diisi`;
+  let lastFilledIndex = -1;
+  rows.forEach((row, index) => { if (staffAbsenceRowHasValue(row)) lastFilledIndex = index; });
+  const visibleThrough = Math.min(rows.length - 1, Math.max(0, lastFilledIndex + 1));
+  Array.from(target.querySelectorAll("tr[data-staff-index]")).forEach((row, index) => { row.hidden = index > visibleThrough; });
+  const addButton = document.querySelector(`[data-staff-add="${session}"]`);
+  if (addButton) addButton.hidden = visibleThrough >= rows.length - 1;
+}
+
 function renderStaff() {
   for (const session of ["morning", "afternoon"]) {
     const rows = Array.isArray(state.staffAbsences[session]) ? state.staffAbsences[session] : [];
@@ -1822,6 +1850,7 @@ function renderStaff() {
       const required = row.reasonCategory === "Lain-lain" ? " required" : "";
       return `<tr data-staff-session="${session}" data-staff-index="${index}"><td>${index + 1}</td><td><select class="cell-input staff-name-select${staffAudit.className}" data-field="staffName" aria-label="Nama guru atau AKP ${SESSION_LABELS[session]} ${index + 1}" title="${safe(staffAudit.title)}">${staffSelectOptions(savedName)}</select></td><td><input class="cell-input absence-reason" data-field="reasonCategory" list="absenceReasons" value="${safe(row.reasonCategory)}" placeholder="Pilih atau taip sebab" aria-label="Sebab ${SESSION_LABELS[session]} ${index + 1}"></td><td><input class="cell-input" data-field="reasonNote" value="${safe(row.reasonNote || "")}" placeholder="${row.reasonCategory === "Lain-lain" ? "Nyatakan sebab (wajib)" : "Pilihan"}"${required}></td></tr>`;
     }).join("");
+    syncStaffCompactUI(session);
   }
   updateEditingAccess();
 }
@@ -2231,6 +2260,7 @@ function updateStaffRow(event) {
   }
   item.reason = encodeAbsenceReason(item);
   state.staffDirty = true;
+  syncStaffCompactUI(session);
   saveDraft();
   if (item.reasonCategory === "Lain-lain" && !String(item.reasonNote || "").trim()) {
     setStatus("Sila nyatakan sebab ketiadaan.", "error");
@@ -2244,6 +2274,16 @@ for (const selector of ["#staffMorningBody", "#staffAfternoonBody"]) {
   $(selector).addEventListener("input", (event) => { if (event.target.matches('input[data-field="reasonNote"]')) updateStaffRow(event); });
   $(selector).addEventListener("change", (event) => { if (event.target.matches("select[data-field],input[data-field]")) updateStaffRow(event); });
 }
+
+document.querySelectorAll("[data-staff-session-tab]").forEach((button) => button.addEventListener("click", () => setStaffSessionPanel(button.dataset.staffSessionTab)));
+document.querySelectorAll("[data-staff-add]").forEach((button) => button.addEventListener("click", () => {
+  const panel = document.querySelector(`[data-staff-session-panel="${button.dataset.staffAdd}"]`);
+  const row = panel?.querySelector("tr[hidden]");
+  if (!row) return;
+  row.hidden = false;
+  row.querySelector("select[data-field=\"staffName\"]")?.focus();
+  button.hidden = !panel.querySelector("tr[hidden]");
+}));
 
 for (const selector of ["#dutyMorningBody", "#dutyAfternoonBody"]) {
   const updateDutyTeacher = (event) => {

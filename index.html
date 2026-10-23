@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="HEM SMARTTRACK">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="manifest" href="manifest.webmanifest?v=117">
+  <link rel="manifest" href="manifest.webmanifest?v=118">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=117">
+  <link rel="stylesheet" href="styles.css?v=118">
 </head>
 <body>
   <header class="topbar no-print">
@@ -195,14 +195,18 @@
     </article>
     </section>
 
-    <section id="staffView" class="utility-card app-view no-print" data-view-panel="staff" hidden>
+    <section id="staffView" class="utility-card app-view no-print compact-staff-view" data-view-panel="staff" hidden>
       <div class="utility-head">
         <div><p class="eyebrow">Rekod 02</p><h2>Keberadaan Guru dan AKP</h2><p>Catat pegawai yang tidak berada di sekolah pada tarikh pilihan.</p></div>
         <div class="utility-controls"><label>Tarikh rekod<input id="staffPageDate" type="date" required></label></div>
       </div>
-      <div class="staff-session-grid standalone-table-wrap">
-        <section class="staff-session-card morning-card"><h3>🌅 Sidang Pagi</h3><div class="table-scroll"><table class="staff-table"><thead><tr><th>Bil</th><th>Nama guru / AKP</th><th>Sebab</th><th>Catatan tambahan</th></tr></thead><tbody id="staffMorningBody"></tbody></table></div></section>
-        <section class="staff-session-card afternoon-card"><h3>🌇 Sidang Petang</h3><div class="table-scroll"><table class="staff-table"><thead><tr><th>Bil</th><th>Nama guru / AKP</th><th>Sebab</th><th>Catatan tambahan</th></tr></thead><tbody id="staffAfternoonBody"></tbody></table></div></section>
+      <nav class="staff-session-tabs" aria-label="Pilih sidang keberadaan">
+        <button class="active morning" type="button" data-staff-session-tab="morning" aria-pressed="true"><span>🌅</span><b>Sidang Pagi</b><strong id="staffMorningCount">0</strong></button>
+        <button class="afternoon" type="button" data-staff-session-tab="afternoon" aria-pressed="false"><span>🌇</span><b>Sidang Petang</b><strong id="staffAfternoonCount">0</strong></button>
+      </nav>
+      <div class="staff-session-grid standalone-table-wrap compact-staff-grid">
+        <section class="staff-session-card morning-card" data-staff-session-panel="morning"><header class="staff-card-head"><div><strong>Sidang Pagi</strong><small>Pegawai yang tidak berada di sekolah</small></div><button type="button" data-staff-add="morning">＋ Tambah rekod</button></header><div class="table-scroll staff-table-scroll"><table class="staff-table"><thead><tr><th>Bil</th><th>Nama guru / AKP</th><th>Sebab</th><th>Catatan tambahan</th></tr></thead><tbody id="staffMorningBody"></tbody></table></div></section>
+        <section class="staff-session-card afternoon-card" data-staff-session-panel="afternoon" hidden><header class="staff-card-head"><div><strong>Sidang Petang</strong><small>Pegawai yang tidak berada di sekolah</small></div><button type="button" data-staff-add="afternoon">＋ Tambah rekod</button></header><div class="table-scroll staff-table-scroll"><table class="staff-table"><thead><tr><th>Bil</th><th>Nama guru / AKP</th><th>Sebab</th><th>Catatan tambahan</th></tr></thead><tbody id="staffAfternoonBody"></tbody></table></div></section>
       </div>
     </section>
 
@@ -618,7 +622,7 @@
     <div class="news-ticker-viewport"><div id="newsTickerTrack" class="news-ticker-track"></div></div>
   </aside>
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="class-demographics.js?v=117" defer></script>
-  <script src="app.js?v=117" defer></script>
+  <script src="class-demographics.js?v=118" defer></script>
+  <script src="app.js?v=118" defer></script>
 </body>
 </html>
