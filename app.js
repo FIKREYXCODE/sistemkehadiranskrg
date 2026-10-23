@@ -557,6 +557,9 @@ function renderAnalytics(records, range) {
   const medals = [{ icon: "🥇", label: "Emas", className: "gold" }, { icon: "🥈", label: "Perak", className: "silver" }, { icon: "🥉", label: "Gangsa", className: "bronze" }];
   $("#attendancePodium").innerHTML = winners.length ? winners.map((item, index) => `<article class="podium-card ${medals[index].className}"><div class="podium-medal" aria-hidden="true">${medals[index].icon}</div><strong>${safe(item.name)}</strong><span>${item.value.toFixed(2)}%</span><small>${safe(item.teacher)}</small><small>${item.records} rekod • ${medals[index].label}</small></article>`).join("") : '<p class="monitoring-empty">Belum ada data kelas yang mencukupi untuk kedudukan emas, perak dan gangsa.</p>';
   $("#analysisRangeLabel").textContent = `${formatDisplayDate(range.from)} – ${formatDisplayDate(range.to)}`;
+  $("#analysisBestPeriod").value = $("#analysisPeriod").value;
+  $("#analysisBestRange").textContent = `${periodLabel} • ${formatDisplayDate(range.from)} – ${formatDisplayDate(range.to)}`;
+  $("#analysisBestClass").innerHTML = winners.length ? winners.map((item, index) => `<article class="${medals[index].className}"><span>${medals[index].icon}</span><div><strong>${safe(item.name)}</strong><small>${safe(item.teacher)}</small></div><b>${item.value.toFixed(2)}%</b></article>`).join("") : '<p class="monitoring-empty">Belum ada data kelas bagi tempoh ini.</p>';
   const width = 1000, height = 290, left = 58, right = 24, top = 24, bottom = 48;
   const plotWidth = width - left - right, plotHeight = height - top - bottom;
   const groupWidth = plotWidth / Math.max(days.length, 1);
@@ -576,7 +579,10 @@ function renderAnalytics(records, range) {
     if (!points.length) return "";
     const path = points.map((point, index) => `${index ? "L" : "M"}${x(point.index).toFixed(1)},${y(point.value).toFixed(1)}`).join(" ");
     const dots = points.map((point) => `<circle class="chart-line-dot" cx="${x(point.index)}" cy="${y(point.value)}" r="4.5" fill="${colors[session]}"><title>${labels[session]} • ${safe(formatDisplayDate(point.date))}: ${point.value.toFixed(2)}%</title></circle>`).join("");
-    return `<path class="chart-line" d="${path}" stroke="${colors[session]}"/>${dots}`;
+    const labelOffsetX = { all: 0, morning: -20, afternoon: 20 }[session];
+    const labelOffsetY = { all: -11, morning: 17, afternoon: 17 }[session];
+    const valueLabels = points.map((point) => (days.length <= 10 || point.index % labelEvery === 0 || point.index === days.length - 1) ? `<text class="chart-value-label ${session}" x="${x(point.index) + labelOffsetX}" y="${y(point.value) + labelOffsetY}" text-anchor="middle" fill="${colors[session]}">${point.value.toFixed(1)}%</text>` : "").join("");
+    return `<path class="chart-line" d="${path}" stroke="${colors[session]}"/>${dots}${valueLabels}`;
   }).join("");
   $("#attendanceChart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Graf garis peratus kehadiran ${safe($("#analysisRangeLabel").textContent)}">${grids}${xLabels}${lines}</svg>`;
   $("#analysisTableBody").innerHTML = days.map((day) => `<tr><td>${safe(formatDisplayDate(day.date))}</td><td>${analysisPercent(day.all)}</td><td>${analysisPercent(day.morning)}</td><td>${analysisPercent(day.afternoon)}</td><td>${day.recordCount}</td></tr>`).join("");
@@ -3170,7 +3176,8 @@ window.addEventListener("hashchange", activateViewFromHash);
 });
 $("#printButton").addEventListener("click", () => window.print());
 $("#analysisRefresh").addEventListener("click", loadAnalytics);
-$("#analysisPeriod").addEventListener("change", loadAnalytics);
+$("#analysisPeriod").addEventListener("change", () => { $("#analysisBestPeriod").value = $("#analysisPeriod").value; loadAnalytics(); });
+$("#analysisBestPeriod").addEventListener("change", () => { $("#analysisPeriod").value = $("#analysisBestPeriod").value; loadAnalytics(); });
 $("#kpiMonth").addEventListener("change", loadKpiAnalytics);
 $("#kpiYear").addEventListener("change", () => {
   loadKpiAnalytics();

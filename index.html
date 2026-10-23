@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest?v=130">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=148">
+  <link rel="stylesheet" href="styles.css?v=149">
 </head>
 <body>
   <header class="topbar no-print">
@@ -460,12 +460,19 @@
       </div>
       <div id="analysisStatus" class="analysis-status" role="status" aria-live="polite">Memuatkan analisis…</div>
       <div id="analysisSummary" class="analysis-summary" aria-label="Ringkasan peratus kehadiran"></div>
-      <div class="chart-shell">
-        <div class="chart-title-row">
-          <div><strong id="analysisRangeLabel">—</strong><small>Graf garis peratus kehadiran bagi tarikh yang mempunyai rekod</small></div>
-          <div class="chart-legend" aria-label="Petunjuk carta"><span><i class="legend-all"></i>Keseluruhan</span><span><i class="legend-morning"></i>Sidang pagi</span><span><i class="legend-afternoon"></i>Sidang petang</span></div>
+      <div class="analysis-chart-layout">
+        <div class="chart-shell">
+          <div class="chart-title-row">
+            <div><strong id="analysisRangeLabel">—</strong><small>Graf garis peratus kehadiran bagi tarikh yang mempunyai rekod</small></div>
+            <div class="chart-legend" aria-label="Petunjuk carta"><span><i class="legend-all"></i>Keseluruhan</span><span><i class="legend-morning"></i>Sidang pagi</span><span><i class="legend-afternoon"></i>Sidang petang</span></div>
+          </div>
+          <div id="attendanceChart" class="attendance-chart" aria-label="Carta graf peratus kehadiran"></div>
         </div>
-        <div id="attendanceChart" class="attendance-chart" aria-label="Carta graf peratus kehadiran"></div>
+        <aside class="analysis-best-card" aria-labelledby="analysisBestTitle">
+          <div class="analysis-best-head"><div><span>🏆 PRESTASI KELAS</span><strong id="analysisBestTitle">Kelas Kehadiran Terbaik</strong></div><label>Tempoh<select id="analysisBestPeriod" aria-label="Pilih tempoh kelas kehadiran terbaik"><option value="week">Mingguan</option><option value="month">Bulanan</option></select></label></div>
+          <p id="analysisBestRange">—</p>
+          <div id="analysisBestClass" class="analysis-best-list" aria-live="polite"></div>
+        </aside>
       </div>
       <div class="analysis-detail-stack">
         <details class="analysis-detail">
@@ -684,6 +691,6 @@
   </aside>
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
   <script src="class-demographics.js?v=130" defer></script>
-  <script src="app.js?v=148" defer></script>
+  <script src="app.js?v=149" defer></script>
 </body>
 </html>

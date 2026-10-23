@@ -652,6 +652,12 @@ body{background:#fff;color:#000}
 #attendanceAnalysis .analysis-summary span,#attendanceAnalysis .analysis-summary small{font-size:.65rem}
 #attendanceAnalysis .chart-shell{padding:12px 14px}
 #attendanceAnalysis .chart-title-row strong{font-size:.82rem}
+.analysis-chart-layout{display:grid;grid-template-columns:minmax(0,1fr) 245px;align-items:stretch;gap:9px}
+.analysis-chart-layout .chart-shell{min-width:0;margin:0}
+.chart-value-label{font-size:10px;font-weight:950;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round;pointer-events:none}
+.analysis-best-card{display:grid;align-content:start;gap:8px;min-width:0;padding:12px;border:1px solid #c8dced;border-radius:14px;background:linear-gradient(150deg,#073f84,#087ec1 70%,#0aa2d2);color:#fff;box-shadow:0 10px 24px #073f8420}
+.analysis-best-head{display:grid;gap:8px}.analysis-best-head>div>span,.analysis-best-head>div>strong{display:block}.analysis-best-head>div>span{color:#8ce1ff;font-size:.5rem;font-weight:950;letter-spacing:.11em}.analysis-best-head>div>strong{margin-top:2px;font-size:.84rem;line-height:1.15}.analysis-best-head label{color:#d9eeff;font-size:.54rem;font-weight:900}.analysis-best-head select{width:100%;height:31px;margin-top:3px;padding:3px 7px;border:1px solid #ffffff80;border-radius:8px;background:#fff;color:#12335d;font:inherit;font-size:.62rem;font-weight:850}
+.analysis-best-card>p{margin:0;color:#d8eeff;font-size:.52rem;line-height:1.3}.analysis-best-list{display:grid;gap:6px}.analysis-best-list article{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:7px;padding:7px;border:1px solid #ffffff45;border-radius:9px;background:#ffffff17}.analysis-best-list article>span{font-size:.85rem}.analysis-best-list article>div{min-width:0}.analysis-best-list article strong,.analysis-best-list article small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.analysis-best-list article strong{font-size:.67rem}.analysis-best-list article small{margin-top:1px;color:#d8eeff;font-size:.48rem}.analysis-best-list article>b{color:#fff4b8;font-size:.73rem}.analysis-best-list article.gold{background:#ffffff2b;border-color:#ffe28c}.analysis-best-list .monitoring-empty{margin:0;color:#fff;font-size:.61rem}
 .analysis-detail-stack{display:grid;gap:8px;margin-top:10px}
 .analysis-detail{border:1px solid #ccdaeb;border-radius:13px;background:#fff;overflow:hidden}
 .analysis-detail>summary{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:11px 14px;background:#f4f8fd;color:var(--navy);cursor:pointer;list-style:none}
@@ -675,6 +681,7 @@ body{background:#fff;color:#000}
   #attendanceAnalysis .analysis-summary strong{font-size:1.05rem}
   #attendanceAnalysis .analysis-summary small{font-size:.56rem}
   #attendanceAnalysis .chart-shell{padding:9px 8px}
+  #attendanceAnalysis .analysis-chart-layout{grid-template-columns:1fr;gap:6px}
   #attendanceAnalysis .chart-title-row{gap:5px}
   #attendanceAnalysis .chart-title-row small{display:none}
   #attendanceAnalysis .chart-legend{gap:7px;font-size:.58rem}
@@ -683,6 +690,12 @@ body{background:#fff;color:#000}
   #attendanceAnalysis .attendance-chart svg{min-width:0}
   #attendanceAnalysis .chart-axis-text{font-size:10px}
   #attendanceAnalysis .chart-line{stroke-width:5}
+  #attendanceAnalysis .chart-value-label{font-size:9px;stroke-width:2.5px}
+  #attendanceAnalysis .analysis-best-card{grid-template-columns:145px minmax(0,1fr);align-items:start;gap:6px;padding:8px;border-radius:10px}
+  #attendanceAnalysis .analysis-best-head{gap:4px}.analysis-best-head>div>strong{font-size:.68rem}.analysis-best-head select{height:27px;font-size:.56rem}
+  #attendanceAnalysis .analysis-best-card>p{display:none}
+  #attendanceAnalysis .analysis-best-list{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+  #attendanceAnalysis .analysis-best-list article{grid-template-columns:auto minmax(0,1fr);gap:3px;padding:5px}.analysis-best-list article>span{font-size:.65rem}.analysis-best-list article>b{grid-column:1/-1;font-size:.58rem;text-align:center}.analysis-best-list article strong{font-size:.53rem}.analysis-best-list article small{display:none}
   .analysis-detail>summary{padding:9px 11px}.analysis-detail>summary small{font-size:.59rem}
 }
 
