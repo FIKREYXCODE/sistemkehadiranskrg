@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest?v=130">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=162">
+  <link rel="stylesheet" href="styles.css?v=164">
 </head>
 <body>
   <header class="topbar no-print">
@@ -241,10 +241,12 @@
         <section class="weekly-duty-report-card">
           <header class="weekly-report-head"><div><small>ANALISIS SISTEM</small><strong>Rumusan Mingguan Automatik</strong></div><span id="weeklyReportState">Draf automatik</span></header>
           <div class="weekly-report-metrics">
-            <article><span>🎒</span><strong id="weeklyAttendanceRate">—</strong><small>kehadiran murid</small></article>
-            <article><span>👥</span><strong id="weeklyStaffPresenceRate">—</strong><small>keberadaan guru &amp; AKP</small></article>
-            <article><span>🍽️</span><strong id="weeklyRmtCount">0</strong><small>laporan RMT</small></article>
-            <article class="attention"><span>⚠️</span><strong id="weeklyReportActionCount">0</strong><small>perkara perlu tindakan</small></article>
+            <article><span>🎒</span><strong id="weeklyAttendanceRate">—</strong><small>purata murid minggu ini</small></article>
+            <article><span>🌅</span><strong id="weeklyTeacherMorningRate">—</strong><small>guru pagi · mingguan</small></article>
+            <article><span>🌇</span><strong id="weeklyTeacherAfternoonRate">—</strong><small>guru petang · mingguan</small></article>
+            <article><span>👥</span><strong id="weeklyAkpPresenceRate">—</strong><small>AKP · mingguan</small></article>
+            <article><span>🍽️</span><strong id="weeklyRmtCount">0</strong><small>laporan RMT minggu ini</small></article>
+            <article class="attention"><span>⚠️</span><strong id="weeklyReportActionCount">0</strong><small>tindakan minggu ini</small></article>
           </div>
           <details id="weeklyReportActionSources" class="weekly-action-sources" hidden></details>
           <label class="weekly-summary-field">Rumusan laporan minggu<textarea id="weeklyReportSummary" rows="5" readonly aria-readonly="true"></textarea></label>
@@ -694,6 +696,6 @@
   </aside>
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
   <script src="class-demographics.js?v=130" defer></script>
-  <script src="app.js?v=163" defer></script>
+  <script src="app.js?v=164" defer></script>
 </body>
 </html>

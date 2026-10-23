@@ -35,6 +35,10 @@ const DEFAULT_STAFF_NAMES = [
   "WAFA FARHANA BINTI ABD KADIR", "WAN MUHAMAD YUSUF BIN WAN ABDUL AZIZ", "YUSNI BINTI WAHJUDIN", "ZAMRIE BIN OMAR ALI", "HANISAH BINTI MANSOR",
   "NURAIDA BINTI KAIMUDIN", "MULYANTI BINTI MIKIL @ MOHAMED ISHAK", "RAPIDAH BINTI KARIM", "YENNY BINTI SANAUDI", "FARIDAH BINTI ACHO",
 ];
+const AKP_STAFF_NAMES = new Set([
+  "HANISAH BINTI MANSOR", "NURAIDA BINTI KAIMUDIN", "MULYANTI BINTI MIKIL @ MOHAMED ISHAK",
+  "RAPIDAH BINTI KARIM", "YENNY BINTI SANAUDI", "FARIDAH BINTI ACHO",
+]);
 const MONITORING_CATEGORY_LABELS = { cleanliness: "Kebersihan", safety: "Keselamatan", both: "Kebersihan dan keselamatan" };
 const MONITORING_STATUS_LABELS = { controlled: "Terkawal", attention: "Perlu perhatian", not_applicable: "Tidak berkaitan" };
 const ADMIN_APPROVERS = {
@@ -847,20 +851,28 @@ function reportStaffAbsences(report, session) {
   return Array.isArray(source?.[session]) ? source[session] : [];
 }
 
-function weeklyStaffData(reports, dates, session) {
-  const totalStaff = count(state.schoolStats.teachers, 500) + count(state.schoolStats.akp, 100);
-  const daily = reports.map((report, index) => {
-    const absences = reportStaffAbsences(report, session).filter(staffAbsenceRowHasValue);
-    return { date: dates[index], absent: absences.length };
-  });
-  const absent = daily.reduce((sum, item) => sum + item.absent, 0);
-  const possible = totalStaff * daily.length;
+function weeklyPresenceMetric(total, absent, days) {
+  const possible = total * days;
   const present = Math.max(0, possible - absent);
-  return {
-    totalStaff, absent, present, days: daily.length,
-    averagePresent: daily.length ? present / daily.length : 0,
-    rate: possible ? (present / possible) * 100 : null,
-  };
+  return { total, absent, present, days, averagePresent: days ? present / days : 0, rate: possible ? (present / possible) * 100 : null };
+}
+
+function weeklyStaffData(reports, dates) {
+  const absenceCounts = { morning: 0, afternoon: 0, akp: 0 };
+  for (const report of reports) for (const session of ["morning", "afternoon"]) {
+    for (const row of reportStaffAbsences(report, session).filter(staffAbsenceRowHasValue)) {
+      const name = String(row.staffName || "").trim().toUpperCase();
+      if (AKP_STAFF_NAMES.has(name)) absenceCounts.akp += 1;
+      else absenceCounts[session] += 1;
+    }
+  }
+  const days = dates.length;
+  const teachers = count(state.schoolStats.teachers, 500);
+  const akp = count(state.schoolStats.akp, 100);
+  const morning = weeklyPresenceMetric(teachers, absenceCounts.morning, days);
+  const afternoon = weeklyPresenceMetric(teachers, absenceCounts.afternoon, days);
+  const akpMetric = weeklyPresenceMetric(akp, absenceCounts.akp, days);
+  return { morning, afternoon, akp: akpMetric, absent: absenceCounts.morning + absenceCounts.afternoon + absenceCounts.akp, days };
 }
 
 function weeklyRmtData(safetyReports, dates, session) {
@@ -899,7 +911,8 @@ function generateWeeklyDutySummary(session, entries, dates, analysis, actionItem
   const paragraphs = [`Rumusan automatik ${label} bagi ${range} menghimpunkan semua rekod HEM SmartTrack yang tersedia setakat ${formatDisplayDate(lastDate)}.`];
   if (attendance.rate !== null) paragraphs.push(`Kehadiran murid: ${attendance.present}/${attendance.enrol} kehadiran harian terkumpul daripada ${attendance.records.length} rekod kelas (${attendance.rate.toFixed(2)}%), ${attendance.rate >= KPI_TARGET ? "mencapai" : "belum mencapai"} KPI sekolah ${KPI_TARGET}%.`);
   else paragraphs.push("Kehadiran murid: belum ada rekod kelas lengkap untuk dianalisis dalam tempoh ini.");
-  if (staff.rate !== null) paragraphs.push(`Keberadaan guru dan AKP: berdasarkan senarai tidak berada, anggaran purata ${staff.averagePresent.toFixed(1)}/${staff.totalStaff} orang sehari (${staff.rate.toFixed(2)}%), dengan ${staff.absent} rekod ketidakhadiran.`);
+  const sessionStaff = staff[session];
+  if (sessionStaff.rate !== null) paragraphs.push(`Keberadaan guru ${label}: purata mingguan ${sessionStaff.rate.toFixed(2)}%, dengan ${sessionStaff.absent} rekod tidak berada. Keberadaan AKP: purata mingguan ${staff.akp.rate === null ? "—" : `${staff.akp.rate.toFixed(2)}%`}, dengan ${staff.akp.absent} rekod tidak berada.`);
   paragraphs.push(rmt.reports.length ? `RMT: ${rmt.reports.length} laporan bagi ${rmt.days} hari merekodkan ${rmt.supplied} hidangan untuk ${rmt.recipients} penerima.` : "RMT: belum ada laporan bagi sidang ini dalam tempoh semasa.");
   paragraphs.push(`Pemantauan sekolah: ${monitoring.reports.length} rekod diterima; ${monitoring.actions.length} memerlukan perhatian.`);
   if (findings.length) paragraphs.push(`Catatan guru bertugas menunjukkan ${findings.join(", ")}.`);
@@ -935,14 +948,14 @@ function buildWeeklyDutyReport(reports, dates, session, stored = null, safetyWee
   const entries = weeklyDutyEntries(reports, dates, session);
   const monitoring = weeklyMonitoringData(safetyWeek.reports, dates, session);
   const attendance = weeklyAttendanceData(reports, dates, session);
-  const staff = weeklyStaffData(reports, dates, session);
+  const staff = weeklyStaffData(reports, dates);
   const rmt = weeklyRmtData(safetyWeek.reports, dates, session);
   const actionItems = [...monitoring.actions, ...rmt.actions, ...attendance.actions, ...weeklyDutyNoteActions(entries)];
   const analysis = { attendance, staff, rmt, monitoring };
   const generated = generateWeeklyDutySummary(session, entries, dates, analysis, actionItems);
   const sourceFingerprint = JSON.stringify({
     entries, attendance: { enrol: attendance.enrol, present: attendance.present, records: attendance.records.length },
-    staff: { absent: staff.absent, days: staff.days }, rmt: { reports: rmt.reports.length, recipients: rmt.recipients, supplied: rmt.supplied },
+    staff: { morning: staff.morning.absent, afternoon: staff.afternoon.absent, akp: staff.akp.absent, days: staff.days }, rmt: { reports: rmt.reports.length, recipients: rmt.recipients, supplied: rmt.supplied },
     monitoring: monitoring.reports.length,
     actionItems: actionItems.map(({ date, location, issue, action }) => ({ date, location, issue, action })),
   });
@@ -972,7 +985,9 @@ function renderWeeklyDutyReport() {
   $("#weeklyReportState").textContent = report.saved ? "✓ Laporan disahkan" : "Draf automatik";
   $("#weeklyReportState").classList.toggle("saved", report.saved);
   $("#weeklyAttendanceRate").textContent = report.analysis.attendance.rate === null ? "—" : `${report.analysis.attendance.rate.toFixed(2)}%`;
-  $("#weeklyStaffPresenceRate").textContent = report.analysis.staff.rate === null ? "—" : `${report.analysis.staff.rate.toFixed(2)}%`;
+  $("#weeklyTeacherMorningRate").textContent = report.analysis.staff.morning.rate === null ? "—" : `${report.analysis.staff.morning.rate.toFixed(2)}%`;
+  $("#weeklyTeacherAfternoonRate").textContent = report.analysis.staff.afternoon.rate === null ? "—" : `${report.analysis.staff.afternoon.rate.toFixed(2)}%`;
+  $("#weeklyAkpPresenceRate").textContent = report.analysis.staff.akp.rate === null ? "—" : `${report.analysis.staff.akp.rate.toFixed(2)}%`;
   $("#weeklyRmtCount").textContent = String(report.analysis.rmt.reports.length);
   $("#weeklyReportActionCount").textContent = String(report.actionItems.length);
   const actionSource = $("#weeklyReportActionSources");
