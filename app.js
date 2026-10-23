@@ -1662,11 +1662,9 @@ function setupSidebarSwipe() {
     if (!isMobile() || event.touches.length !== 1 || document.body.classList.contains("modal-open")) return;
     const touch = event.touches[0];
     const sidebarOpen = document.body.classList.contains("sidebar-open");
-    const sidebarRight = $("#mainSidebar").getBoundingClientRect().right;
-    if (!sidebarOpen && touch.clientX <= 72) {
-      gesture = { mode: "open", startX: touch.clientX, startY: touch.clientY, lastX: touch.clientX, lastY: touch.clientY, startedAt: Date.now(), horizontal: false };
-    } else if (sidebarOpen && touch.clientX <= sidebarRight) {
-      gesture = { mode: "close", startX: touch.clientX, startY: touch.clientY, lastX: touch.clientX, lastY: touch.clientY, startedAt: Date.now(), horizontal: false };
+    const openZone = Math.min(150, window.innerWidth * 0.3);
+    if (!sidebarOpen && touch.clientX <= openZone) {
+      gesture = { startX: touch.clientX, startY: touch.clientY, lastX: touch.clientX, lastY: touch.clientY, startedAt: Date.now(), horizontal: false };
     }
   }, { passive: true });
 
@@ -1677,7 +1675,7 @@ function setupSidebarSwipe() {
     gesture.lastY = touch.clientY;
     const dx = gesture.lastX - gesture.startX;
     const dy = gesture.lastY - gesture.startY;
-    if (Math.abs(dx) > 12 && Math.abs(dx) > Math.abs(dy) * 1.15) {
+    if (dx > 6 && dx > Math.abs(dy)) {
       gesture.horizontal = true;
       event.preventDefault();
     }
@@ -1688,10 +1686,9 @@ function setupSidebarSwipe() {
     const touch = event.changedTouches[0];
     const dx = (touch?.clientX ?? gesture.lastX) - gesture.startX;
     const dy = (touch?.clientY ?? gesture.lastY) - gesture.startY;
-    const quickEnough = Date.now() - gesture.startedAt <= 900;
-    const deliberateSwipe = gesture.horizontal && quickEnough && Math.abs(dx) >= 64 && Math.abs(dx) > Math.abs(dy) * 1.25;
-    if (deliberateSwipe && gesture.mode === "open" && dx > 0) setSidebar(true);
-    if (deliberateSwipe && gesture.mode === "close" && dx < 0) setSidebar(false);
+    const quickEnough = Date.now() - gesture.startedAt <= 1200;
+    const deliberateSwipe = gesture.horizontal && quickEnough && dx >= 24 && dx > Math.abs(dy);
+    if (deliberateSwipe) setSidebar(true);
     resetGesture();
   }, { passive: true });
 
