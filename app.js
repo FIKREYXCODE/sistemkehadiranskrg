@@ -1222,7 +1222,8 @@ function dutyStatusMonitoringReports(reports = []) {
 }
 
 function dutyStatusNotePresent(report) {
-  return Boolean(cleanMonitoringText(report?.issue || "") || String(report?.action || "").trim());
+  const details = monitoringIssueDetails(report?.issue || "");
+  return Boolean(details.note || Object.keys(details.aspects).length || String(report?.action || "").trim());
 }
 
 function dutyStatusDayRecord(date, school = {}, safetyReports = []) {
@@ -1692,8 +1693,39 @@ function monitoringSessionLabel(value) {
   return value === "morning" ? "Sidang Pagi" : value === "afternoon" ? "Sidang Petang" : "Sidang belum ditetapkan";
 }
 
+const MONITORING_ASPECTS = [
+  ["cleanliness", "Kebersihan", "✨"],
+  ["safety", "Keselamatan", "🛡️"],
+  ["damage", "Kerosakan", "🔧"],
+  ["facilities", "Kemudahan", "🏫"],
+];
+
+function monitoringIssueDetails(value = "") {
+  const withoutBatch = String(value).replace(/^\[smart-report:[^\]]+\]\s*/i, "").trim();
+  const match = withoutBatch.match(/^\[inspection-v1:([^\]]+)\]\s*/i);
+  if (!match) return { note: withoutBatch, aspects: {} };
+  try {
+    const data = JSON.parse(decodeURIComponent(match[1]));
+    return { note: String(data.note || withoutBatch.slice(match[0].length)).trim(), aspects: data.aspects && typeof data.aspects === "object" ? data.aspects : {} };
+  } catch (error) {
+    console.warn("Butiran pemeriksaan lama tidak dapat dibaca.", error);
+    return { note: withoutBatch.slice(match[0].length).trim(), aspects: {} };
+  }
+}
+
 function cleanMonitoringText(value = "") {
-  return String(value).replace(/^\[smart-report:[^\]]+\]\s*/i, "").trim();
+  return monitoringIssueDetails(value).note;
+}
+
+function monitoringAspectBadges(value = "") {
+  const aspects = monitoringIssueDetails(value).aspects;
+  const badges = MONITORING_ASPECTS.map(([key, label, icon]) => {
+    const status = aspects[key];
+    if (!status) return "";
+    const text = status === "good" ? "Baik" : status === "attention" ? "Perlu tindakan" : "Tidak berkaitan";
+    return `<span class="monitoring-aspect-badge ${safe(status)}">${icon} ${safe(label)}: ${safe(text)}</span>`;
+  }).filter(Boolean).join("");
+  return badges ? `<div class="monitoring-aspect-badges">${badges}</div>` : "";
 }
 
 function monitoringBatchId(report) {
@@ -1752,7 +1784,8 @@ function addMonitoringItem(selectedLocation = "") {
   const card = document.createElement("details");
   card.className = "monitoring-item-card";
   card.open = true;
-  card.innerHTML = `<summary><span class="monitoring-step">${index}</span><span><strong data-monitoring-item-title>${safe(location)}</strong><small data-monitoring-item-status>Baik</small></span><button class="monitoring-remove" type="button" aria-label="Buang ${safe(location)}">Buang</button></summary><div class="monitoring-item-content"><input data-monitoring-field="location" type="hidden" value="${safe(location)}"><label class="other-location"${location === "Lain-lain" ? "" : " hidden"}>Nama kawasan<input data-monitoring-field="otherLocation" maxlength="180" placeholder="Contoh: Bilik Kesihatan"></label><div class="monitoring-item-grid status-only"><label>Status kawasan<select data-monitoring-field="status" required><option value="controlled">🟢 Baik</option><option value="not_applicable">🟡 Memuaskan</option><option value="attention">🔴 Perlu Tindakan</option></select></label></div><label>Catatan ringkas — pilihan<textarea data-monitoring-field="note" rows="2" maxlength="1500" placeholder="Catat perkara penting sahaja"></textarea></label><label class="follow-up" hidden>Tindakan susulan<textarea data-monitoring-field="action" rows="2" maxlength="1500" placeholder="Nyatakan tindakan yang perlu dibuat"></textarea></label></div>`;
+  const aspectFields = MONITORING_ASPECTS.map(([key, label, icon]) => `<label class="monitoring-aspect-field"><span>${icon} ${safe(label)}</span><select data-monitoring-aspect="${safe(key)}" aria-label="Keadaan ${safe(label)}"><option value="">Belum dinilai</option><option value="good">✓ Baik</option><option value="attention">⚠ Perlu tindakan</option><option value="na">— Tidak berkaitan</option></select></label>`).join("");
+  card.innerHTML = `<summary><span class="monitoring-step">${index}</span><span><strong data-monitoring-item-title>${safe(location)}</strong><small data-monitoring-item-status>Belum dinilai</small></span><button class="monitoring-remove" type="button" aria-label="Buang ${safe(location)}">Buang</button></summary><div class="monitoring-item-content"><input data-monitoring-field="location" type="hidden" value="${safe(location)}"><input data-monitoring-field="status" type="hidden" value="controlled"><label class="other-location"${location === "Lain-lain" ? "" : " hidden"}>Nama kawasan<input data-monitoring-field="otherLocation" maxlength="180" placeholder="Contoh: Bilik Kesihatan"></label><div class="monitoring-inspection-head"><div><strong>Semakan keadaan</strong><small>Pilih keadaan bagi aspek yang diperiksa.</small></div><button type="button" data-monitoring-all-good>✓ Semua baik</button></div><div class="monitoring-aspect-grid">${aspectFields}</div><div class="monitoring-auto-status"><span>Status keseluruhan dijana automatik</span><strong data-monitoring-auto-status>Belum dinilai</strong></div><label>Penemuan / catatan ringkas — pilihan<textarea data-monitoring-field="note" rows="2" maxlength="1500" placeholder="Contoh: Lantai bersih, lampu koridor tidak menyala"></textarea></label><label class="follow-up" hidden>Tindakan susulan<textarea data-monitoring-field="action" rows="2" maxlength="1500" placeholder="Nyatakan tindakan yang perlu dibuat"></textarea></label></div>`;
   container.appendChild(card);
   syncMonitoringLocationSelection();
   $("#monitoringFormStatus").textContent = `${container.querySelectorAll(".monitoring-item-card").length} kawasan dimasukkan dalam satu laporan.`;
@@ -1773,7 +1806,7 @@ function renderMonitoringReports() {
       const photoList = Array.isArray(report.photos) ? report.photos : [];
       const photos = photoList.map((photo, index) => `<a href="${safe(photo.url)}" target="_blank" rel="noopener"><img src="${safe(photo.url)}" loading="lazy" alt="${safe(report.location)}, gambar ${index + 1}"></a>`).join("");
       const thumbnail = photoList[0]?.url ? `<img class="monitoring-location-thumb" src="${safe(photoList[0].url)}" loading="lazy" alt="Pratonton ${safe(report.location)}">` : '<span class="monitoring-location-thumb empty" aria-label="Tiada gambar">📷</span>';
-      return `<details class="monitoring-location-result"${filter !== "all" ? " open" : ""}><summary>${thumbnail}<span class="monitoring-result-status ${monitoringStatusClass(report.routeStatus)}">${report.routeStatus === "controlled" ? "✓" : report.routeStatus === "attention" ? "!" : "●"}</span><strong>${safe(report.location)}</strong><small>${safe(monitoringStatusLabel(report.routeStatus))}</small></summary><div class="monitoring-location-result-body"><div class="monitoring-photo-grid">${photos || '<span class="monitoring-no-photo">Tiada gambar dilampirkan</span>'}</div><dl><div><dt>Keadaan / punca / catatan</dt><dd>${safe(cleanMonitoringText(report.issue) || "Tiada catatan tambahan")}</dd></div>${report.routeStatus === "attention" ? `<div><dt>Tindakan susulan</dt><dd>${safe(report.action || "Belum dinyatakan")}</dd></div>` : ""}</dl></div></details>`;
+      return `<details class="monitoring-location-result"${filter !== "all" ? " open" : ""}><summary>${thumbnail}<span class="monitoring-result-status ${monitoringStatusClass(report.routeStatus)}">${report.routeStatus === "controlled" ? "✓" : report.routeStatus === "attention" ? "!" : "●"}</span><strong>${safe(report.location)}</strong><small>${safe(monitoringStatusLabel(report.routeStatus))}</small></summary><div class="monitoring-location-result-body"><div class="monitoring-photo-grid">${photos || '<span class="monitoring-no-photo">Tiada gambar dilampirkan</span>'}</div><div class="monitoring-result-copy">${monitoringAspectBadges(report.issue)}<dl><div><dt>Penemuan / catatan</dt><dd>${safe(cleanMonitoringText(report.issue) || "Tiada catatan tambahan")}</dd></div>${report.routeStatus === "attention" ? `<div><dt>Tindakan susulan</dt><dd>${safe(report.action || "Belum dinyatakan")}</dd></div>` : ""}</dl></div></div></details>`;
     }).join("");
     return `<article class="monitoring-master-report"><header><div><p class="monitoring-report-kicker">LAPORAN PEMANTAUAN SEKOLAH</p><h3>Kebersihan &amp; Keselamatan</h3></div><span class="category-badge">${safe(monitoringSessionLabel(group.session))}</span></header><div class="monitoring-report-meta"><div><span>Tarikh</span><strong>${safe(formatDisplayDate(state.date))}</strong></div><div><span>Sidang</span><strong>${safe(monitoringSessionLabel(group.session))}</strong></div><div><span>Kawasan</span><strong>${group.items.length} dipantau</strong></div></div><div class="monitoring-report-status-line"><span class="controlled">${group.items.filter((item) => item.routeStatus === "controlled").length} baik</span><span class="neutral">${group.items.filter((item) => item.routeStatus === "not_applicable").length} memuaskan</span><span class="attention">${group.items.filter((item) => item.routeStatus === "attention").length} perlu tindakan</span></div><div class="monitoring-location-results">${items}</div><footer class="monitoring-prepared-by"><span>Disediakan oleh</span><strong>${safe(group.updatedBy)}</strong><small>${safe(formatDisplayDateTime(group.createdAt))}</small></footer></article>`;
   };
@@ -1832,10 +1865,13 @@ async function saveMonitoringReport(event) {
       const location = locationChoice === "Lain-lain" ? field("otherLocation").value.trim() : locationChoice;
       const status = field("status").value;
       const action = field("action").value.trim();
+      const aspects = Object.fromEntries(Array.from(card.querySelectorAll("[data-monitoring-aspect]")).map((input) => [input.dataset.monitoringAspect, input.value]).filter(([, value]) => value));
       if (!location) throw new Error("Sila pilih atau nyatakan lokasi pemantauan.");
+      if (!Object.keys(aspects).length) throw new Error(`Sila nilai sekurang-kurangnya satu aspek untuk ${location}.`);
       if (status === "attention" && !action) throw new Error("Sila nyatakan tindakan susulan bagi status Perlu Tindakan.");
       const note = field("note").value.trim() || (status === "controlled" ? "Kawasan dalam keadaan baik." : status === "not_applicable" ? "Kawasan dalam keadaan memuaskan." : "Pemantauan memerlukan tindakan.");
-      const payload = { date: state.date, updatedBy: editorName(), category: "both", session, location, routeStatus: status, parkingStatus: "not_applicable", issue: `[smart-report:${batchId}] ${note}`, action: action || "Tiada tindakan susulan diperlukan.", photos: sharedPhotos, reportGroupId: batchId };
+      const inspection = encodeURIComponent(JSON.stringify({ aspects, note }));
+      const payload = { date: state.date, updatedBy: editorName(), category: "both", session, location, routeStatus: status, parkingStatus: "not_applicable", issue: `[smart-report:${batchId}] [inspection-v1:${inspection}] ${note}`, action: action || "Tiada tindakan susulan diperlukan.", photos: sharedPhotos, reportGroupId: batchId };
       const response = await fetch(SAFETY_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const result = await responseJson(response, "Laporan gagal disimpan.");
       if (!response.ok) throw new Error(result.error || "Laporan gagal disimpan.");
@@ -3040,10 +3076,29 @@ $("#monitoringReports").addEventListener("click", (event) => {
   renderMonitoringReports();
   setMonitoringTab("archive");
 });
-$("#monitoringItems").addEventListener("click", (event) => { const button = event.target.closest(".monitoring-remove"); if (!button) return; event.preventDefault(); button.closest(".monitoring-item-card").remove(); const count = $("#monitoringItems").querySelectorAll(".monitoring-item-card").length; if (!count) $("#monitoringItems").innerHTML = '<p class="monitoring-empty">Belum ada kawasan dipilih. Scroll senarai di atas dan tekan kawasan yang dipantau.</p>'; syncMonitoringLocationSelection(); $("#monitoringFormStatus").textContent = count ? `${count} kawasan dalam laporan ini.` : ""; });
+$("#monitoringItems").addEventListener("click", (event) => {
+  const removeButton = event.target.closest(".monitoring-remove");
+  if (removeButton) { event.preventDefault(); removeButton.closest(".monitoring-item-card").remove(); const count = $("#monitoringItems").querySelectorAll(".monitoring-item-card").length; if (!count) $("#monitoringItems").innerHTML = '<p class="monitoring-empty">Belum ada kawasan dipilih. Scroll senarai di atas dan tekan kawasan yang dipantau.</p>'; syncMonitoringLocationSelection(); $("#monitoringFormStatus").textContent = count ? `${count} kawasan dalam laporan ini.` : ""; return; }
+  const allGoodButton = event.target.closest("[data-monitoring-all-good]");
+  if (!allGoodButton) return;
+  event.preventDefault();
+  const card = allGoodButton.closest(".monitoring-item-card");
+  card.querySelectorAll("[data-monitoring-aspect]").forEach((input) => { input.value = "good"; input.className = "is-good"; });
+  const status = card.querySelector('[data-monitoring-field="status"]');
+  status.value = "controlled";
+  status.dispatchEvent(new Event("change", { bubbles: true }));
+});
 $("#monitoringItems").addEventListener("change", (event) => {
   const card = event.target.closest(".monitoring-item-card"); if (!card) return;
-  if (event.target.matches('[data-monitoring-field="status"]')) { const follow = card.querySelector(".follow-up"); follow.hidden = event.target.value !== "attention"; follow.querySelector("textarea").required = event.target.value === "attention"; card.querySelector("[data-monitoring-item-status]").textContent = monitoringStatusLabel(event.target.value); }
+  if (event.target.matches('[data-monitoring-field="status"]')) { const follow = card.querySelector(".follow-up"); follow.hidden = event.target.value !== "attention"; follow.querySelector("textarea").required = event.target.value === "attention"; const label = monitoringStatusLabel(event.target.value); card.querySelector("[data-monitoring-item-status]").textContent = label; const autoStatus = card.querySelector("[data-monitoring-auto-status]"); if (autoStatus) { autoStatus.textContent = `${event.target.value === "controlled" ? "🟢" : event.target.value === "attention" ? "🔴" : "🟡"} ${label}`; autoStatus.className = monitoringStatusClass(event.target.value); } }
+  if (event.target.matches("[data-monitoring-aspect]")) {
+    event.target.className = event.target.value ? `is-${event.target.value}` : "";
+    const values = Array.from(card.querySelectorAll("[data-monitoring-aspect]")).map((input) => input.value);
+    const assessed = values.filter(Boolean);
+    const status = card.querySelector('[data-monitoring-field="status"]');
+    status.value = values.includes("attention") ? "attention" : assessed.length && assessed.every((value) => value === "na") ? "not_applicable" : "controlled";
+    if (assessed.length) status.dispatchEvent(new Event("change", { bubbles: true }));
+  }
 });
 $("#oprPhotos").addEventListener("change", (event) => renderOprPreview(event.target.files));
 $("#oprForm").addEventListener("submit", saveOprReport);
