@@ -841,10 +841,16 @@ function weeklyAttendanceData(reports, dates, session) {
   return { records, ...totals, rate, days: new Set(records.map((row) => row.date)).size, actions };
 }
 
+function reportStaffAbsences(report, session) {
+  const source = report?.staffAbsences;
+  if (Array.isArray(source)) return source.filter((row) => (row.session === "afternoon" ? "afternoon" : "morning") === session);
+  return Array.isArray(source?.[session]) ? source[session] : [];
+}
+
 function weeklyStaffData(reports, dates, session) {
   const totalStaff = count(state.schoolStats.teachers, 500) + count(state.schoolStats.akp, 100);
   const daily = reports.map((report, index) => {
-    const absences = (Array.isArray(report?.staffAbsences?.[session]) ? report.staffAbsences[session] : []).filter(staffAbsenceRowHasValue);
+    const absences = reportStaffAbsences(report, session).filter(staffAbsenceRowHasValue);
     return { date: dates[index], absent: absences.length };
   });
   const absent = daily.reduce((sum, item) => sum + item.absent, 0);
@@ -1268,7 +1274,7 @@ function dutyStatusSessionRecord(monitoring, session) {
 function dutyStatusDayRecord(date, school = {}, safetyReports = []) {
   const monitoring = dutyStatusMonitoringReports(safetyReports).map((report) => ({ ...report, reportDate: report.reportDate || date }));
   const sessions = { morning: dutyStatusSessionRecord(monitoring, "morning"), afternoon: dutyStatusSessionRecord(monitoring, "afternoon") };
-  const staffRows = ["morning", "afternoon"].flatMap((session) => (Array.isArray(school?.staffAbsences?.[session]) ? school.staffAbsences[session] : []).filter(staffAbsenceRowHasValue));
+  const staffRows = ["morning", "afternoon"].flatMap((session) => reportStaffAbsences(school, session).filter(staffAbsenceRowHasValue));
   const meta = school?.meta || {};
   const dutyNotes = [meta.noteMorning, meta.noteAfternoon].map((value) => String(value || "").trim()).filter(Boolean);
   const photos = monitoring.flatMap((report) => Array.isArray(report.photos) ? report.photos : []);
