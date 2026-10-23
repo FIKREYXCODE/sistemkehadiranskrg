@@ -1323,3 +1323,25 @@ body[data-active-view="staff"] .identity-bar>div small{margin-top:1px;font-size:
   .workspace-nav{background:linear-gradient(155deg,#031e49eb,#064781db 60%,#087cadc9)}
   .workspace-nav>a,.workspace-nav .sidebar-group{box-shadow:inset 0 1px 0 #ffffffa3,0 7px 16px #001b4638}
 }
+
+/* v152: kad kelas terbaik transparent, memenuhi ruang dan boleh dipilih. */
+#attendanceAnalysis .analysis-best-card{display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;align-content:stretch;gap:8px;color:#12335d;border:1px solid #ffffffc9;background:linear-gradient(145deg,#ffffffa8,#dff4ff72);box-shadow:inset 0 1px 0 #fff,0 12px 28px #123b6d18;-webkit-backdrop-filter:blur(18px) saturate(1.15);backdrop-filter:blur(18px) saturate(1.15)}
+#attendanceAnalysis .analysis-best-head>div>span{color:#0875ad}.analysis-best-head>div>strong{color:#0a376c;font-size:.92rem}.analysis-best-head label{color:#456985}.analysis-best-head select{border-color:#a9cce3;background:#ffffffb8}
+#attendanceAnalysis .analysis-best-card>p{color:#55738d}
+#attendanceAnalysis .analysis-best-list{grid-template-rows:repeat(3,minmax(62px,1fr));gap:7px;min-height:0}
+#attendanceAnalysis .analysis-best-list button{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:center;gap:2px 8px;width:100%;min-width:0;padding:9px 10px;border:1px solid #b8d5e8;border-radius:11px;background:linear-gradient(135deg,#ffffff8f,#eaf7ff73);color:#143556;font:inherit;text-align:left;cursor:pointer;box-shadow:inset 0 1px 0 #fff;transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease,background .16s ease}
+#attendanceAnalysis .analysis-best-list button:hover,#attendanceAnalysis .analysis-best-list button:focus-visible{transform:translateY(-1px);border-color:#3e9acb;background:#ffffffd4;box-shadow:0 7px 15px #0b528321;outline:none}
+#attendanceAnalysis .analysis-best-list button.selected{border-color:#087bc1;background:linear-gradient(135deg,#fff,#dff4ff);box-shadow:0 0 0 3px #0b8ed01c,0 7px 16px #0b528325}
+#attendanceAnalysis .analysis-best-list button>span{grid-row:1/3;font-size:1.05rem}.analysis-best-list button>div{min-width:0}.analysis-best-list button strong,.analysis-best-list button small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.analysis-best-list button strong{color:#092f61;font-size:.79rem}.analysis-best-list button small{margin-top:2px;color:#57728a;font-size:.54rem}.analysis-best-list button>b{color:#0755a7;font-size:.82rem}.analysis-best-list button>em{color:#678096;font-size:.5rem;font-style:normal;font-weight:850;text-align:right}
+#attendanceAnalysis .analysis-best-insight{margin:0;padding:7px 8px;border:1px solid #bdd9e9;border-radius:9px;background:#ffffff82;color:#405f79!important;font-size:.55rem!important;line-height:1.3}.analysis-best-insight strong{color:#0a376c}.analysis-best-insight b{color:#0875ad}
+@media(max-width:800px){
+  #attendanceAnalysis .analysis-best-card{display:grid;grid-template-columns:145px minmax(0,1fr);grid-template-rows:auto auto;gap:6px;padding:9px}
+  #attendanceAnalysis .analysis-best-head{grid-row:1/3}.analysis-best-head>div>strong{font-size:.72rem}
+  #attendanceAnalysis .analysis-best-list{grid-column:2;grid-row:1;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:1fr;gap:5px;min-height:86px}
+  #attendanceAnalysis .analysis-best-list button{grid-template-columns:1fr;grid-template-rows:auto auto auto;padding:7px 5px;text-align:center}.analysis-best-list button>span{grid-row:auto;font-size:.82rem}.analysis-best-list button>div{min-width:0}.analysis-best-list button strong{font-size:.62rem}.analysis-best-list button small{display:none}.analysis-best-list button>b{font-size:.68rem}.analysis-best-list button>em{display:none}
+  #attendanceAnalysis .analysis-best-card>.analysis-best-insight{display:block;grid-column:2;grid-row:2;padding:5px 6px;font-size:.48rem!important}
+}
+@media(max-width:430px){
+  #attendanceAnalysis .analysis-best-card{grid-template-columns:112px minmax(0,1fr)}
+  #attendanceAnalysis .analysis-best-list{min-height:82px}.analysis-best-list button strong{font-size:.55rem}.analysis-best-list button>b{font-size:.61rem}
+}

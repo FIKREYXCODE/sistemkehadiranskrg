@@ -548,7 +548,7 @@ function renderAnalytics(records, range) {
     if (!key) continue;
     const className = row.name || row.className || key;
     const rosterClass = state.classes.find((item) => String(item.id) === key || String(item.name) === String(className));
-    const current = ranking.get(key) || { name: className, teacher: row.teacherName || row.teacher || rosterClass?.teacherName || "Nama guru belum tersedia", enrol: 0, present: 0, records: 0 };
+    const current = ranking.get(key) || { id: key, name: className, teacher: row.teacherName || row.teacher || rosterClass?.teacherName || "Nama guru belum tersedia", enrol: 0, present: 0, records: 0 };
     current.enrol += enrol; current.present += enrol - absent; current.records += 1;
     if (row.teacherName || row.teacher) current.teacher = row.teacherName || row.teacher;
     ranking.set(key, current);
@@ -559,7 +559,8 @@ function renderAnalytics(records, range) {
   $("#analysisRangeLabel").textContent = `${formatDisplayDate(range.from)} – ${formatDisplayDate(range.to)}`;
   $("#analysisBestPeriod").value = $("#analysisPeriod").value;
   $("#analysisBestRange").textContent = `${periodLabel} • ${formatDisplayDate(range.from)} – ${formatDisplayDate(range.to)}`;
-  $("#analysisBestClass").innerHTML = winners.length ? winners.map((item, index) => `<article class="${medals[index].className}"><span>${medals[index].icon}</span><div><strong>${safe(item.name)}</strong><small>${safe(item.teacher)}</small></div><b>${item.value.toFixed(2)}%</b></article>`).join("") : '<p class="monitoring-empty">Belum ada data kelas bagi tempoh ini.</p>';
+  $("#analysisBestClass").innerHTML = winners.length ? winners.map((item, index) => `<button class="${medals[index].className}${index === 0 ? " selected" : ""}" type="button" data-analysis-best="${index}" data-best-name="${safe(item.name)}" data-best-teacher="${safe(item.teacher)}" data-best-value="${item.value.toFixed(2)}%" data-best-records="${item.records}" aria-pressed="${index === 0}"><span>${medals[index].icon}</span><div><strong>${safe(item.name)}</strong><small>${safe(item.teacher)}</small></div><b>${item.value.toFixed(2)}%</b><em>${item.records} rekod</em></button>`).join("") : '<p class="monitoring-empty">Belum ada data kelas bagi tempoh ini.</p>';
+  $("#analysisBestInsight").innerHTML = winners.length ? `<strong>${safe(winners[0].name)}</strong> mendahului dengan <b>${winners[0].value.toFixed(2)}%</b> daripada ${winners[0].records} rekod.` : "Pilih tempoh lain untuk melihat pencapaian kelas.";
   const width = 1000, height = 290, left = 58, right = 24, top = 24, bottom = 48;
   const plotWidth = width - left - right, plotHeight = height - top - bottom;
   const groupWidth = plotWidth / Math.max(days.length, 1);
@@ -3178,6 +3179,12 @@ $("#printButton").addEventListener("click", () => window.print());
 $("#analysisRefresh").addEventListener("click", loadAnalytics);
 $("#analysisPeriod").addEventListener("change", () => { $("#analysisBestPeriod").value = $("#analysisPeriod").value; loadAnalytics(); });
 $("#analysisBestPeriod").addEventListener("change", () => { $("#analysisPeriod").value = $("#analysisBestPeriod").value; loadAnalytics(); });
+$("#analysisBestClass").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-analysis-best]");
+  if (!button) return;
+  $("#analysisBestClass").querySelectorAll("[data-analysis-best]").forEach((item) => { const selected = item === button; item.classList.toggle("selected", selected); item.setAttribute("aria-pressed", String(selected)); });
+  $("#analysisBestInsight").innerHTML = `<strong>${safe(button.dataset.bestName)}</strong> mencatat <b>${safe(button.dataset.bestValue)}</b> daripada ${safe(button.dataset.bestRecords)} rekod • ${safe(button.dataset.bestTeacher)}.`;
+});
 $("#kpiMonth").addEventListener("change", loadKpiAnalytics);
 $("#kpiYear").addEventListener("change", () => {
   loadKpiAnalytics();
