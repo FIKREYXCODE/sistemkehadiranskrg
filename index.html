@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest?v=130">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=146">
+  <link rel="stylesheet" href="styles.css?v=147">
 </head>
 <body>
   <header class="topbar no-print">
@@ -53,7 +53,6 @@
     <details id="rmtNavGroup" class="sidebar-group nav-rmt">
       <summary><span class="sidebar-group-copy"><strong>Guru Bertugas RMT</strong><small>Buka pilihan pengurusan RMT</small></span></summary>
       <div class="sidebar-submenu">
-        <a href="#guru-rmt-maklumat" data-view-link="rmtInfo"><strong>Senarai Guru Bertugas Mingguan</strong></a>
         <a href="#guru-rmt-status" data-view-link="rmtStatus"><strong>Status Pengisian RMT</strong></a>
         <a href="#guru-rmt-laporan" data-view-link="rmtReport"><strong>Laporan RMT Harian</strong></a>
         <a href="#guru-rmt-arkib" data-view-link="rmtArchive"><strong>Arkib &amp; Gambar</strong></a>
@@ -500,21 +499,27 @@
       </div>
     </section>
 
-    <section id="rmtInfoView" class="utility-card app-view no-print" data-view-panel="rmtInfo" hidden>
-      <div class="utility-head">
-        <div><p class="eyebrow">Pengurusan RMT</p><h2>Senarai Guru Bertugas Mingguan</h2><p>Pilih satu sidang untuk menyemak atau mengisi nama guru bertugas.</p></div>
-        <a class="rmt-portal-button" href="https://appsjohor.moe.gov.my/rmt" target="_blank" rel="noopener noreferrer">🔗 Buka Portal RMT</a>
-      </div>
-      <div id="rmtTemplateForm" class="rmt-template-form">
-        <div class="rmt-meta-grid"><label>Nombor minggu<input id="rmtWeek" type="number" inputmode="numeric" min="1" max="53" placeholder="Contoh: 12" required><small>Masukkan nombor minggu sekolah</small></label><label>Tarikh pengisian<input id="rmtFrom" type="date" required><small>Tarikh guru membuat pengisian</small></label><input id="rmtTo" type="hidden"></div>
-        <div class="rmt-count-grid"><label>Jumlah Murid RMT Pagi<input id="rmtMorningCount" type="number" min="0" value="142"></label><label>Jumlah Murid RMT Petang<input id="rmtAfternoonCount" type="number" min="0" value="119"></label><div class="rmt-total-display"><span>Jumlah keseluruhan RMT</span><strong id="rmtComputedTotal">261</strong><small>Dikira secara automatik</small></div></div>
-        <div class="rmt-duty-session-picker"><label>Paparan sidang<select id="rmtDutySessionView"><option value="morning">🌅 Sidang Pagi</option><option value="afternoon">🌇 Sidang Petang</option></select></label><small>Hanya satu senarai dipaparkan pada satu masa.</small></div>
-        <div class="rmt-session-grid single-session"><fieldset data-rmt-duty-panel="morning"><legend>📗 Guru sesi pagi</legend><div id="rmtMorningNames" class="rmt-name-list"></div></fieldset><fieldset data-rmt-duty-panel="afternoon" hidden><legend>📕 Guru sesi petang</legend><div id="rmtAfternoonNames" class="rmt-name-list"></div></fieldset></div>
-        <div class="rmt-template-actions"><button id="rmtDutySave" class="primary-button" type="button">Simpan Senarai Guru Bertugas Mingguan</button><p id="rmtDutyStatus" class="form-message" role="status">Senarai ini akan disimpan mengikut minggu dan boleh dilihat pada semua peranti.</p></div>
-      </div>
-    </section>
-
     <section id="rmtStatusView" class="utility-card app-view no-print" data-view-panel="rmtStatus" hidden>
+      <section class="rmt-duty-inline-card" aria-labelledby="rmtDutyInlineTitle">
+        <div class="rmt-duty-inline-head">
+          <div><p class="eyebrow">Guru bertugas minggu ini</p><h2 id="rmtDutyInlineTitle">Senarai Guru Bertugas RMT</h2><p id="rmtDutySnapshotStatus">Memuatkan senarai guru…</p></div>
+          <a class="rmt-portal-button" href="https://appsjohor.moe.gov.my/rmt" target="_blank" rel="noopener noreferrer">Buka Portal RMT</a>
+        </div>
+        <div class="rmt-duty-snapshot" aria-live="polite">
+          <article class="morning"><strong>Sidang Pagi</strong><p id="rmtMorningSnapshot">Memuatkan…</p></article>
+          <article class="afternoon"><strong>Sidang Petang</strong><p id="rmtAfternoonSnapshot">Memuatkan…</p></article>
+        </div>
+        <details id="rmtDutyEditor" class="rmt-duty-editor">
+          <summary>Kemas kini senarai guru bertugas</summary>
+          <div id="rmtTemplateForm" class="rmt-template-form">
+            <div class="rmt-meta-grid"><label>Nombor minggu<input id="rmtWeek" type="number" inputmode="numeric" min="1" max="53" placeholder="Contoh: 12" required><small>Masukkan nombor minggu sekolah</small></label><label>Tarikh pengisian<input id="rmtFrom" type="date" required><small>Tarikh guru membuat pengisian</small></label><input id="rmtTo" type="hidden"></div>
+            <div class="rmt-count-grid"><label>Jumlah Murid RMT Pagi<input id="rmtMorningCount" type="number" min="0" value="142"></label><label>Jumlah Murid RMT Petang<input id="rmtAfternoonCount" type="number" min="0" value="119"></label><div class="rmt-total-display"><span>Jumlah keseluruhan RMT</span><strong id="rmtComputedTotal">261</strong><small>Dikira secara automatik</small></div></div>
+            <div class="rmt-duty-session-picker"><label>Paparan sidang<select id="rmtDutySessionView"><option value="morning">🌅 Sidang Pagi</option><option value="afternoon">🌇 Sidang Petang</option></select></label><small>Hanya satu senarai dipaparkan pada satu masa.</small></div>
+            <div class="rmt-session-grid single-session"><fieldset data-rmt-duty-panel="morning"><legend>📗 Guru sesi pagi</legend><div id="rmtMorningNames" class="rmt-name-list"></div></fieldset><fieldset data-rmt-duty-panel="afternoon" hidden><legend>📕 Guru sesi petang</legend><div id="rmtAfternoonNames" class="rmt-name-list"></div></fieldset></div>
+            <div class="rmt-template-actions"><button id="rmtDutySave" class="primary-button" type="button">Simpan Senarai Guru Bertugas Mingguan</button><p id="rmtDutyStatus" class="form-message" role="status">Senarai ini akan disimpan mengikut minggu dan boleh dilihat pada semua peranti.</p></div>
+          </div>
+        </details>
+      </section>
       <section class="rmt-calendar-panel" aria-labelledby="rmtCalendarTitle">
         <div class="rmt-calendar-heading"><div><p class="eyebrow">Kalendar bulanan</p><h3 id="rmtCalendarTitle">Status Pengisian RMT</h3><p>Klik tarikh untuk membuka laporan dan gambar. Nama pengisi ditunjukkan secara ringkas dalam petak.</p></div><label>Bulan laporan<input id="rmtCalendarMonth" type="month"></label></div>
         <div class="rmt-summary-grid"><div><span>Jumlah laporan</span><strong id="rmtSummaryTotal">0</strong></div><div class="morning"><span>Sidang pagi</span><strong id="rmtSummaryMorning">0</strong></div><div class="afternoon"><span>Sidang petang</span><strong id="rmtSummaryAfternoon">0</strong></div><div class="complete"><span>Hari lengkap</span><strong id="rmtSummaryComplete">0</strong></div></div>
@@ -679,6 +684,6 @@
   </aside>
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
   <script src="class-demographics.js?v=130" defer></script>
-  <script src="app.js?v=146" defer></script>
+  <script src="app.js?v=147" defer></script>
 </body>
 </html>

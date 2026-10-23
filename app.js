@@ -1350,6 +1350,14 @@ function setRmtNameValues(target, names = []) {
   $(target).querySelectorAll(".rmt-name-input").forEach((input, index) => { input.value = names[index] || ""; });
 }
 
+function renderRmtDutySnapshot(message = "") {
+  const morningNames = rmtNameValues("#rmtMorningNames");
+  const afternoonNames = rmtNameValues("#rmtAfternoonNames");
+  $("#rmtMorningSnapshot").textContent = morningNames.length ? morningNames.join(" • ") : "Belum ditetapkan";
+  $("#rmtAfternoonSnapshot").textContent = afternoonNames.length ? afternoonNames.join(" • ") : "Belum ditetapkan";
+  $("#rmtDutySnapshotStatus").textContent = message || "Senarai guru bagi minggu tarikh pengisian.";
+}
+
 async function loadRmtWeek() {
   if (state.rmtScheduleLoading) return;
   state.rmtScheduleLoading = true;
@@ -1372,6 +1380,7 @@ async function loadRmtWeek() {
       $("#rmtWeek").value = "";
       setRmtNameValues("#rmtMorningNames"); setRmtNameValues("#rmtAfternoonNames");
       $("#rmtDutyStatus").textContent = "Belum ada senarai guru RMT disimpan bagi minggu ini.";
+      renderRmtDutySnapshot("Belum ada senarai guru RMT disimpan bagi minggu ini.");
       return;
     }
     const filledDate = schedule.filledDate || date || state.date;
@@ -1384,9 +1393,12 @@ async function loadRmtWeek() {
     setRmtNameValues("#rmtMorningNames", schedule.morningNames);
     setRmtNameValues("#rmtAfternoonNames", schedule.afternoonNames);
     updateRmtTotal(); syncAllLocalizedDateInputs();
-    $("#rmtDutyStatus").textContent = `Senarai minggu ${schedule.weekNumber || isoWeekNumber(filledDate)} diisi oleh ${schedule.updatedBy || "guru bertugas"} pada ${formatDisplayDate(filledDate)}.`;
+    const scheduleMessage = `Minggu ${schedule.weekNumber || isoWeekNumber(filledDate)} • Dikemas kini oleh ${schedule.updatedBy || "guru bertugas"} pada ${formatDisplayDate(filledDate)}.`;
+    $("#rmtDutyStatus").textContent = scheduleMessage;
+    renderRmtDutySnapshot(scheduleMessage);
   } catch (error) {
     $("#rmtDutyStatus").textContent = error.message || "Senarai guru RMT tidak dapat dibuka.";
+    renderRmtDutySnapshot(error.message || "Senarai guru RMT tidak dapat dibuka.");
   } finally { state.rmtScheduleLoading = false; }
 }
 
@@ -1407,7 +1419,10 @@ async function saveRmtWeek() {
       data = await responseJson(response, "Senarai guru RMT gagal disimpan.");
     }
     if (!response.ok) throw new Error(data.error || "Senarai guru RMT gagal disimpan.");
-    $("#rmtDutyStatus").textContent = `Senarai guru RMT berjaya disimpan pada ${formatDisplayDate(filledDate)} dan boleh dilihat pada semua peranti.`;
+    const savedMessage = `Senarai guru RMT berjaya disimpan pada ${formatDisplayDate(filledDate)} dan boleh dilihat pada semua peranti.`;
+    $("#rmtDutyStatus").textContent = savedMessage;
+    renderRmtDutySnapshot(savedMessage);
+    $("#rmtDutyEditor").open = false;
   } catch (error) { $("#rmtDutyStatus").textContent = error.message || "Senarai guru RMT gagal disimpan."; }
   finally { button.disabled = false; }
 }
@@ -3072,12 +3087,13 @@ $("#sessionFilter").addEventListener("change", (event) => {
   updateSessionVisibility();
   updateEditingAccess();
 });
-const VIEW_HASHES = { home: "utama", attendance: "e-jkm", staff: "keberadaan-guru-akp", dailyDuty: "guru-bertugas-mingguan", dutyStatus: "status-guru-bertugas", duty: "guru-bertugas", calendar: "rekod-kalendar", monitoring: "laporan-pemantauan", analysis: "analisis", rmtInfo: "guru-rmt-maklumat", rmtStatus: "guru-rmt-status", rmtReport: "guru-rmt-laporan", rmtArchive: "guru-rmt-arkib", opr: "template-opr-hem" };
+const VIEW_HASHES = { home: "utama", attendance: "e-jkm", staff: "keberadaan-guru-akp", dailyDuty: "guru-bertugas-mingguan", dutyStatus: "status-guru-bertugas", duty: "guru-bertugas", calendar: "rekod-kalendar", monitoring: "laporan-pemantauan", analysis: "analisis", rmtStatus: "guru-rmt-status", rmtReport: "guru-rmt-laporan", rmtArchive: "guru-rmt-arkib", opr: "template-opr-hem" };
 const HASH_VIEWS = Object.fromEntries(Object.entries(VIEW_HASHES).map(([view, hash]) => [hash, view]));
-const RMT_VIEWS = ["rmtInfo", "rmtStatus", "rmtReport", "rmtArchive"];
+const RMT_VIEWS = ["rmtStatus", "rmtReport", "rmtArchive"];
 const DUTY_VIEWS = ["dailyDuty", "staff", "monitoring", "dutyStatus"];
 HASH_VIEWS["guru-bertugas-harian"] = "dailyDuty";
-HASH_VIEWS["guru-rmt"] = "rmtInfo";
+HASH_VIEWS["guru-rmt"] = "rmtStatus";
+HASH_VIEWS["guru-rmt-maklumat"] = "rmtStatus";
 HASH_VIEWS["laporan-bergambar"] = "monitoring";
 HASH_VIEWS.kehadiran = "attendance";
 HASH_VIEWS["rekod-pengisian-kelas"] = "attendance";
@@ -3115,7 +3131,7 @@ function activateViewFromHash() {
   if (requested === "duty") loadWeeklyDuty();
   if (requested === "completion") loadCompletionView();
   if (requested === "calendar") loadCalendarRecord();
-  if (requested === "rmtInfo") loadRmtWeek();
+  if (requested === "rmtStatus") loadRmtWeek();
   if (requested === "rmtArchive") ensureRmtArchiveDefaultDate();
   if (["rmtStatus", "rmtArchive"].includes(requested)) loadRmtReports();
   if (requested === "opr") loadOprReports();
