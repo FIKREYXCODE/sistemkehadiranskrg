@@ -753,10 +753,6 @@ function weeklyDutyEntries(reports, dates, session) {
     .filter((item) => item.note);
 }
 
-function weeklyDutyItemCount(entries) {
-  return entries.reduce((total, entry) => total + Math.max(1, entry.note.split(/\n+|(?<=[.!?])\s+/).map((item) => item.trim()).filter(Boolean).length), 0);
-}
-
 function weeklyDutyActionCount(entries) {
   const warning = /perlu\s+tindakan|belum\s+selesai|rosak|kotor|bahaya|tidak\s+selamat|masalah|aduan|lewat|gangguan/i;
   return entries.reduce((total, entry) => total + entry.note.split(/\n+|(?<=[.!?])\s+/).filter((item) => warning.test(item)).length, 0);
@@ -765,7 +761,7 @@ function weeklyDutyActionCount(entries) {
 function generateWeeklyDutySummary(session, entries, dates) {
   const label = SESSION_LABELS[session];
   const range = `${formatDisplayDate(dates[0])} hingga ${formatDisplayDate(dates[4])}`;
-  if (!entries.length) return `Belum ada catatan log untuk dianalisis bagi ${label} sepanjang minggu ${range}. Sila semak dan lengkapkan rumusan sebelum laporan mingguan disahkan.`;
+  if (!entries.length) return `Belum ada maklumat untuk dianalisis bagi ${label} untuk minggu ${range}. Sila lengkapkan satu rumusan mingguan sebelum laporan disahkan.`;
   const allText = entries.map((item) => item.note).join(" ").toLowerCase();
   const findings = [];
   if (/disiplin/.test(allText) && /terkawal|baik|memuaskan/.test(allText)) findings.push("disiplin murid berada dalam keadaan terkawal");
@@ -774,7 +770,7 @@ function generateWeeklyDutySummary(session, entries, dates) {
   if (/rmt/.test(allText)) findings.push("pelaksanaan RMT turut direkodkan");
   if (/sukan|sukantara|latihan/.test(allText)) findings.push("aktiviti sukan dilaksanakan mengikut perancangan");
   const actionCount = weeklyDutyActionCount(entries);
-  const opening = `Laporan guru bertugas ${label} bagi minggu ${range} merangkumi catatan pada ${entries.length} hari.`;
+  const opening = `Laporan guru bertugas ${label} bagi minggu ${range} dirumuskan dalam satu laporan mingguan.`;
   const analysis = findings.length ? ` Secara keseluruhan, ${findings.join(", ")}.` : " Catatan sepanjang minggu telah dikumpulkan untuk semakan dan pengesahan.";
   const action = actionCount ? ` Terdapat ${actionCount} perkara yang memerlukan perhatian atau tindakan susulan.` : " Tiada isu utama yang memerlukan tindakan susulan dikenal pasti daripada catatan yang direkodkan.";
   return `${opening}${analysis}${action}`;
@@ -824,14 +820,6 @@ function renderWeeklyDutyReport() {
   $("#dutyRosterCount").textContent = `${names.length} orang`;
   $("#weeklyReportState").textContent = report.saved ? "✓ Laporan disahkan" : "Draf automatik";
   $("#weeklyReportState").classList.toggle("saved", report.saved);
-  const weekdays = new Intl.DateTimeFormat("ms-MY", { weekday: "short", timeZone: "UTC" });
-  const entryDates = new Set(report.entries.map((item) => item.date));
-  $("#weeklyReportDays").innerHTML = state.dutyWeek.dates.map((date) => {
-    const logged = entryDates.has(date), current = date === state.date;
-    return `<span class="${logged ? "logged" : current ? "current" : ""}" title="${safe(formatDisplayDate(date))}"><b>${safe(weekdays.format(dateObject(date)))}</b><em>${logged ? "✓" : current ? "Hari ini" : "—"}</em></span>`;
-  }).join("");
-  $("#weeklyReportDayCount").textContent = String(report.entries.length);
-  $("#weeklyReportItemCount").textContent = String(weeklyDutyItemCount(report.entries));
   $("#weeklyReportActionCount").textContent = String(weeklyDutyActionCount(report.entries));
   $("#weeklyReportSummary").value = report.summary;
   $("#weeklyReportSummary").readOnly = !report.editing;
@@ -839,8 +827,7 @@ function renderWeeklyDutyReport() {
   $("#weeklyReportPreparedBy").value = report.preparedBy || "";
   $("#weeklyReportApprovedBy").value = report.approvedBy || "";
   $("#weeklyReportApprovedTitle").value = report.approvedTitle || "";
-  const sourceDays = report.entries.map((item) => weekdays.format(dateObject(item.date))).join(", ");
-  $("#weeklyReportSources").textContent = sourceDays ? `Dijana daripada catatan: ${sourceDays}. Hanya satu laporan disimpan untuk minggu ini.` : "Tiada catatan harian terdahulu. Rumusan boleh dilengkapkan terus dan disimpan sekali untuk minggu ini.";
+  $("#weeklyReportSources").textContent = report.entries.length ? "Analisis awal disediakan daripada rekod sedia ada. Hanya satu laporan disimpan bagi sidang ini untuk minggu tersebut." : "Lengkapkan dan sahkan satu laporan sahaja bagi sidang ini untuk minggu tersebut.";
   $("#weeklyReportEdit").textContent = report.editing ? "✓ Selesai edit" : "✎ Semak & edit";
   $("#weeklyReportSave").textContent = report.saved ? "✓ Simpan versi baharu" : "✓ Sahkan laporan minggu";
 }
@@ -2993,7 +2980,7 @@ window.addEventListener("beforeunload", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=126", { scope: "./", updateViaCache: "none" })
+    navigator.serviceWorker.register("./service-worker.js?v=127", { scope: "./", updateViaCache: "none" })
       .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
   });
 }
