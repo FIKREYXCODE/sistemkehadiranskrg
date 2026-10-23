@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest?v=130">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=139">
+  <link rel="stylesheet" href="styles.css?v=140">
 </head>
 <body>
   <header class="topbar no-print">
@@ -39,30 +39,30 @@
   <div class="app-layout">
   <nav id="mainSidebar" class="workspace-nav no-print" aria-label="Menu utama HEM SMARTTRACK" aria-hidden="true">
     <p class="sidebar-title">MENU UTAMA</p>
-    <a href="#utama" data-view-link="home"><span>⌂</span><strong>Laman Utama</strong><small>Lokasi, pautan dan ringkasan</small></a>
-    <a href="#e-jkm" data-view-link="attendance"><span>01</span><strong>e-JKM</strong><small>Rekod Kehadiran Murid</small></a>
-    <details id="dutyNavGroup" class="sidebar-group">
-      <summary><span>03</span><span class="sidebar-group-copy"><strong>Guru Bertugas Mingguan</strong><small>Senarai, pelaporan dan pemantauan</small></span></summary>
+    <a class="nav-home" href="#utama" data-view-link="home"><span class="menu-emblem" aria-hidden="true"><i>⌂</i></span><strong>Laman Utama</strong><small>Lokasi, pautan dan ringkasan</small></a>
+    <a class="nav-attendance" href="#e-jkm" data-view-link="attendance"><span class="menu-emblem" aria-hidden="true"><b>1</b><i>✓</i></span><strong>e-JKM</strong><small>Rekod Kehadiran Murid</small></a>
+    <details id="dutyNavGroup" class="sidebar-group nav-duty">
+      <summary><span class="menu-emblem" aria-hidden="true"><b>2</b><i>♟</i></span><span class="sidebar-group-copy"><strong>Guru Bertugas Mingguan</strong><small>Senarai, pelaporan dan pemantauan</small></span></summary>
       <div class="sidebar-submenu">
-        <a href="#guru-bertugas-mingguan" data-view-link="dailyDuty"><span>3.1</span><strong>Senarai &amp; Rumusan Mingguan</strong></a>
-        <a href="#keberadaan-guru-akp" data-view-link="staff"><span>3.2</span><strong>Keberadaan Guru &amp; AKP</strong></a>
-        <a href="#laporan-pemantauan" data-view-link="monitoring"><span>3.3</span><strong>Pemantauan Sekolah</strong></a>
-        <a href="#status-guru-bertugas" data-view-link="dutyStatus"><span>3.4</span><strong>Status Pengisian Harian</strong></a>
+        <a href="#guru-bertugas-mingguan" data-view-link="dailyDuty"><span>2.1</span><strong>Senarai &amp; Rumusan Mingguan</strong></a>
+        <a href="#keberadaan-guru-akp" data-view-link="staff"><span>2.2</span><strong>Keberadaan Guru &amp; AKP</strong></a>
+        <a href="#laporan-pemantauan" data-view-link="monitoring"><span>2.3</span><strong>Pemantauan Sekolah</strong></a>
+        <a href="#status-guru-bertugas" data-view-link="dutyStatus"><span>2.4</span><strong>Status Pengisian Harian</strong></a>
       </div>
     </details>
-    <a href="#guru-bertugas" data-view-link="duty"><span>04</span><strong>HEM SmartDisiplin</strong><small>Sistem pengurusan disiplin murid</small></a>
-    <details id="rmtNavGroup" class="sidebar-group">
-      <summary><span>05</span><span class="sidebar-group-copy"><strong>Guru Bertugas RMT</strong><small>Buka pilihan pengurusan RMT</small></span></summary>
+    <a class="nav-discipline" href="#guru-bertugas" data-view-link="duty"><span class="menu-emblem" aria-hidden="true"><b>3</b><i>!</i></span><strong>HEM SmartDisiplin</strong><small>Sistem pengurusan disiplin murid</small></a>
+    <details id="rmtNavGroup" class="sidebar-group nav-rmt">
+      <summary><span class="menu-emblem" aria-hidden="true"><b>4</b><i>●</i></span><span class="sidebar-group-copy"><strong>Guru Bertugas RMT</strong><small>Buka pilihan pengurusan RMT</small></span></summary>
       <div class="sidebar-submenu">
-        <a href="#guru-rmt-maklumat" data-view-link="rmtInfo"><span>5.1</span><strong>Senarai Guru Bertugas Mingguan</strong></a>
-        <a href="#guru-rmt-status" data-view-link="rmtStatus"><span>5.2</span><strong>Status Pengisian RMT</strong></a>
-        <a href="#guru-rmt-laporan" data-view-link="rmtReport"><span>5.3</span><strong>Laporan RMT Harian</strong></a>
-        <a href="#guru-rmt-arkib" data-view-link="rmtArchive"><span>5.4</span><strong>Arkib &amp; Gambar</strong></a>
+        <a href="#guru-rmt-maklumat" data-view-link="rmtInfo"><span>4.1</span><strong>Senarai Guru Bertugas Mingguan</strong></a>
+        <a href="#guru-rmt-status" data-view-link="rmtStatus"><span>4.2</span><strong>Status Pengisian RMT</strong></a>
+        <a href="#guru-rmt-laporan" data-view-link="rmtReport"><span>4.3</span><strong>Laporan RMT Harian</strong></a>
+        <a href="#guru-rmt-arkib" data-view-link="rmtArchive"><span>4.4</span><strong>Arkib &amp; Gambar</strong></a>
       </div>
     </details>
-    <a href="#rekod-kalendar" data-view-link="calendar"><span>06</span><strong>Rekod Ikut Kalendar</strong><small>Semak pengisian mengikut tarikh</small></a>
-    <a href="#analisis" data-view-link="analysis"><span>08</span><strong>Analisis Kehadiran</strong><small>Graf, KPI dan kelas terbaik</small></a>
-    <a href="#template-opr-hem" data-view-link="opr"><span>09</span><strong>Template OPR HEM</strong><small>Program, gambar dan penyedia</small></a>
+    <a class="nav-calendar" href="#rekod-kalendar" data-view-link="calendar"><span class="menu-emblem" aria-hidden="true"><b>5</b><i>▦</i></span><strong>Rekod Ikut Kalendar</strong><small>Semak pengisian mengikut tarikh</small></a>
+    <a class="nav-analysis" href="#analisis" data-view-link="analysis"><span class="menu-emblem" aria-hidden="true"><b>6</b><i>↗</i></span><strong>Trend Analisis Kehadiran</strong><small>Graf, KPI dan kelas terbaik</small></a>
+    <a class="nav-opr" href="#template-opr-hem" data-view-link="opr"><span class="menu-emblem" aria-hidden="true"><b>7</b><i>▤</i></span><strong>Template OPR HEM</strong><small>Program, gambar dan penyedia</small></a>
   </nav>
   <button id="sidebarBackdrop" class="sidebar-backdrop no-print" type="button" aria-label="Tutup menu" tabindex="-1"></button>
 
@@ -184,7 +184,7 @@
       </header>
 
       <section class="table-section">
-        <div class="section-heading"><div><span>01</span><h3>e-JKM — Rekod Kehadiran Murid</h3></div><div class="completion-legend" aria-label="Petunjuk status pengisian"><span class="complete">● Selesai</span><span class="incomplete">● Belum selesai</span></div></div>
+        <div class="section-heading"><div><span>1</span><h3>e-JKM — Rekod Kehadiran Murid</h3></div><div class="completion-legend" aria-label="Petunjuk status pengisian"><span class="complete">● Selesai</span><span class="incomplete">● Belum selesai</span></div></div>
         <div id="classCompletionLists" class="class-completion-lists" aria-live="polite"></div>
         <div class="table-scroll">
           <table class="attendance-table">
@@ -203,7 +203,7 @@
 
     <section id="staffView" class="utility-card app-view no-print compact-staff-view" data-view-panel="staff" hidden>
       <div class="utility-head">
-        <div><p class="eyebrow">Guru Bertugas Mingguan · 3.2</p><h2>Keberadaan Guru dan AKP</h2><p>Catat pegawai yang tidak berada di sekolah pada tarikh pilihan.</p></div>
+        <div><p class="eyebrow">Guru Bertugas Mingguan · 2.2</p><h2>Keberadaan Guru dan AKP</h2><p>Catat pegawai yang tidak berada di sekolah pada tarikh pilihan.</p></div>
         <div class="utility-controls"><label>Tarikh rekod<input id="staffPageDate" type="date" required></label></div>
       </div>
       <nav class="staff-session-tabs" aria-label="Pilih sidang keberadaan">
@@ -218,7 +218,7 @@
 
     <section id="dailyDutyView" class="utility-card app-view no-print compact-daily-duty" data-view-panel="dailyDuty" hidden>
       <div class="utility-head">
-        <div><p class="eyebrow">Guru Bertugas Mingguan · 3.1</p><h2>Senarai &amp; Rumusan Mingguan</h2><p>Nama guru dipilih sekali bagi minggu tersebut. Sistem menghimpunkan semua rekod HEM menjadi satu rumusan mingguan bagi setiap sidang.</p></div>
+        <div><p class="eyebrow">Guru Bertugas Mingguan · 2.1</p><h2>Senarai &amp; Rumusan Mingguan</h2><p>Nama guru dipilih sekali bagi minggu tersebut. Sistem menghimpunkan semua rekod HEM menjadi satu rumusan mingguan bagi setiap sidang.</p></div>
         <div class="utility-controls"><label>Tarikh rekod<input id="dailyDutyDate" type="date" required></label></div>
       </div>
       <div class="duty-week-toolbar">
@@ -268,7 +268,7 @@
 
     <section id="dutyStatusView" class="utility-card app-view no-print duty-status-view" data-view-panel="dutyStatus" hidden>
       <div class="duty-status-head">
-        <div><p class="eyebrow">Guru Bertugas Mingguan · 3.4</p><h2>Status Pengisian Harian</h2><p>Semak pengisian keberadaan dan pemantauan sekolah mengikut tarikh. Klik petak untuk melihat butiran atau menyambung pengisian.</p></div>
+        <div><p class="eyebrow">Guru Bertugas Mingguan · 2.4</p><h2>Status Pengisian Harian</h2><p>Semak pengisian keberadaan dan pemantauan sekolah mengikut tarikh. Klik petak untuk melihat butiran atau menyambung pengisian.</p></div>
         <label>Bulan pemantauan<input id="dutyStatusMonth" type="month"></label>
       </div>
       <div class="duty-status-summary" aria-label="Ringkasan status bulanan">
@@ -335,7 +335,7 @@
     <section id="monitoringReports" class="monitoring-card smart-monitoring app-view no-print" data-view-panel="monitoring" aria-labelledby="monitoringTitle" hidden>
       <div class="monitoring-head smart-monitoring-head">
         <div>
-          <p class="eyebrow">Guru Bertugas Mingguan · 3.3</p>
+          <p class="eyebrow">Guru Bertugas Mingguan · 2.3</p>
           <h2 id="monitoringTitle">Kalendar Pemantauan Harian</h2>
           <p>Klik petak tarikh untuk mengisi atau melihat laporan pemantauan.</p>
         </div>
@@ -663,6 +663,6 @@
   </aside>
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
   <script src="class-demographics.js?v=130" defer></script>
-  <script src="app.js?v=139" defer></script>
+  <script src="app.js?v=140" defer></script>
 </body>
 </html>
