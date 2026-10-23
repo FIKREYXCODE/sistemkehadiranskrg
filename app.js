@@ -46,6 +46,7 @@ const ABSENCE_REASONS = ["Kursus / Bengkel", "Mesyuarat / Taklimat", "Urusan Ras
 const KPI_TARGET = 96;
 const MONITORING_LOCATIONS = ["Kawasan Perhimpunan", "Bilik Darjah", "Koridor", "Tangga", "Padang", "Dewan", "Tandas Murid Lelaki", "Tandas Murid Perempuan", "Tandas Guru", "Surau / Bilik Solat", "Kantin", "Kawasan RMT", "Penyediaan Makanan RMT", "Pengendalian Makanan RMT", "Pintu Pagar", "Laluan Keluar / Masuk", "Kawasan Letak Kenderaan", "Laluan Pejalan Kaki", "Kawasan Sekitar Sekolah", "Longkang & Saliran", "Tempat Pembuangan Sampah", "Landskap / Kawasan Hijau", "Bilik UBK", "Makmal Komputer", "Pusat Sumber", "Bilik Sains", "Bilik Muzik", "Stor", "Bilik khas lain", "Lain-lain"];
 const CLASS_ETHNICITY_COUNTS = window.CLASS_ETHNICITY_COUNTS || {};
+const IDME_POSITION_KEY = "skrg-idme-position-v1";
 
 function draftKey(date = state.date) { return `${DRAFT_PREFIX}${date}`; }
 
@@ -98,6 +99,79 @@ function localDateValue() {
   const date = new Date();
   date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
   return date.toISOString().slice(0, 10);
+}
+
+function setupDraggableIdmeShortcut() {
+  const shortcut = $("#idmeShortcut");
+  if (!shortcut) return;
+  let dragState = null;
+  let suppressClick = false;
+
+  const positionBounds = () => {
+    const rect = shortcut.getBoundingClientRect();
+    return { width: rect.width, height: rect.height, maxX: Math.max(8, window.innerWidth - rect.width - 8), maxY: Math.max(8, window.innerHeight - rect.height - 8) };
+  };
+  const applyPosition = (left, top, save = false) => {
+    const bounds = positionBounds();
+    const x = Math.min(bounds.maxX, Math.max(8, left));
+    const y = Math.min(bounds.maxY, Math.max(8, top));
+    shortcut.classList.add("is-positioned");
+    shortcut.style.left = `${x}px`;
+    shortcut.style.top = `${y}px`;
+    if (save) {
+      try { localStorage.setItem(IDME_POSITION_KEY, JSON.stringify({ x: x / bounds.maxX, y: y / bounds.maxY })); } catch { /* Kedudukan hanya kekal untuk sesi semasa jika storan disekat. */ }
+    }
+  };
+  const restorePosition = () => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(IDME_POSITION_KEY) || "null");
+      if (!saved || !Number.isFinite(saved.x) || !Number.isFinite(saved.y)) return;
+      const bounds = positionBounds();
+      applyPosition(saved.x * bounds.maxX, saved.y * bounds.maxY);
+    } catch { /* Gunakan kedudukan asal jika data lama tidak sah. */ }
+  };
+
+  shortcut.addEventListener("pointerdown", (event) => {
+    if (event.button !== undefined && event.button !== 0) return;
+    const rect = shortcut.getBoundingClientRect();
+    dragState = { pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, left: rect.left, top: rect.top, moved: false };
+    shortcut.classList.add("is-positioned", "is-dragging");
+    shortcut.style.left = `${rect.left}px`;
+    shortcut.style.top = `${rect.top}px`;
+    shortcut.setPointerCapture?.(event.pointerId);
+  });
+  shortcut.addEventListener("dragstart", (event) => event.preventDefault());
+  shortcut.addEventListener("pointermove", (event) => {
+    if (!dragState || event.pointerId !== dragState.pointerId) return;
+    const dx = event.clientX - dragState.startX;
+    const dy = event.clientY - dragState.startY;
+    if (!dragState.moved && Math.hypot(dx, dy) < 6) return;
+    dragState.moved = true;
+    event.preventDefault();
+    applyPosition(dragState.left + dx, dragState.top + dy);
+  });
+  const finishDrag = (event) => {
+    if (!dragState || event.pointerId !== dragState.pointerId) return;
+    const moved = dragState.moved;
+    dragState = null;
+    shortcut.classList.remove("is-dragging");
+    shortcut.releasePointerCapture?.(event.pointerId);
+    if (!moved) return;
+    const rect = shortcut.getBoundingClientRect();
+    applyPosition(rect.left, rect.top, true);
+    suppressClick = true;
+    window.setTimeout(() => { suppressClick = false; }, 350);
+  };
+  shortcut.addEventListener("pointerup", finishDrag);
+  shortcut.addEventListener("pointercancel", finishDrag);
+  shortcut.addEventListener("click", (event) => {
+    if (!suppressClick) return;
+    event.preventDefault();
+    event.stopPropagation();
+    suppressClick = false;
+  });
+  window.addEventListener("resize", () => { if (shortcut.classList.contains("is-positioned")) restorePosition(); });
+  restorePosition();
 }
 
 function safe(value) {
@@ -2599,6 +2673,7 @@ $("#completionDate").value = state.date;
 $("#calendarDate").value = state.date;
 $("#letterDate").value = state.date;
 setupRmtTemplate();
+setupDraggableIdmeShortcut();
 updateRmtDutySessionView();
 enhanceLocalizedDateInputs();
 setupKpiFilters();
@@ -2650,7 +2725,7 @@ window.addEventListener("beforeunload", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=90", { scope: "./", updateViaCache: "none" })
+    navigator.serviceWorker.register("./service-worker.js?v=121", { scope: "./", updateViaCache: "none" })
       .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
   });
 }
