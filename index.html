@@ -238,6 +238,9 @@
         <section class="weekly-duty-report-card">
           <header class="weekly-report-head"><div><small>ANALISIS SISTEM</small><strong>Rumusan Mingguan Automatik</strong></div><span id="weeklyReportState">Draf automatik</span></header>
           <div class="weekly-report-metrics">
+            <article><span>🎒</span><strong id="weeklyAttendanceRate">—</strong><small>kehadiran murid</small></article>
+            <article><span>👥</span><strong id="weeklyStaffPresenceRate">—</strong><small>keberadaan guru &amp; AKP</small></article>
+            <article><span>🍽️</span><strong id="weeklyRmtCount">0</strong><small>laporan RMT</small></article>
             <article class="attention"><span>⚠️</span><strong id="weeklyReportActionCount">0</strong><small>perkara perlu tindakan</small></article>
           </div>
           <details id="weeklyReportActionSources" class="weekly-action-sources" hidden></details>
@@ -250,7 +253,7 @@
           <p id="weeklyReportSources" class="weekly-report-sources"></p>
           <div class="weekly-report-actions">
             <button id="weeklyReportGenerate" class="secondary-button" type="button">↻ Jana semula</button>
-            <button id="weeklyReportEdit" class="secondary-button" type="button">✎ Semak &amp; edit</button>
+            <button id="weeklyReportEdit" class="secondary-button" type="button">✎ Edit rumusan</button>
             <button id="weeklyReportSave" class="primary-button" type="button">✓ Sahkan laporan minggu</button>
           </div>
         </section>

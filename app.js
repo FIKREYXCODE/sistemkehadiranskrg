@@ -800,10 +800,61 @@ function weeklyMonitoringData(safetyReports, dates, session) {
   return { reports: all, actions };
 }
 
-function generateWeeklyDutySummary(session, entries, dates, actionItems = []) {
+function weeklyAttendanceData(reports, dates, session) {
+  const records = reports.flatMap((report, dayIndex) => filterReportClasses(report, session)
+    .filter((row) => reportClassCompleted(report, row.id))
+    .map((row) => ({ ...classFigures(row), date: dates[dayIndex], name: row.name })));
+  const totals = records.reduce((sum, row) => ({ enrol: sum.enrol + row.enrolTotal, present: sum.present + row.presentTotal }), { enrol: 0, present: 0 });
+  const rate = totals.enrol ? (totals.present / totals.enrol) * 100 : null;
+  const actions = rate !== null && rate < KPI_TARGET ? [{
+    source: "Analisis Kehadiran Murid", date: dates[dates.length - 1], location: SESSION_LABELS[session],
+    issue: `Purata kehadiran terkumpul ${rate.toFixed(2)}%, di bawah KPI sekolah ${KPI_TARGET}%.`,
+    action: "Pantau ketidakhadiran murid dan laksanakan intervensi kelas berkaitan", updatedBy: "Analisis sistem",
+  }] : [];
+  return { records, ...totals, rate, days: new Set(records.map((row) => row.date)).size, actions };
+}
+
+function weeklyStaffData(reports, dates, session) {
+  const totalStaff = count(state.schoolStats.teachers, 500) + count(state.schoolStats.akp, 100);
+  const daily = reports.map((report, index) => {
+    const absences = (Array.isArray(report?.staffAbsences?.[session]) ? report.staffAbsences[session] : []).filter(staffAbsenceRowHasValue);
+    return { date: dates[index], absent: absences.length };
+  });
+  const absent = daily.reduce((sum, item) => sum + item.absent, 0);
+  const possible = totalStaff * daily.length;
+  const present = Math.max(0, possible - absent);
+  return {
+    totalStaff, absent, present, days: daily.length,
+    averagePresent: daily.length ? present / daily.length : 0,
+    rate: possible ? (present / possible) * 100 : null,
+  };
+}
+
+function weeklyRmtData(safetyReports, dates, session) {
+  const reports = safetyReports.flatMap((items, index) => items.map((report) => ({ ...report, reportDate: report.reportDate || dates[index] })))
+    .filter((report) => isRmtReport(report) && (!report.session || report.session === session));
+  let recipients = 0, supplied = 0;
+  const actions = [];
+  for (const report of reports) {
+    let details = null;
+    try { details = String(report.issue || "").startsWith("[rmt-v2]") ? JSON.parse(String(report.issue).slice(8)) : null; } catch { details = null; }
+    const recipientCount = count(details?.recipients);
+    const suppliedCount = count(details?.supplied);
+    recipients += recipientCount; supplied += suppliedCount;
+    const rating = String(details?.rating || "");
+    if ((recipientCount && suppliedCount < recipientCount) || /kurang|tidak memuaskan|bermasalah/i.test(rating)) actions.push({
+      source: "Laporan Guru Bertugas RMT", date: report.reportDate, location: report.location || "RMT",
+      issue: suppliedCount < recipientCount ? `${suppliedCount} hidangan dibekalkan untuk ${recipientCount} penerima.` : `Penilaian RMT: ${rating}.`,
+      action: "Semak bekalan dan pelaksanaan RMT", updatedBy: report.updatedBy || "",
+    });
+  }
+  return { reports, recipients, supplied, days: new Set(reports.map((report) => report.reportDate)).size, actions };
+}
+
+function generateWeeklyDutySummary(session, entries, dates, analysis, actionItems = []) {
   const label = SESSION_LABELS[session];
-  const range = `${formatDisplayDate(dates[0])} hingga ${formatDisplayDate(dates[4])}`;
-  if (!entries.length && !actionItems.length) return `Belum ada maklumat atau perkara perlu tindakan direkodkan bagi ${label} untuk minggu ${range}.`;
+  const lastDate = dates[dates.length - 1];
+  const range = dates.length === 1 ? formatDisplayDate(dates[0]) : `${formatDisplayDate(dates[0])} hingga ${formatDisplayDate(lastDate)}`;
   const allText = entries.map((item) => item.note).join(" ").toLowerCase();
   const findings = [];
   if (/disiplin/.test(allText) && /terkawal|baik|memuaskan/.test(allText)) findings.push("disiplin murid berada dalam keadaan terkawal");
@@ -811,12 +862,18 @@ function generateWeeklyDutySummary(session, entries, dates, actionItems = []) {
   if (/pdp|pengajaran|pembelajaran/.test(allText) && /jadual|berjalan|dijalankan/.test(allText)) findings.push("PdP berjalan mengikut jadual");
   if (/rmt/.test(allText)) findings.push("pelaksanaan RMT turut direkodkan");
   if (/sukan|sukantara|latihan/.test(allText)) findings.push("aktiviti sukan dilaksanakan mengikut perancangan");
+  const { attendance, staff, rmt, monitoring } = analysis;
+  const paragraphs = [`Rumusan automatik ${label} bagi ${range} menghimpunkan semua rekod HEM SmartTrack yang tersedia setakat ${formatDisplayDate(lastDate)}.`];
+  if (attendance.rate !== null) paragraphs.push(`Kehadiran murid: ${attendance.present}/${attendance.enrol} kehadiran harian terkumpul daripada ${attendance.records.length} rekod kelas (${attendance.rate.toFixed(2)}%), ${attendance.rate >= KPI_TARGET ? "mencapai" : "belum mencapai"} KPI sekolah ${KPI_TARGET}%.`);
+  else paragraphs.push("Kehadiran murid: belum ada rekod kelas lengkap untuk dianalisis dalam tempoh ini.");
+  if (staff.rate !== null) paragraphs.push(`Keberadaan guru dan AKP: berdasarkan senarai tidak berada, anggaran purata ${staff.averagePresent.toFixed(1)}/${staff.totalStaff} orang sehari (${staff.rate.toFixed(2)}%), dengan ${staff.absent} rekod ketidakhadiran.`);
+  paragraphs.push(rmt.reports.length ? `RMT: ${rmt.reports.length} laporan bagi ${rmt.days} hari merekodkan ${rmt.supplied} hidangan untuk ${rmt.recipients} penerima.` : "RMT: belum ada laporan bagi sidang ini dalam tempoh semasa.");
+  paragraphs.push(`Pemantauan sekolah: ${monitoring.reports.length} rekod diterima; ${monitoring.actions.length} memerlukan perhatian.`);
+  if (findings.length) paragraphs.push(`Catatan guru bertugas menunjukkan ${findings.join(", ")}.`);
   const actionCount = actionItems.length;
-  const opening = `Laporan guru bertugas ${label} bagi minggu ${range} dirumuskan dalam satu laporan mingguan.`;
-  const analysis = findings.length ? ` Secara keseluruhan, ${findings.join(", ")}.` : entries.length ? " Catatan sepanjang minggu telah dikumpulkan untuk semakan dan pengesahan." : " Tiada catatan tambahan guru bertugas direkodkan.";
   const locations = [...new Set(actionItems.map((item) => item.location).filter(Boolean))].slice(0, 4);
-  const action = actionCount ? ` Terdapat ${actionCount} perkara perlu tindakan daripada laporan minggu ini${locations.length ? ` melibatkan ${locations.join(", ")}` : ""}.` : " Tiada perkara perlu tindakan direkodkan dalam laporan minggu ini.";
-  return `${opening}${analysis}${action}`;
+  paragraphs.push(actionCount ? `Tindakan susulan: ${actionCount} perkara dikenal pasti${locations.length ? ` melibatkan ${locations.join(", ")}` : ""}.` : "Tindakan susulan: tiada perkara perlu tindakan dikenal pasti setakat ini.");
+  return paragraphs.join("\n\n");
 }
 
 function parseWeeklyDutyStoredReport(report) {
@@ -844,15 +901,24 @@ function buildWeeklyDutyReport(reports, dates, session, stored = null, safetyWee
   const anchorMeta = reports[0]?.meta || {};
   const entries = weeklyDutyEntries(reports, dates, session);
   const monitoring = weeklyMonitoringData(safetyWeek.reports, dates, session);
-  const actionItems = [...monitoring.actions, ...weeklyDutyNoteActions(entries)];
-  const generated = generateWeeklyDutySummary(session, entries, dates, actionItems);
-  const sourceFingerprint = JSON.stringify({ entries, actionItems: actionItems.map(({ date, location, issue, action }) => ({ date, location, issue, action })) });
+  const attendance = weeklyAttendanceData(reports, dates, session);
+  const staff = weeklyStaffData(reports, dates, session);
+  const rmt = weeklyRmtData(safetyWeek.reports, dates, session);
+  const actionItems = [...monitoring.actions, ...rmt.actions, ...attendance.actions, ...weeklyDutyNoteActions(entries)];
+  const analysis = { attendance, staff, rmt, monitoring };
+  const generated = generateWeeklyDutySummary(session, entries, dates, analysis, actionItems);
+  const sourceFingerprint = JSON.stringify({
+    entries, attendance: { enrol: attendance.enrol, present: attendance.present, records: attendance.records.length },
+    staff: { absent: staff.absent, days: staff.days }, rmt: { reports: rmt.reports.length, recipients: rmt.recipients, supplied: rmt.supplied },
+    monitoring: monitoring.reports.length,
+    actionItems: actionItems.map(({ date, location, issue, action }) => ({ date, location, issue, action })),
+  });
   const storedMatchesSources = Boolean(stored?.summary) && stored?.sourceFingerprint === sourceFingerprint;
   const latestValue = (field) => reports.map((report) => String(report?.meta?.[field] || "").trim()).filter(Boolean).pop() || "";
   return {
     summary: storedMatchesSources ? String(stored.summary).trim() : generated, generated, sourceFingerprint,
-    saved: storedMatchesSources, editing: false, entries, actionItems,
-    sourceCounts: { monitoring: monitoring.reports.length, dutyNotes: entries.length, unavailableDays: safetyWeek.failed },
+    saved: storedMatchesSources, editing: false, entries, actionItems, analysis,
+    sourceCounts: { attendance: attendance.records.length, staffAbsences: staff.absent, rmt: rmt.reports.length, monitoring: monitoring.reports.length, dutyNotes: entries.length, unavailableDays: safetyWeek.failed },
     preparedBy: String(stored?.preparedBy || "").trim() || String(anchorMeta[fields.preparedBy] || "").trim() || latestValue(fields.preparedBy),
     approvedBy: String(stored?.approvedBy || "").trim() || String(anchorMeta[fields.approvedBy] || "").trim() || latestValue(fields.approvedBy),
     approvedTitle: String(stored?.approvedTitle || "").trim() || String(anchorMeta[fields.approvedTitle] || "").trim() || latestValue(fields.approvedTitle),
@@ -869,6 +935,9 @@ function renderWeeklyDutyReport() {
   $("#dutyRosterCount").textContent = `${names.length} orang`;
   $("#weeklyReportState").textContent = report.saved ? "✓ Laporan disahkan" : "Draf automatik";
   $("#weeklyReportState").classList.toggle("saved", report.saved);
+  $("#weeklyAttendanceRate").textContent = report.analysis.attendance.rate === null ? "—" : `${report.analysis.attendance.rate.toFixed(2)}%`;
+  $("#weeklyStaffPresenceRate").textContent = report.analysis.staff.rate === null ? "—" : `${report.analysis.staff.rate.toFixed(2)}%`;
+  $("#weeklyRmtCount").textContent = String(report.analysis.rmt.reports.length);
   $("#weeklyReportActionCount").textContent = String(report.actionItems.length);
   const actionSource = $("#weeklyReportActionSources");
   actionSource.hidden = !report.actionItems.length;
@@ -879,8 +948,8 @@ function renderWeeklyDutyReport() {
   $("#weeklyReportPreparedBy").value = report.preparedBy || "";
   $("#weeklyReportApprovedBy").value = report.approvedBy || "";
   $("#weeklyReportApprovedTitle").value = report.approvedTitle || "";
-  $("#weeklyReportSources").textContent = `Sumber minggu ini: ${report.sourceCounts.monitoring} rekod Pemantauan Sekolah • ${report.sourceCounts.dutyNotes} catatan guru bertugas. Hanya rekod ${formatDisplayDate(state.dutyWeek.anchor)} hingga ${formatDisplayDate(state.dutyWeek.end)} digunakan.${report.sourceCounts.unavailableDays ? ` ${report.sourceCounts.unavailableDays} hari belum dapat disemak; cuba jana semula.` : ""}`;
-  $("#weeklyReportEdit").textContent = report.editing ? "✓ Selesai edit" : "✎ Semak & edit";
+  $("#weeklyReportSources").textContent = `Dijana daripada ${report.sourceCounts.attendance} rekod kelas • ${report.sourceCounts.staffAbsences} rekod tidak berada • ${report.sourceCounts.rmt} laporan RMT • ${report.sourceCounts.monitoring} rekod pemantauan • ${report.sourceCounts.dutyNotes} catatan guru bertugas. Tempoh analisis: ${formatDisplayDate(state.dutyWeek.anchor)} hingga ${formatDisplayDate(state.dutyWeek.end)}.${report.sourceCounts.unavailableDays ? ` ${report.sourceCounts.unavailableDays} hari belum dapat disemak; cuba jana semula.` : ""}`;
+  $("#weeklyReportEdit").textContent = report.editing ? "✓ Selesai edit" : "✎ Edit rumusan";
   $("#weeklyReportSave").textContent = report.saved ? "✓ Simpan versi baharu" : "✓ Sahkan laporan minggu";
 }
 
@@ -896,7 +965,9 @@ function setDailyDutySession(session = "morning") {
 }
 
 async function loadDutyWeekTemplate(currentData = null, force = false) {
-  const dates = schoolWeekDates(state.date);
+  const weekDates = schoolWeekDates(state.date);
+  const dates = weekDates.filter((date) => date <= state.date);
+  if (!dates.length) dates.push(weekDates[0]);
   const weekKey = dates.join(":");
   if (state.dutyWeek.loading) return;
   if (!force && state.dutyWeek.loadedKey === weekKey && Date.now() - state.dutyWeek.loadedAt < 60000) return;
@@ -920,7 +991,7 @@ async function loadDutyWeekTemplate(currentData = null, force = false) {
     };
     state.dutyWeek = {
       ...state.dutyWeek,
-      anchor: dates[0], end: dates[4], sourceDate: firstSourceIndex >= 0 ? dates[firstSourceIndex] : "",
+      anchor: dates[0], end: dates[dates.length - 1], sourceDate: firstSourceIndex >= 0 ? dates[firstSourceIndex] : "",
       editing: !hasWeeklyNames, locked: hasWeeklyNames, loading: false, loadedKey: weekKey, loadedAt: Date.now(), dates, reports,
       summaries: { morning: buildWeeklyDutyReport(reports, dates, "morning", storedReports.morning, safetyWeek), afternoon: buildWeeklyDutyReport(reports, dates, "afternoon", storedReports.afternoon, safetyWeek) },
     };
