@@ -153,7 +153,7 @@ tfoot td{background:#dfeaf4;font-weight:900}
 .chart-title-row strong,.chart-title-row small{display:block}.chart-title-row small{margin-top:4px;color:var(--muted);font-size:.72rem}
 .chart-legend{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:.72rem;font-weight:700}
 .chart-legend span{display:flex;align-items:center;gap:6px}.chart-legend i{width:22px;height:4px;border-radius:4px;background:#0755b5}.chart-legend .legend-morning{background:#08a06c}.chart-legend .legend-afternoon{background:#f28b23}
-.attendance-chart{min-height:330px;margin-top:12px;overflow-x:auto}.attendance-chart svg{display:block;width:100%;min-width:720px;height:auto}.chart-grid{stroke:#dbe7f4;stroke-width:1}.chart-axis-text{fill:#6b7d97;font-size:12px}.chart-bar{opacity:.9;transition:opacity .15s}.chart-bar:hover{opacity:1;stroke:#14213d;stroke-width:1}.chart-bar-value{fill:#fff;font-size:10px;font-weight:900;pointer-events:none}.chart-bar-value.outside{fill:#14213d;font-size:9px}
+.attendance-chart{min-height:250px;margin-top:8px;overflow:hidden}.attendance-chart svg{display:block;width:100%;height:auto}.chart-grid{stroke:#dbe7f4;stroke-width:1}.chart-axis-text{fill:#6b7d97;font-size:12px}.chart-line{fill:none;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.chart-line-dot{stroke:#fff;stroke-width:2.5;transition:r .15s}.chart-line-dot:hover{r:7px}
 .analysis-table-wrap{margin-top:16px;overflow:auto;border:1px solid var(--line);border-radius:12px}.analysis-table{min-width:680px}.analysis-table th{background:var(--navy)}.analysis-table td{font-size:.8rem}.analysis-table td:not(:first-child){font-weight:800}
 .analysis-note{margin:12px 0 0;color:var(--muted);font-size:.75rem}
 @media(max-width:1050px){.topbar-school-copy>span{display:none}.topbar{padding-left:16px;padding-right:16px}.top-actions{gap:7px}.save-status{display:none}}
@@ -597,6 +597,55 @@ body{background:#fff;color:#000}
   #rmtArchiveView .rmt-shared-gallery{display:flex;gap:9px;overflow-x:auto;padding-bottom:8px;scroll-snap-type:x mandatory}
   #rmtArchiveView .rmt-shared-report{flex:0 0 min(88vw,560px);grid-template-columns:1fr;scroll-snap-align:start}
   #rmtArchiveView .rmt-shared-report .monitoring-photo-grid{height:135px;min-height:0}
+}
+
+/* v142: rekod kalendar untuk pentadbir dan analisis utama yang lebih padat. */
+.admin-private-tools{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:14px 0 24px;padding:16px 18px;border:1px solid #bdd7f2;border-radius:16px;background:linear-gradient(145deg,#f3f9ff,#fff)}
+.admin-private-tools h2{margin:2px 0 4px;font-size:1.12rem}.admin-private-tools p{margin:0;color:var(--muted);font-size:.75rem}.admin-private-tools .secondary-button{flex:0 0 auto;text-decoration:none}
+#attendanceAnalysis.analysis-card{padding:20px 22px}
+#attendanceAnalysis .analysis-head{align-items:center;gap:18px}
+#attendanceAnalysis .analysis-head h2{margin-bottom:3px;font-size:clamp(1.25rem,2vw,1.7rem)}
+#attendanceAnalysis .analysis-head>div>p:last-child{font-size:.72rem;line-height:1.35}
+#attendanceAnalysis .analysis-controls{min-width:min(100%,470px)}
+#attendanceAnalysis .analysis-status{margin-top:10px;padding:8px 11px;font-size:.72rem}
+#attendanceAnalysis .analysis-summary{gap:9px;margin:10px 0}
+#attendanceAnalysis .analysis-summary article{padding:10px 13px}
+#attendanceAnalysis .analysis-summary strong{margin:2px 0;font-size:1.28rem}
+#attendanceAnalysis .analysis-summary span,#attendanceAnalysis .analysis-summary small{font-size:.65rem}
+#attendanceAnalysis .chart-shell{padding:12px 14px}
+#attendanceAnalysis .chart-title-row strong{font-size:.82rem}
+.analysis-detail-stack{display:grid;gap:8px;margin-top:10px}
+.analysis-detail{border:1px solid #ccdaeb;border-radius:13px;background:#fff;overflow:hidden}
+.analysis-detail>summary{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:11px 14px;background:#f4f8fd;color:var(--navy);cursor:pointer;list-style:none}
+.analysis-detail>summary::-webkit-details-marker{display:none}.analysis-detail>summary span{display:block;min-width:0}.analysis-detail>summary b,.analysis-detail>summary small{display:block}.analysis-detail>summary b{font-size:.82rem}.analysis-detail>summary small{margin-top:2px;color:var(--muted);font-size:.64rem}.analysis-detail>summary i{font-style:normal;font-size:1.05rem;font-weight:900}.analysis-detail[open]>summary i{transform:rotate(45deg)}
+.analysis-detail>.kpi-panel,.analysis-detail>.podium-section,.analysis-detail>.annual-winners-section,.analysis-detail>.analysis-table-wrap,.analysis-detail>.analysis-note{margin:12px}
+.analysis-detail>.annual-winners-section{margin-top:18px}
+@media(max-width:800px){
+  .admin-private-tools{align-items:stretch;flex-direction:column}.admin-private-tools .secondary-button{align-self:flex-start}
+  #attendanceAnalysis.analysis-card{width:100%;padding:13px 12px;border-radius:18px}
+  #attendanceAnalysis .analysis-head{gap:9px}
+  #attendanceAnalysis .analysis-head>div>p:last-child{display:none}
+  #attendanceAnalysis .analysis-controls{display:grid;grid-template-columns:1fr 1fr auto;gap:6px}
+  #attendanceAnalysis .analysis-controls label{min-width:0;font-size:.62rem}
+  #attendanceAnalysis .analysis-controls select,#attendanceAnalysis .analysis-controls input{height:36px;margin-top:3px;padding:0 7px;font-size:.72rem}
+  #attendanceAnalysis .analysis-controls .primary-button{align-self:end;width:38px;height:36px;padding:0;font-size:0}
+  #attendanceAnalysis .analysis-controls .primary-button:after{content:"↻";font-size:1rem}
+  #attendanceAnalysis .analysis-status{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #attendanceAnalysis .analysis-summary{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+  #attendanceAnalysis .analysis-summary article{padding:8px 7px}
+  #attendanceAnalysis .analysis-summary span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #attendanceAnalysis .analysis-summary strong{font-size:1.05rem}
+  #attendanceAnalysis .analysis-summary small{font-size:.56rem}
+  #attendanceAnalysis .chart-shell{padding:9px 8px}
+  #attendanceAnalysis .chart-title-row{gap:5px}
+  #attendanceAnalysis .chart-title-row small{display:none}
+  #attendanceAnalysis .chart-legend{gap:7px;font-size:.58rem}
+  #attendanceAnalysis .chart-legend i{width:14px;height:3px}
+  #attendanceAnalysis .attendance-chart{min-height:0;margin-top:2px}
+  #attendanceAnalysis .attendance-chart svg{min-width:0}
+  #attendanceAnalysis .chart-axis-text{font-size:10px}
+  #attendanceAnalysis .chart-line{stroke-width:5}
+  .analysis-detail>summary{padding:9px 11px}.analysis-detail>summary small{font-size:.59rem}
 }
 
 /* v133: SmartDisiplin satu paparan dengan carta garis dan fokus tindakan operasi. */

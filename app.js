@@ -557,31 +557,28 @@ function renderAnalytics(records, range) {
   const medals = [{ icon: "🥇", label: "Emas", className: "gold" }, { icon: "🥈", label: "Perak", className: "silver" }, { icon: "🥉", label: "Gangsa", className: "bronze" }];
   $("#attendancePodium").innerHTML = winners.length ? winners.map((item, index) => `<article class="podium-card ${medals[index].className}"><div class="podium-medal" aria-hidden="true">${medals[index].icon}</div><strong>${safe(item.name)}</strong><span>${item.value.toFixed(2)}%</span><small>${safe(item.teacher)}</small><small>${item.records} rekod • ${medals[index].label}</small></article>`).join("") : '<p class="monitoring-empty">Belum ada data kelas yang mencukupi untuk kedudukan emas, perak dan gangsa.</p>';
   $("#analysisRangeLabel").textContent = `${formatDisplayDate(range.from)} – ${formatDisplayDate(range.to)}`;
-  const width = 1000, height = 350, left = 58, right = 24, top = 24, bottom = 52;
+  const width = 1000, height = 290, left = 58, right = 24, top = 24, bottom = 48;
   const plotWidth = width - left - right, plotHeight = height - top - bottom;
   const groupWidth = plotWidth / Math.max(days.length, 1);
   const x = (index) => left + (index + 0.5) * groupWidth;
-  const y = (value) => top + ((100 - Math.max(0, Math.min(100, value))) / 100) * plotHeight;
+  const finiteValues = days.flatMap((day) => [day.all, day.morning, day.afternoon]).filter(Number.isFinite);
+  const axisMin = finiteValues.length ? Math.max(0, Math.floor((Math.min(...finiteValues) - 5) / 10) * 10) : 0;
+  const axisRange = Math.max(10, 100 - axisMin);
+  const y = (value) => top + ((100 - Math.max(axisMin, Math.min(100, value))) / axisRange) * plotHeight;
   const colors = { all: "#0755b5", morning: "#08a06c", afternoon: "#f28b23" };
-  const grids = [0, 25, 50, 75, 100].map((value) => `<line class="chart-grid" x1="${left}" y1="${y(value)}" x2="${width-right}" y2="${y(value)}"/><text class="chart-axis-text" x="${left-10}" y="${y(value)+4}" text-anchor="end">${value}%</text>`).join("");
+  const gridValues = Array.from({ length: 5 }, (_, index) => axisMin + (axisRange * index / 4));
+  const grids = gridValues.map((value) => `<line class="chart-grid" x1="${left}" y1="${y(value)}" x2="${width-right}" y2="${y(value)}"/><text class="chart-axis-text" x="${left-10}" y="${y(value)+4}" text-anchor="end">${Math.round(value)}%</text>`).join("");
   const labelEvery = days.length > 10 ? 5 : 1;
-  const xLabels = days.map((day, index) => (index % labelEvery === 0 || index === days.length - 1) ? `<text class="chart-axis-text" x="${x(index)}" y="${height-20}" text-anchor="middle">${safe(formatDisplayDate(day.date))}</text>` : "").join("");
+  const xLabels = days.map((day, index) => (index % labelEvery === 0 || index === days.length - 1) ? `<text class="chart-axis-text" x="${x(index)}" y="${height-16}" text-anchor="middle">${safe(formatDisplayDate(day.date))}</text>` : "").join("");
   const sessions = ["all", "morning", "afternoon"];
-  const barWidth = Math.max(3, Math.min(20, groupWidth * 0.24));
-  const bars = days.map((day, index) => sessions.map((session, sessionIndex) => {
-    const value = day[session];
-    if (!Number.isFinite(value)) return "";
-    const barX = x(index) + (sessionIndex - 1) * (barWidth + 2) - barWidth / 2;
-    const barY = y(value);
-    const barHeight = top + plotHeight - barY;
-    const barCenter = barX + barWidth / 2;
-    const valueText = `${value.toFixed(1)}%`;
-    const valueLabel = barHeight >= 42
-      ? `<text class="chart-bar-value" x="${barCenter}" y="${barY + barHeight / 2}" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90 ${barCenter} ${barY + barHeight / 2})">${valueText}</text>`
-      : `<text class="chart-bar-value outside" x="${barCenter}" y="${Math.max(top + 10, barY - 5)}" text-anchor="middle">${valueText}</text>`;
-    return `<rect class="chart-bar" fill="${colors[session]}" x="${barX}" y="${barY}" width="${barWidth}" height="${barHeight}" rx="3"><title>${labels[session]} • ${safe(formatDisplayDate(day.date))}: ${value.toFixed(2)}%</title></rect>${valueLabel}`;
-  }).join("")).join("");
-  $("#attendanceChart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Graf bar peratus kehadiran ${safe($("#analysisRangeLabel").textContent)}">${grids}${xLabels}${bars}</svg>`;
+  const lines = sessions.map((session) => {
+    const points = days.map((day, index) => Number.isFinite(day[session]) ? { index, value: day[session], date: day.date } : null).filter(Boolean);
+    if (!points.length) return "";
+    const path = points.map((point, index) => `${index ? "L" : "M"}${x(point.index).toFixed(1)},${y(point.value).toFixed(1)}`).join(" ");
+    const dots = points.map((point) => `<circle class="chart-line-dot" cx="${x(point.index)}" cy="${y(point.value)}" r="4.5" fill="${colors[session]}"><title>${labels[session]} • ${safe(formatDisplayDate(point.date))}: ${point.value.toFixed(2)}%</title></circle>`).join("");
+    return `<path class="chart-line" d="${path}" stroke="${colors[session]}"/>${dots}`;
+  }).join("");
+  $("#attendanceChart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Graf garis peratus kehadiran ${safe($("#analysisRangeLabel").textContent)}">${grids}${xLabels}${lines}</svg>`;
   $("#analysisTableBody").innerHTML = days.map((day) => `<tr><td>${safe(formatDisplayDate(day.date))}</td><td>${analysisPercent(day.all)}</td><td>${analysisPercent(day.morning)}</td><td>${analysisPercent(day.afternoon)}</td><td>${day.recordCount}</td></tr>`).join("");
   const totalRecords = records.length;
   $("#analysisStatus").className = "analysis-status";
@@ -3087,7 +3084,11 @@ HASH_VIEWS["rekod-pengisian-kelas"] = "attendance";
 HASH_VIEWS["status-kelas"] = "attendance";
 
 function activateViewFromHash() {
-  const requested = HASH_VIEWS[window.location.hash.replace(/^#/, "")] || "home";
+  let requested = HASH_VIEWS[window.location.hash.replace(/^#/, "")] || "home";
+  if (requested === "calendar" && !state.adminPin) {
+    requested = "home";
+    history.replaceState(null, "", `${window.location.pathname}${window.location.search}#utama`);
+  }
   const isRmtView = RMT_VIEWS.includes(requested);
   const isDutyView = DUTY_VIEWS.includes(requested);
   document.body.classList.toggle("rmt-view-active", isRmtView);
@@ -3281,6 +3282,12 @@ $("#adminButton").addEventListener("click", async () => {
   showAdminLogin();
 });
 $("#adminClose").addEventListener("click", closeAdminModal);
+$("[data-admin-calendar-link]").addEventListener("click", (event) => {
+  event.preventDefault();
+  $("#adminModal").hidden = true;
+  document.body.classList.remove("modal-open");
+  window.location.hash = VIEW_HASHES.calendar;
+});
 $("#adminLoginForm").addEventListener("submit", verifyAdmin);
 $("#adminSave").addEventListener("click", saveClassProfiles);
 $("#adminStaffAdd").addEventListener("click", addAdminStaffRow);
