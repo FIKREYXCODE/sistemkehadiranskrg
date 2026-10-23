@@ -486,13 +486,21 @@ function analyticsRange(period, anchorValue) {
   }
   const mondayOffset = (anchor.getUTCDay() + 6) % 7;
   const from = addDays(anchor, -mondayOffset);
-  return { from: dateValue(from), to: dateValue(addDays(from, 6)) };
+  return { from: dateValue(from), to: dateValue(addDays(from, 4)) };
 }
 
 function datesInRange(from, to) {
   const values = [];
-  for (let cursor = dateObject(from); cursor <= dateObject(to); cursor = addDays(cursor, 1)) values.push(dateValue(cursor));
+  for (let cursor = dateObject(from); cursor <= dateObject(to); cursor = addDays(cursor, 1)) {
+    const weekday = cursor.getUTCDay();
+    if (weekday >= 1 && weekday <= 5) values.push(dateValue(cursor));
+  }
   return values;
+}
+
+function isSchoolDay(value) {
+  const weekday = dateObject(value).getUTCDay();
+  return weekday >= 1 && weekday <= 5;
 }
 
 function analyticsRecordSession(row) {
@@ -531,7 +539,8 @@ function aggregateAnalytics(records, from, to) {
 function analysisPercent(value) { return Number.isFinite(value) ? `${value.toFixed(2)}%` : "—"; }
 
 function renderAnalytics(records, range) {
-  const { days, totals } = aggregateAnalytics(records, range.from, range.to);
+  const schoolDayRecords = records.filter((row) => isSchoolDay(row.date));
+  const { days, totals } = aggregateAnalytics(schoolDayRecords, range.from, range.to);
   const labels = { all: "Keseluruhan", morning: "Sidang pagi", afternoon: "Sidang petang" };
   const periodLabel = $("#analysisPeriod").value === "month" ? "Purata bulanan" : "Purata mingguan";
   $("#analysisSummary").innerHTML = ["all", "morning", "afternoon"].map((session) => {
@@ -540,7 +549,7 @@ function renderAnalytics(records, range) {
     return `<article class="${session}"><span>${periodLabel} — ${labels[session]}</span><strong>${analysisPercent(average)}</strong><small>${item.days.size} hari • ${item.records} rekod kelas</small></article>`;
   }).join("");
   const ranking = new Map();
-  for (const row of records) {
+  for (const row of schoolDayRecords) {
     const enrol = count(row.enrolMale, 300) + count(row.enrolFemale, 300);
     if (!enrol) continue;
     const absent = Math.min(count(row.absentMale, 300) + count(row.absentFemale, 300), enrol);
@@ -587,7 +596,7 @@ function renderAnalytics(records, range) {
   }).join("");
   $("#attendanceChart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="Graf garis peratus kehadiran ${safe($("#analysisRangeLabel").textContent)}">${grids}${xLabels}${lines}</svg>`;
   $("#analysisTableBody").innerHTML = days.map((day) => `<tr><td>${safe(formatDisplayDate(day.date))}</td><td>${analysisPercent(day.all)}</td><td>${analysisPercent(day.morning)}</td><td>${analysisPercent(day.afternoon)}</td><td>${day.recordCount}</td></tr>`).join("");
-  const totalRecords = records.length;
+  const totalRecords = schoolDayRecords.length;
   $("#analysisStatus").className = "analysis-status";
   $("#analysisStatus").textContent = totalRecords ? `${totalRecords} rekod kelas ditemui. Analisis ini tidak mengubah data asal.` : "Belum ada rekod kehadiran tersimpan dalam tempoh ini.";
 }
