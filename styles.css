@@ -1345,3 +1345,90 @@ body[data-active-view="staff"] .identity-bar>div small{margin-top:1px;font-size:
   #attendanceAnalysis .analysis-best-card{grid-template-columns:112px minmax(0,1fr)}
   #attendanceAnalysis .analysis-best-list{min-height:82px}.analysis-best-list button strong{font-size:.55rem}.analysis-best-list button>b{font-size:.61rem}
 }
+
+/* v153: menu utama benar-benar transparent — halaman di belakang kekal kelihatan. */
+.sidebar-backdrop{background:transparent}
+.workspace-nav{
+  border:0;
+  background:transparent;
+  box-shadow:none;
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+}
+.workspace-nav .sidebar-title{
+  color:#fff;
+  text-shadow:0 1px 2px #00152f,0 0 7px #00152f,0 0 12px #00152f;
+}
+.workspace-nav>a,
+.workspace-nav .sidebar-group{
+  border:1px solid #ffffffe8;
+  background:transparent;
+  box-shadow:0 5px 14px #00152f4d;
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+}
+.workspace-nav>a:before,
+.workspace-nav>a:after,
+.workspace-nav .sidebar-group:before,
+.workspace-nav .sidebar-group:after{display:none;content:none}
+.workspace-nav strong,
+.sidebar-group-copy strong,
+.workspace-nav small,
+.sidebar-group-copy small{
+  color:#fff;
+  text-shadow:0 1px 2px #00152f,0 0 5px #00152f,0 0 9px #00152f;
+}
+.workspace-nav>a:hover,
+.workspace-nav>a:focus-visible,
+.workspace-nav .sidebar-group:hover{
+  border-color:#fff;
+  background:transparent;
+  box-shadow:0 7px 18px #00152f73,0 0 0 2px #ffffff4a;
+  filter:none;
+}
+.workspace-nav>a[aria-current="page"]{
+  border-color:#fff;
+  outline:2px solid #fff;
+  outline-offset:2px;
+  background:transparent;
+  box-shadow:0 0 0 4px #00152f4f,0 7px 18px #00152f73;
+}
+.workspace-nav .sidebar-group[open]{
+  background:transparent;
+  box-shadow:0 7px 18px #00152f73;
+}
+.workspace-nav .sidebar-group>summary:after{
+  border-color:#fff;
+  background:transparent;
+  color:#fff;
+  box-shadow:0 2px 7px #00152f5c;
+  text-shadow:0 1px 3px #00152f;
+}
+.sidebar-submenu{
+  border-top-color:#ffffffe0;
+  background:transparent;
+}
+.workspace-nav .sidebar-submenu a,
+.workspace-nav .sidebar-submenu a:hover,
+.workspace-nav .sidebar-submenu a:focus-visible,
+.workspace-nav .sidebar-submenu a[aria-current="page"]{
+  background:transparent;
+}
+.workspace-nav .sidebar-submenu a:hover,
+.workspace-nav .sidebar-submenu a:focus-visible{
+  box-shadow:inset 3px 0 #fff;
+}
+.workspace-nav .sidebar-submenu a[aria-current="page"]{
+  box-shadow:inset 3px 0 #fff,0 0 0 1px #ffffff8c;
+}
+@media(max-width:800px){
+  .workspace-nav{
+    background:transparent;
+    box-shadow:none;
+  }
+  .workspace-nav>a,
+  .workspace-nav .sidebar-group{
+    background:transparent;
+    box-shadow:0 4px 12px #00152f52;
+  }
+}
