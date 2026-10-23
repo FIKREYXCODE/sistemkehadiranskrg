@@ -585,7 +585,7 @@ function renderAnalytics(records, range) {
     const valueLabels = points.map((point) => (days.length <= 10 || point.index % labelEvery === 0 || point.index === days.length - 1) ? `<text class="chart-value-label ${session}" x="${x(point.index) + labelOffsetX}" y="${y(point.value) + labelOffsetY}" text-anchor="middle" fill="${colors[session]}">${point.value.toFixed(1)}%</text>` : "").join("");
     return `<path class="chart-line" d="${path}" stroke="${colors[session]}"/>${dots}${valueLabels}`;
   }).join("");
-  $("#attendanceChart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Graf garis peratus kehadiran ${safe($("#analysisRangeLabel").textContent)}">${grids}${xLabels}${lines}</svg>`;
+  $("#attendanceChart").innerHTML = `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" role="img" aria-label="Graf garis peratus kehadiran ${safe($("#analysisRangeLabel").textContent)}">${grids}${xLabels}${lines}</svg>`;
   $("#analysisTableBody").innerHTML = days.map((day) => `<tr><td>${safe(formatDisplayDate(day.date))}</td><td>${analysisPercent(day.all)}</td><td>${analysisPercent(day.morning)}</td><td>${analysisPercent(day.afternoon)}</td><td>${day.recordCount}</td></tr>`).join("");
   const totalRecords = records.length;
   $("#analysisStatus").className = "analysis-status";
