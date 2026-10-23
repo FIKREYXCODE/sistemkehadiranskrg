@@ -3124,6 +3124,12 @@ function activateViewFromHash() {
 }
 
 window.addEventListener("hashchange", activateViewFromHash);
+[["#dutyNavGroup", "#rmtNavGroup"], ["#rmtNavGroup", "#dutyNavGroup"]].forEach(([currentSelector, otherSelector]) => {
+  const current = $(currentSelector);
+  current.querySelector("summary").addEventListener("click", () => {
+    if (!current.open) $(otherSelector).open = false;
+  });
+});
 $("#printButton").addEventListener("click", () => window.print());
 $("#analysisRefresh").addEventListener("click", loadAnalytics);
 $("#analysisPeriod").addEventListener("change", loadAnalytics);

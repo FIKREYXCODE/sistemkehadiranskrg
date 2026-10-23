@@ -184,6 +184,7 @@ tfoot td{background:#dfeaf4;font-weight:900}
 .analysis-head{align-items:stretch;flex-direction:column}.analysis-controls{min-width:0}.analysis-summary{grid-template-columns:1fr}.chart-title-row{flex-direction:column}
 .topbar-logo-pair{width:88px;height:62px;padding:5px;gap:4px}.topbar-logo-pair img{max-height:51px}.topbar-logo-pair img:first-child{max-width:50px}.topbar-logo-pair img:last-child{max-width:32px}.topbar-school-copy small{font-size:.5rem}.topbar-school-copy strong{font-size:.78rem;white-space:normal;max-width:215px}
 }
+
 @media print{@page{size:A4 landscape;margin:7mm}
 body{background:#fff;color:#000}
 .no-print,.site-footer{display:none!important}
@@ -1211,4 +1212,28 @@ body[data-active-view="staff"] .identity-bar>div small{margin-top:1px;font-size:
   .daily-duty-tabs{margin-top:6px}.daily-duty-tabs button{min-height:32px;font-size:.6rem}
   .compact-daily-duty .standalone-duty-grid{margin-top:6px}.compact-daily-duty .duty-session-card h4{display:none}.compact-daily-duty .duty-table th,.compact-daily-duty .duty-table td{padding:4px 5px}.compact-daily-duty .duty-table .cell-input{height:31px;font-size:.59rem}
   .compact-daily-duty .standalone-report-notes{margin-top:6px;padding-top:6px}.compact-daily-duty .session-note-card{gap:5px;padding:7px}.compact-daily-duty .session-note-card h4{display:none}.compact-daily-duty .session-note-card label{font-size:.55rem}.compact-daily-duty .session-note-card textarea,.compact-daily-duty .session-note-card input,.compact-daily-duty .session-note-card select{min-height:30px;padding:4px 5px;font-size:.57rem}.compact-daily-duty .session-note-card textarea{height:40px;min-height:40px}
+}
+
+/* v144-final: menu utama berwarna penuh, tanpa petak ikon atau nombor. */
+.workspace-nav>a,.workspace-nav .sidebar-group{border:0;border-radius:14px;background:linear-gradient(135deg,var(--nav-accent),var(--nav-accent-2));color:#fff;box-shadow:0 9px 22px color-mix(in srgb,var(--nav-accent) 25%,transparent)}
+.workspace-nav .sidebar-group.nav-rmt{--nav-accent:#d26a10;--nav-accent-2:#f2ac2d}
+.workspace-nav>a{display:block;padding:15px 17px}
+.workspace-nav>a:hover{border-color:transparent;box-shadow:0 12px 27px color-mix(in srgb,var(--nav-accent) 34%,transparent);filter:saturate(1.08)}
+.workspace-nav .menu-emblem{display:none!important}
+.workspace-nav strong,.sidebar-group-copy strong{color:#fff;font-size:1rem;line-height:1.18}
+.workspace-nav small,.sidebar-group-copy small{display:block;margin-top:4px;color:#ffffffd9;font-size:.76rem;line-height:1.25}
+.workspace-nav>a[aria-current="page"]{border:0;outline:3px solid #ffe07a;outline-offset:1px;background:linear-gradient(135deg,var(--nav-accent),var(--nav-accent-2));box-shadow:0 12px 30px color-mix(in srgb,var(--nav-accent) 38%,transparent)}
+.workspace-nav .sidebar-group>summary{grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:15px 17px}
+.workspace-nav .sidebar-group>summary:after{color:#fff;font-size:1rem}
+.sidebar-submenu{gap:0;padding:0 14px 12px;border-top:1px solid #ffffff52}
+.workspace-nav .sidebar-submenu a{display:block;padding:11px 3px;border:0;border-bottom:1px solid #ffffff3d;border-radius:0;background:transparent;color:#fff;box-shadow:none}
+.workspace-nav .sidebar-submenu a:last-child{border-bottom:0}
+.workspace-nav .sidebar-submenu a:hover{transform:none;background:#ffffff17;box-shadow:none}
+.workspace-nav .sidebar-submenu a>span{display:none!important}
+.workspace-nav .sidebar-submenu strong{color:#fff;font-size:.86rem;line-height:1.25}
+.workspace-nav .sidebar-submenu a[aria-current="page"]{outline:0;background:#ffffff2b;box-shadow:inset 3px 0 #ffe07a}
+@media(max-width:800px){
+  .workspace-nav>a{padding:14px 15px}
+  .workspace-nav strong,.sidebar-group-copy strong{font-size:.94rem}
+  .workspace-nav small,.sidebar-group-copy small{display:block;font-size:.72rem}
 }
