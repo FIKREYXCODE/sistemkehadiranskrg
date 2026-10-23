@@ -1287,3 +1287,24 @@ body[data-active-view="staff"] .identity-bar>div small{margin-top:1px;font-size:
   .workspace-nav strong,.sidebar-group-copy strong{font-size:.94rem}
   .workspace-nav small,.sidebar-group-copy small{display:block;font-size:.72rem}
 }
+
+/* v150: menu utama berwarna dengan kemasan glass/kristal moden. */
+.workspace-nav{overflow-x:hidden;border:1px solid #ffffff85;background:linear-gradient(155deg,#062b62e8,#0755b5d9 64%,#079bd3d1);box-shadow:inset 0 1px 0 #ffffff55,0 26px 70px #041c4145;-webkit-backdrop-filter:blur(22px) saturate(1.28);backdrop-filter:blur(22px) saturate(1.28)}
+.workspace-nav .sidebar-title{color:#d9efff;text-shadow:0 1px 2px #001d48}
+.workspace-nav>a,.workspace-nav .sidebar-group{position:relative;isolation:isolate;width:auto;min-width:0;margin:0;overflow:hidden;border:1px solid #ffffff8c;background:linear-gradient(145deg,color-mix(in srgb,var(--nav-accent-2) 72%,#fff 28%) 0%,color-mix(in srgb,var(--nav-accent) 94%,#092755 6%) 72%,color-mix(in srgb,var(--nav-accent) 78%,#021a42 22%) 100%);box-shadow:inset 0 1px 0 #ffffffc4,inset 0 -1px 0 #001b4638,0 12px 25px color-mix(in srgb,var(--nav-accent) 34%,transparent);-webkit-backdrop-filter:blur(15px) saturate(1.35);backdrop-filter:blur(15px) saturate(1.35);transition:transform .2s ease,box-shadow .2s ease,filter .2s ease}
+.workspace-nav>a:before,.workspace-nav .sidebar-group:before{content:"";position:absolute;z-index:-1;inset:0;background:linear-gradient(112deg,#ffffff66 0%,#ffffff18 27%,transparent 45%,#ffffff24 72%,transparent 100%);transform:translateX(-28%);transition:transform .35s ease;pointer-events:none}
+.workspace-nav>a:after,.workspace-nav .sidebar-group:after{content:"";position:absolute;z-index:-1;top:-62%;right:-12%;width:145px;height:145px;border:1px solid #ffffff45;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ffffff70,transparent 58%);filter:blur(.2px);pointer-events:none}
+.workspace-nav>a:hover,.workspace-nav>a:focus-visible,.workspace-nav .sidebar-group:hover{transform:translateY(-2px);filter:saturate(1.12) brightness(1.05);box-shadow:inset 0 1px 0 #fff,0 16px 31px color-mix(in srgb,var(--nav-accent) 46%,transparent)}
+.workspace-nav>a:hover:before,.workspace-nav>a:focus-visible:before,.workspace-nav .sidebar-group:hover:before{transform:translateX(14%)}
+.workspace-nav>a:focus-visible,.workspace-nav .sidebar-group>summary:focus-visible{outline:3px solid #fff3a8;outline-offset:2px}
+.workspace-nav strong,.sidebar-group-copy strong{text-shadow:0 1px 3px #00173e80}
+.workspace-nav small,.sidebar-group-copy small{color:#f4fbff;text-shadow:0 1px 2px #00173e65}
+.workspace-nav>a[aria-current="page"]{outline:2px solid #fff3a8;outline-offset:2px;background:linear-gradient(145deg,color-mix(in srgb,var(--nav-accent-2) 80%,#fff 20%),color-mix(in srgb,var(--nav-accent) 88%,#042653 12%));box-shadow:inset 0 1px 0 #fff,0 0 0 4px #ffe37b35,0 17px 34px color-mix(in srgb,var(--nav-accent) 50%,transparent)}
+.workspace-nav .sidebar-group>summary:after{width:25px;height:25px;display:grid;place-items:center;border:1px solid #ffffff75;border-radius:50%;background:#ffffff20;box-shadow:inset 0 1px 0 #ffffff85}
+.workspace-nav .sidebar-group[open]{box-shadow:inset 0 1px 0 #fff,0 17px 36px color-mix(in srgb,var(--nav-accent) 46%,transparent)}
+.sidebar-submenu{position:relative;z-index:1;border-top-color:#ffffff70;background:linear-gradient(180deg,#032b5b26,#001c4b30)}
+.workspace-nav .sidebar-submenu a{background:transparent}.workspace-nav .sidebar-submenu a:hover{background:#ffffff24}.workspace-nav .sidebar-submenu a[aria-current="page"]{background:#ffffff30;box-shadow:inset 3px 0 #fff3a8}
+@media(max-width:800px){
+  .workspace-nav{background:linear-gradient(155deg,#062b62f2,#0755b5e8 64%,#079bd3df)}
+  .workspace-nav>a,.workspace-nav .sidebar-group{box-shadow:inset 0 1px 0 #ffffffc4,0 8px 18px color-mix(in srgb,var(--nav-accent) 30%,transparent)}
+}
