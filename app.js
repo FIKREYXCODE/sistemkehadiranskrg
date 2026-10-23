@@ -188,16 +188,13 @@ async function loadDisciplinePublicSummary() {
     const data = await response.json();
     if (!response.ok || !data.summary) throw new Error(data.error || "Status tidak tersedia");
     const summary = data.summary;
-    const fields = {
-      disciplinePendingAction: summary.pendingAction,
-      disciplinePendingApproval: summary.pendingApproval,
-      disciplinePendingSsdm: summary.pendingSsdm,
-      disciplineSsdmAttention: summary.ssdmAttention,
-    };
+    const fields = { disciplinePendingAction: summary.pendingAction, disciplinePendingSsdm: summary.pendingSsdm, disciplineSsdmAttention: summary.ssdmAttention };
     for (const [id, value] of Object.entries(fields)) { const element = $(`#${id}`); if (element) element.textContent = String(Number(value) || 0); }
     const total = Object.values(fields).reduce((sum, value) => sum + (Number(value) || 0), 0);
     $("#disciplineAlertTotal").textContent = String(total);
     $("#disciplineAlertTotal").classList.toggle("clear", total === 0);
+    $("#disciplineAlertBadge").textContent = String(total);
+    $("#disciplineAlertBadge").classList.toggle("clear", total === 0);
     $("#disciplineTotalCases").textContent = String(Number(summary.total) || 0);
     $("#disciplineInProgress").textContent = String(Number(summary.inProgress) || 0);
     $("#disciplineCompleted").textContent = String(Number(summary.completed) || 0);
@@ -205,11 +202,14 @@ async function loadDisciplinePublicSummary() {
     const trendChart = $("#disciplineTrendChart");
     if (trendChart) {
       const max = Math.max(1, ...trend.map((item) => Number(item.count) || 0));
-      trendChart.innerHTML = trend.length ? trend.map((item) => {
-        const count = Number(item.count) || 0;
-        const height = Math.max(7, Math.round((count / max) * 100));
-        return `<div class="discipline-trend-column"><strong>${count}</strong><i><b style="height:${height}%"></b></i><span>${safe(item.label)}</span></div>`;
-      }).join("") : '<p>Trend belum tersedia. Sila muat semula sebentar lagi.</p>';
+      const points = trend.map((item, index) => {
+        const x = trend.length < 2 ? 50 : 6 + index * (88 / (trend.length - 1));
+        const y = 88 - ((Number(item.count) || 0) / max) * 66;
+        return { x, y, ...item };
+      });
+      const linePoints = points.map((item) => `${item.x},${item.y}`).join(" ");
+      const areaPoints = points.length ? `6,88 ${linePoints} 94,88` : "";
+      trendChart.innerHTML = trend.length ? `<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-label="Carta garis trend kes disiplin enam bulan"><defs><linearGradient id="disciplineArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#168ac7" stop-opacity=".28"/><stop offset="1" stop-color="#168ac7" stop-opacity=".02"/></linearGradient></defs><line x1="6" y1="88" x2="94" y2="88"/><polygon points="${areaPoints}"/><polyline points="${linePoints}"/>${points.map((item) => `<circle cx="${item.x}" cy="${item.y}" r="2.1"><title>${safe(item.label)}: ${Number(item.count) || 0} kes</title></circle>`).join("")}</svg><div class="discipline-trend-labels">${points.map((item) => `<span><b>${Number(item.count) || 0}</b>${safe(item.label)}</span>`).join("")}</div>` : '<p>Trend belum tersedia. Sila muat semula sebentar lagi.</p>';
     }
     status.textContent = summary.updatedAt ? `Data semasa • ${formatDisplayDateTime(summary.updatedAt)}` : "Data semasa telah dimuatkan";
   } catch (error) {
