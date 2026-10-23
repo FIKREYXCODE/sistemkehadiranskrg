@@ -562,6 +562,11 @@ body{background:#fff;color:#000}
 #rmtStatusView .rmt-calendar-day{min-height:44px;padding:2px 3px;border-radius:8px}
 #rmtStatusView .rmt-calendar-day span{font-size:.82rem}
 #rmtStatusView .rmt-day-session,#rmtStatusView .rmt-day-note{padding:1px 3px;font-size:.42rem!important}
+#rmtStatusView .rmt-day-report{display:grid;width:100%;gap:1px;padding:2px 3px;border-radius:5px;background:#ffffffc7;line-height:1.05;overflow:hidden}
+#rmtStatusView .rmt-day-report i,#rmtStatusView .rmt-day-report em{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-style:normal}
+#rmtStatusView .rmt-day-report i{font-size:.43rem;font-weight:950}
+#rmtStatusView .rmt-day-report em{font-size:.39rem;font-weight:850;opacity:.86}
+#rmtStatusView .rmt-calendar-day.both{justify-content:flex-start;padding-top:3px}
 #rmtStatusView .rmt-calendar-footer{margin-top:7px}
 #rmtStatusView .rmt-calendar-footer p{font-size:.64rem}
 
@@ -620,7 +625,10 @@ body{background:#fff;color:#000}
   #rmtStatusView .rmt-summary-grid strong{font-size:.9rem}
   #rmtStatusView .rmt-calendar-legend{display:flex;gap:4px;margin:6px 0;overflow-x:auto;flex-wrap:nowrap}
   #rmtStatusView .rmt-calendar-legend span{flex:0 0 auto;white-space:nowrap}
-  #rmtStatusView .rmt-calendar-day{min-height:42px;padding:2px 1px}
+  #rmtStatusView .rmt-calendar-day{min-height:54px;padding:2px 1px}
+  #rmtStatusView .rmt-day-report{padding:1px 2px}
+  #rmtStatusView .rmt-day-report i{font-size:.39rem}
+  #rmtStatusView .rmt-day-report em{font-size:.36rem}
   #rmtReportView .rmt-photo-section{padding:0}
   #rmtReportView .rmt-report-card{grid-template-columns:minmax(0,1fr) minmax(0,1fr);padding:10px;gap:7px}
   #rmtReportView .rmt-number-field{grid-template-rows:minmax(2.25em,auto) 38px}

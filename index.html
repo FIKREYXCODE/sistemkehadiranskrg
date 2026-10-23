@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest?v=130">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=147">
+  <link rel="stylesheet" href="styles.css?v=148">
 </head>
 <body>
   <header class="topbar no-print">
@@ -521,7 +521,7 @@
         </details>
       </section>
       <section class="rmt-calendar-panel" aria-labelledby="rmtCalendarTitle">
-        <div class="rmt-calendar-heading"><div><p class="eyebrow">Kalendar bulanan</p><h3 id="rmtCalendarTitle">Status Pengisian RMT</h3><p>Klik tarikh untuk membuka laporan dan gambar. Nama pengisi ditunjukkan secara ringkas dalam petak.</p></div><label>Bulan laporan<input id="rmtCalendarMonth" type="month"></label></div>
+        <div class="rmt-calendar-heading"><div><p class="eyebrow">Kalendar bulanan</p><h3 id="rmtCalendarTitle">Status Pengisian RMT</h3><p>Setiap petak menunjukkan menu serta bilangan RMT dibekalkan berbanding penerima. Klik tarikh untuk membuka laporan dan gambar.</p></div><label>Bulan laporan<input id="rmtCalendarMonth" type="month"></label></div>
         <div class="rmt-summary-grid"><div><span>Jumlah laporan</span><strong id="rmtSummaryTotal">0</strong></div><div class="morning"><span>Sidang pagi</span><strong id="rmtSummaryMorning">0</strong></div><div class="afternoon"><span>Sidang petang</span><strong id="rmtSummaryAfternoon">0</strong></div><div class="complete"><span>Hari lengkap</span><strong id="rmtSummaryComplete">0</strong></div></div>
         <div class="rmt-calendar-legend" aria-label="Petunjuk warna kalendar"><span class="morning-only">Kuning: laporan pagi</span><span class="afternoon-only">Hijau terang: laporan petang</span><span class="both">Kuning + hijau: dua sidang</span><span class="missing">Merah muda: belum diisi</span><span class="weekend">Merah: Sabtu/Ahad — Tiada RMT</span><span class="future">Kelabu: tarikh akan datang</span></div>
         <div class="rmt-calendar-weekdays" aria-hidden="true"><span>Isn</span><span>Sel</span><span>Rab</span><span>Kha</span><span>Jum</span><span>Sab</span><span>Ahd</span></div>
@@ -539,7 +539,7 @@
             <label class="rmt-paired-field">Penilaian / Keadaan RMT<select data-rmt-field="rating" required><option value="Baik">Baik</option><option value="Memuaskan">Memuaskan</option><option value="Kurang Memuaskan">Kurang Memuaskan</option></select></label>
             <label class="rmt-number-field rmt-paired-field">Bilangan Penerima RMT<input data-rmt-field="recipients" type="number" inputmode="numeric" min="0" required></label>
             <label class="rmt-number-field rmt-paired-field">Bilangan RMT Dibekalkan<input data-rmt-field="supplied" type="number" inputmode="numeric" min="0" required></label>
-            <label class="rmt-paired-field">Menu RMT<textarea data-rmt-field="menu" rows="2" required></textarea></label>
+            <label class="rmt-paired-field">Menu RMT<select data-rmt-field="menu" required><option value="">Pilih menu RMT hari ini</option><option>Menu RMT 1 - Nasi Ayam</option><option>Menu RMT 2 - Nasi Lemak</option><option>Menu RMT 3 - Bubur Nasi</option><option>Menu RMT 4 - Mi Goreng</option><option>Menu RMT 5 - Bihun Goreng Putih</option><option>Menu RMT 6 - Soto</option><option>Menu RMT 7 - Nasi Paprik</option><option>Menu RMT 8 - Nasi Goreng Cina</option><option>Menu RMT 9 - Bihun Sup</option><option>Menu RMT 10 - Makaroni Sup</option><option>Menu RMT 11 - Roti Canai</option><option>Menu RMT 12 - Roti + Telur Hancur + Kacang Panggang</option><option>Menu RMT 13 - Ayam Panggang dan Kentang</option><option>Menu RMT 14 - Bijirin Sarapan Pagi</option><option>Menu RMT 15 - Kuih-muih</option><option>Menu RMT 16 - Nasi + Kari Ayam/Kari Ikan Tenggiri</option><option>Menu RMT 17 - Nasi Goreng Kampung</option><option>Menu RMT 18 - Bubur Kacang + Roti Putih</option><option>Menu RMT 19 - Roti Putih + Sup Ayam/Sup Ikan Tenggiri</option><option>Menu RMT 20 - Bun + Kari Ayam/Kari Ikan Tenggiri</option><option>Tiada Dalam Senarai Menu RMT</option><option>Menu RMT (Bulan Puasa) - Roti + Buah</option></select></label>
             <label class="rmt-paired-field">Catatan Guru Bertugas — Pilihan<textarea data-rmt-field="notes" rows="2"></textarea></label>
             <label class="photo-uploader">Gambar laporan<input data-rmt-field="photos" type="file" accept="image/*,.heic,.heif" multiple required><span>Pilih 1 hingga 4 gambar.</span></label>
             <button class="primary-button rmt-submit-inline" type="submit">Simpan Laporan RMT</button><div class="monitoring-preview rmt-field-wide" data-rmt-preview></div><p class="form-message rmt-field-wide" data-rmt-status></p>
@@ -684,6 +684,6 @@
   </aside>
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
   <script src="class-demographics.js?v=130" defer></script>
-  <script src="app.js?v=147" defer></script>
+  <script src="app.js?v=148" defer></script>
 </body>
 </html>

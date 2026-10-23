@@ -1450,6 +1450,29 @@ function rmtTeacherShortName(value) {
   return firstName.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(" ") || "Guru";
 }
 
+function rmtReportDetails(report) {
+  try { return String(report?.issue || "").startsWith("[rmt-v2]") ? JSON.parse(String(report.issue).slice(8)) : null; }
+  catch { return null; }
+}
+
+function rmtMenuShortName(value) {
+  return String(value || "Menu tidak dinyatakan")
+    .replace(/^Menu RMT \(Bulan Puasa\)\s*-\s*/i, "Puasa · ")
+    .replace(/^Menu RMT\s+\d+\s*-\s*/i, "")
+    .replace(/^Tiada Dalam Senarai Menu RMT$/i, "Menu lain");
+}
+
+function rmtCalendarReport(report, sessionLabel) {
+  const details = rmtReportDetails(report) || {};
+  const menu = rmtMenuShortName(details.menu);
+  const supplied = Number(details.supplied || 0);
+  const recipients = Number(details.recipients || 0);
+  const ratio = recipients ? `${supplied}/${recipients}` : supplied ? String(supplied) : "—";
+  const teacher = rmtTeacherShortName(report?.updatedBy);
+  const title = `${sessionLabel}: ${menu}; RMT ${ratio}; diisi oleh ${teacher}`;
+  return `<small class="rmt-day-report" title="${safe(title)}"><i>${safe(sessionLabel)} · ${safe(menu)}</i><em>RMT ${safe(ratio)}</em></small>`;
+}
+
 function renderRmtReports() {
   const sessionLabel = (value) => value === "afternoon" ? "Sidang Petang" : "Sidang Pagi";
   const reports = rmtReportsForDisplay();
@@ -1459,8 +1482,7 @@ function renderRmtReports() {
     const created = formatDisplayDateTime(report.createdAt);
     const displayLocation = formatEmbeddedDates(report.location);
     const photos = (Array.isArray(report.photos) ? report.photos : []).map((photo, index) => `<a href="${safe(photo.url)}" target="_blank" rel="noopener"><img src="${safe(photo.url)}" loading="lazy" alt="Gambar RMT ${safe(displayLocation)} ${index + 1}"></a>`).join("");
-    let details = null;
-    try { details = String(report.issue || "").startsWith("[rmt-v2]") ? JSON.parse(String(report.issue).slice(8)) : null; } catch { details = null; }
+    const details = rmtReportDetails(report);
     const content = details ? `<dl class="rmt-report-details"><div><dt>Penerima</dt><dd>${safe(details.recipients)} orang</dd></div><div><dt>Dibekalkan</dt><dd>${safe(details.supplied)} hidangan</dd></div><div><dt>Menu</dt><dd>${safe(details.menu)}</dd></div><div><dt>Penilaian</dt><dd>${safe(details.rating)}</dd></div>${details.notes ? `<div><dt>Catatan</dt><dd>${safe(details.notes)}</dd></div>` : ""}</dl>` : `<p>${safe(formatEmbeddedDates(report.action))}</p>`;
     return `<article class="rmt-shared-report"><div class="monitoring-photo-grid">${photos}</div><div><span class="category-badge">${sessionLabel(report.session)}</span><h4>${safe(displayLocation)}</h4><p>Diisi oleh <strong>${safe(report.updatedBy || "—")}</strong></p><small>${safe(created)}</small>${content}</div></article>`;
   }).join("");
@@ -1499,7 +1521,7 @@ function renderRmtCalendar() {
     else if (hasMorning) { status = "morning-only"; label = `Sidang pagi: ${morningTeacher}`; }
     else if (hasAfternoon) { status = "afternoon-only"; label = `Sidang petang: ${afternoonTeacher}`; }
     const selected = !state.rmtShowAll && state.rmtSelectedDate === date ? " selected" : "";
-    const details = status === "weekend" ? '<small class="rmt-day-note">Tiada RMT</small>' : `${hasMorning ? `<small class="rmt-day-session morning-name" title="${safe(sessions.morning[0].updatedBy || "")}">P: ${safe(morningTeacher)}</small>` : ""}${hasAfternoon ? `<small class="rmt-day-session afternoon-name" title="${safe(sessions.afternoon[0].updatedBy || "")}">PTG: ${safe(afternoonTeacher)}</small>` : ""}${status === "missing" ? '<small class="rmt-day-note">Belum diisi</small>' : ""}`;
+    const details = status === "weekend" ? '<small class="rmt-day-note">Tiada RMT</small>' : `${hasMorning ? rmtCalendarReport(sessions.morning[0], "P") : ""}${hasAfternoon ? rmtCalendarReport(sessions.afternoon[0], "PTG") : ""}${status === "missing" ? '<small class="rmt-day-note">Belum diisi</small>' : ""}`;
     cells.push(`<button class="rmt-calendar-day ${status}${selected}" type="button" data-rmt-date="${date}" aria-label="${safe(formatDisplayDate(date))}: ${safe(label)}"><span>${day}</span>${details}</button>`);
   }
   $("#rmtCalendarGrid").innerHTML = cells.join("");
