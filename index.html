@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest?v=130">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=135">
+  <link rel="stylesheet" href="styles.css?v=139">
 </head>
 <body>
   <header class="topbar no-print">
@@ -336,23 +336,23 @@
       <div class="monitoring-head smart-monitoring-head">
         <div>
           <p class="eyebrow">Guru Bertugas Mingguan · 3.3</p>
-          <h2 id="monitoringTitle">Smart Monitor Kebersihan &amp; Keselamatan</h2>
-          <p>Satu pelaporan lengkap untuk semua kawasan yang dipantau.</p>
+          <h2 id="monitoringTitle">Kalendar Pemantauan Harian</h2>
+          <p>Klik petak tarikh untuk mengisi atau melihat laporan pemantauan.</p>
         </div>
-        <label class="smart-date-control"><span>Tarikh</span><input id="monitoringDate" type="date" required></label>
+        <label class="smart-date-control"><span>Bulan pemantauan</span><input id="monitoringCalendarMonth" type="month" required></label>
+        <input id="monitoringDate" type="date" required hidden>
         <span class="monitoring-date-label" hidden>Tarikh laporan: <strong id="monitoringDateLabel">—</strong></span>
       </div>
-      <nav class="monitoring-tabs" aria-label="Pilihan pemantauan sekolah">
-        <button class="active" type="button" data-monitoring-tab="summary">Ringkasan</button>
-        <button type="button" data-monitoring-tab="form">Isi Laporan</button>
-        <button type="button" data-monitoring-tab="archive">Arkib &amp; Tindakan</button>
-      </nav>
-      <section id="monitoringSummaryPanel" class="monitoring-tab-panel" data-monitoring-panel="summary">
-        <div id="monitoringSmartSummary" class="monitoring-smart-summary" aria-live="polite"></div>
-        <button class="primary-button monitoring-start-button" type="button" data-monitoring-open="form">＋ Isi satu laporan lengkap</button>
-      </section>
-      <section class="monitoring-tab-panel" data-monitoring-panel="form" hidden>
-      <form id="monitoringForm" class="monitoring-form dynamic-monitoring-form">
+      <div class="duty-status-legend monitoring-calendar-legend" aria-label="Petunjuk warna kalendar"><span class="complete">Hijau: laporan lengkap</span><span class="partial">Kuning: perlu dilengkapkan</span><span class="missing">Merah muda: belum diisi</span><span class="weekend">Kelabu: hujung minggu / akan datang</span><span class="attention">⚠ Perlu tindakan pentadbir</span></div>
+      <div class="duty-status-weekdays" aria-hidden="true"><span>Isn</span><span>Sel</span><span>Rab</span><span>Kha</span><span>Jum</span><span>Sab</span><span>Ahd</span></div>
+      <div id="monitoringCalendar" class="duty-status-calendar monitoring-calendar" aria-live="polite"></div>
+      <p id="monitoringCalendarStatus" class="duty-status-message" role="status">Memuatkan kalendar pemantauan…</p>
+      <div id="monitoringSmartSummary" hidden aria-hidden="true"></div>
+      <section id="monitoringDayWorkspace" class="monitoring-day-workspace" hidden>
+        <header id="monitoringSelectedDayHead" class="monitoring-selected-day-head"></header>
+        <details id="monitoringFormDisclosure" class="monitoring-workspace-disclosure">
+          <summary><span>＋ Isi / lengkapkan laporan tarikh ini</span><small>Pilih kawasan, nilai keadaan dan lampirkan gambar.</small></summary>
+          <form id="monitoringForm" class="monitoring-form dynamic-monitoring-form">
         <div class="monitoring-session-header">
           <label>Sidang laporan<select id="monitoringSession" required><option value="">Pilih sidang</option><option value="morning">🌅 Sidang Pagi</option><option value="afternoon">🌇 Sidang Petang</option></select></label>
         </div>
@@ -369,15 +369,16 @@
           <button id="monitoringSave" class="primary-button" type="submit">Simpan satu laporan lengkap</button>
           <p id="monitoringFormStatus" class="form-message" role="status" aria-live="polite"></p>
         </div>
-      </form>
-      </section>
-      <section class="monitoring-tab-panel" data-monitoring-panel="archive" hidden>
-      <div class="monitoring-gallery-head smart-gallery-head">
-        <div><h3>Laporan pada tarikh dipilih</h3><p>Gambar dan catatan boleh dilihat oleh semua guru yang membuka sistem.</p></div>
-        <button id="monitoringRefresh" class="secondary-button" type="button">Muat semula</button>
-      </div>
-      <div id="monitoringListStatus" class="monitoring-list-status" role="status" aria-live="polite">Memuatkan laporan…</div>
-      <div id="monitoringGallery" class="monitoring-gallery"></div>
+          </form>
+        </details>
+        <section id="monitoringArchiveSection" class="monitoring-day-archive">
+          <div class="monitoring-gallery-head smart-gallery-head">
+            <div><h3>Laporan pada tarikh dipilih</h3><p>Gambar, status kawasan dan tindakan yang diperlukan.</p></div>
+            <button id="monitoringRefresh" class="secondary-button" type="button">Muat semula</button>
+          </div>
+          <div id="monitoringListStatus" class="monitoring-list-status" role="status" aria-live="polite">Memuatkan laporan…</div>
+          <div id="monitoringGallery" class="monitoring-gallery"></div>
+        </section>
       </section>
     </section>
 
@@ -662,6 +663,6 @@
   </aside>
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
   <script src="class-demographics.js?v=130" defer></script>
-  <script src="app.js?v=135" defer></script>
+  <script src="app.js?v=139" defer></script>
 </body>
 </html>

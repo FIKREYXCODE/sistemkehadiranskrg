@@ -9,7 +9,7 @@ const state = {
   savePromise: null, pendingAttendance: new Map(), staffDirty: false, dutyDirtySessions: new Set(), pendingMeta: {}, audit: new Map(), adminPin: "", session: "all",
   staffDirectory: [], adminStaffDirectory: [], schoolStats: { teachers: 58, akp: 3 },
   analytics: { period: "week", date: "", loading: false, filtersReady: false, filterPromise: null, annualLoadingYear: "", annualCache: new Map() },
-  monitoring: { reports: [], loading: false, previewUrls: [], filter: "all" },
+  monitoring: { reports: [], loading: false, previewUrls: [], filter: "all", month: "", calendarLoading: false, calendarRecords: new Map(), selectedDate: "" },
   dutyStatus: { month: "", loading: false, records: new Map(), selectedDate: "" },
   weeklyDuty: { loading: false }, completion: { loading: false }, calendar: { loading: false }, rmtPreviewUrls: [], rmtReports: [], rmtLoading: false,
   rmtMonth: "", rmtSelectedDate: "", rmtShowAll: false, rmtScheduleLoading: false,
@@ -463,6 +463,7 @@ function enhanceLocalizedDateInputs() {
     if (input.closest(".localized-date-control")) return;
     const wrapper = document.createElement("span");
     wrapper.className = "localized-date-control";
+    if (input.hidden) wrapper.hidden = true;
     input.parentNode.insertBefore(wrapper, input);
     wrapper.appendChild(input);
     const display = document.createElement("span");
@@ -1728,6 +1729,109 @@ function monitoringAspectBadges(value = "") {
   return badges ? `<div class="monitoring-aspect-badges">${badges}</div>` : "";
 }
 
+function monitoringCalendarRange(month = state.monitoring.month || state.date.slice(0, 7)) {
+  return rmtMonthRange(month);
+}
+
+function monitoringCalendarRecord(date, reports = []) {
+  const items = dutyStatusMonitoringReports(reports).map((report) => ({ ...report, reportDate: report.reportDate || date }));
+  const complete = items.length > 0 && items.every((report) => {
+    const aspects = monitoringIssueDetails(report.issue).aspects;
+    return Array.isArray(report.photos) && report.photos.length > 0 && (Object.keys(aspects).length > 0 || Boolean(cleanMonitoringText(report.issue)));
+  });
+  const attention = items.some((report) => report.routeStatus === "attention" || Object.values(monitoringIssueDetails(report.issue).aspects).includes("attention"));
+  const names = Array.from(new Set(items.map((report) => String(report.updatedBy || "").trim()).filter(Boolean)));
+  const photos = items.flatMap((report) => Array.isArray(report.photos) ? report.photos : []);
+  return { date, status: complete ? "complete" : items.length ? "partial" : "missing", attention, items, names, photos };
+}
+
+function monitoringCalendarStatusLabel(status) {
+  return status === "complete" ? "Lengkap" : status === "partial" ? "Perlu lengkap" : "Belum diisi";
+}
+
+function renderMonitoringSelectedDay() {
+  const workspace = $("#monitoringDayWorkspace");
+  const date = state.monitoring.selectedDate;
+  if (!date) { workspace.hidden = true; return; }
+  workspace.hidden = false;
+  const record = state.monitoring.calendarRecords.get(date) || monitoringCalendarRecord(date, state.monitoring.reports);
+  const names = record.names.length ? record.names.map(rmtTeacherShortName).join(", ") : "Belum ada pengisi";
+  $("#monitoringSelectedDayHead").innerHTML = `<div><span class="duty-status-pill ${record.status}">${safe(monitoringCalendarStatusLabel(record.status))}</span><h3>${safe(formatDisplayDate(date))}</h3><p>${safe(names)}${record.items.length ? ` • ${record.items.length} kawasan` : ""}</p></div>${record.attention ? '<strong class="monitoring-day-alert">⚠ Perlu tindakan pentadbir</strong>' : '<span class="monitoring-day-clear">Tiada amaran tindakan</span>'}`;
+  $("#monitoringFormDisclosure").open = record.status !== "complete";
+  $("#monitoringArchiveSection").hidden = !record.items.length;
+}
+
+function renderMonitoringCalendar() {
+  const range = monitoringCalendarRange();
+  const today = localDateValue();
+  const firstDayOffset = (new Date(Date.UTC(range.year, range.monthNumber - 1, 1)).getUTCDay() + 6) % 7;
+  const cells = Array.from({ length: firstDayOffset }, () => '<span class="duty-status-spacer" aria-hidden="true"></span>');
+  let recorded = 0;
+  for (let day = 1; day <= range.lastDay; day++) {
+    const date = `${range.month}-${String(day).padStart(2, "0")}`;
+    const weekday = new Date(`${date}T00:00:00Z`).getUTCDay();
+    const inactive = weekday === 0 || weekday === 6 || date > today;
+    const record = state.monitoring.calendarRecords.get(date);
+    const status = inactive ? "weekend" : record?.status || "missing";
+    if (!inactive && status !== "missing") recorded += 1;
+    const selected = state.monitoring.selectedDate === date ? " selected" : "";
+    const names = record?.names?.slice(0, 2).map(rmtTeacherShortName).join(" · ") || "";
+    const note = inactive ? (date > today ? "Akan datang" : "Tiada tugas") : monitoringCalendarStatusLabel(status);
+    const alert = !inactive && record?.attention ? '<b class="monitoring-calendar-alert" aria-label="Perlu tindakan pentadbir">!</b>' : "";
+    cells.push(`<button class="duty-status-day monitoring-calendar-day ${status}${selected}${record?.attention ? " has-alert" : ""}" type="button" data-monitoring-date="${date}"${inactive ? " disabled" : ""} aria-label="${safe(formatDisplayDate(date))}: ${safe(note)}${record?.attention ? ", perlu tindakan pentadbir" : ""}">${alert}<strong>${day}</strong><span>${safe(note)}</span>${names ? `<small title="${safe(record.names.join(", "))}">${safe(names)}</small>` : ""}</button>`);
+  }
+  $("#monitoringCalendar").innerHTML = cells.join("");
+  $("#monitoringCalendarStatus").textContent = state.monitoring.calendarLoading ? "Memuatkan kalendar pemantauan…" : `${recorded} hari mempunyai laporan. Klik petak tarikh untuk mengisi atau melihat laporan.`;
+  renderMonitoringSelectedDay();
+}
+
+function resetMonitoringFormForDate() {
+  $("#monitoringItems").innerHTML = '<p class="monitoring-empty">Belum ada kawasan dipilih. Scroll senarai di atas dan tekan kawasan yang dipantau.</p>';
+  $("#monitoringPhotos").value = "";
+  $("#monitoringSession").value = "";
+  $("#monitoringFormStatus").textContent = "";
+  clearMonitoringPreview();
+  syncMonitoringLocationSelection();
+}
+
+async function openMonitoringCalendarDate(date) {
+  state.monitoring.selectedDate = date;
+  state.date = date;
+  syncReportDateInputs();
+  resetMonitoringFormForDate();
+  renderMonitoringCalendar();
+  await loadMonitoringReports();
+  $("#monitoringDayWorkspace").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function loadMonitoringCalendar() {
+  if (state.monitoring.calendarLoading) return;
+  state.monitoring.calendarLoading = true;
+  state.monitoring.month = $("#monitoringCalendarMonth").value || state.monitoring.month || state.date.slice(0, 7);
+  $("#monitoringCalendarMonth").value = state.monitoring.month;
+  $("#monitoringCalendarStatus").textContent = "Memuatkan kalendar pemantauan…";
+  try {
+    const range = monitoringCalendarRange();
+    const today = localDateValue();
+    const dates = Array.from({ length: range.lastDay }, (_, index) => `${range.month}-${String(index + 1).padStart(2, "0")}`)
+      .filter((date) => { const day = new Date(`${date}T00:00:00Z`).getUTCDay(); return day !== 0 && day !== 6 && date <= today; });
+    const results = await Promise.allSettled(dates.map(fetchSafetyDate));
+    state.monitoring.calendarRecords = new Map(results.map((result, index) => [dates[index], monitoringCalendarRecord(dates[index], result.status === "fulfilled" ? result.value : [])]));
+    if (!state.monitoring.selectedDate?.startsWith(`${range.month}-`)) state.monitoring.selectedDate = dates.includes(today) ? today : dates.at(-1) || "";
+  } catch (error) {
+    console.error(error);
+    $("#monitoringCalendarStatus").textContent = "Kalendar pemantauan tidak dapat dimuatkan. Cuba lagi sebentar.";
+  } finally {
+    state.monitoring.calendarLoading = false;
+    renderMonitoringCalendar();
+  }
+  if (state.monitoring.selectedDate) {
+    state.date = state.monitoring.selectedDate;
+    syncReportDateInputs();
+    await loadMonitoringReports();
+  }
+}
+
 function monitoringBatchId(report) {
   const match = String(report.issue || "").match(/^\[smart-report:([^\]]+)\]/i);
   if (match) return match[1];
@@ -1820,6 +1924,10 @@ function renderMonitoringReports() {
   }).join("");
   $("#monitoringGallery").innerHTML = `${filterBar}${filteredGroups.length ? archiveGroups : `<p class="monitoring-empty">Tiada kawasan berstatus “${safe(filterLabels[filter])}” pada tarikh ini.</p>`}`;
   $("#monitoringListStatus").textContent = groups.length ? `${groups.length} laporan lengkap • ${allItems.length} kawasan dipantau.` : "Belum ada laporan bergambar pada tarikh ini.";
+  if (state.monitoring.selectedDate === state.date) {
+    state.monitoring.calendarRecords.set(state.date, monitoringCalendarRecord(state.date, state.monitoring.reports));
+    renderMonitoringCalendar();
+  } else renderMonitoringSelectedDay();
 }
 
 async function loadMonitoringReports() {
@@ -1839,6 +1947,7 @@ async function loadMonitoringReports() {
     $("#monitoringGallery").innerHTML = "";
     $("#monitoringListStatus").className = "monitoring-list-status error";
     $("#monitoringListStatus").textContent = error.message || "Laporan bergambar tidak dapat dibuka. Cuba lagi.";
+    renderMonitoringSelectedDay();
   } finally { state.monitoring.loading = false; }
 }
 
@@ -1881,8 +1990,7 @@ async function saveMonitoringReport(event) {
     clearMonitoringPreview();
     syncMonitoringLocationSelection();
     $("#monitoringFormStatus").textContent = `Satu laporan lengkap dengan ${cards.length} kawasan berjaya disimpan.`;
-    await loadMonitoringReports();
-    setMonitoringTab("summary");
+    await loadMonitoringCalendar();
   } catch (error) {
     console.error(error);
     $("#monitoringFormStatus").textContent = error.message || "Laporan gagal disimpan. Cuba lagi.";
@@ -2962,7 +3070,7 @@ function activateViewFromHash() {
   $("#identityBar").hidden = !(["attendance", "staff", "dailyDuty", "monitoring", "dutyStatus"].includes(requested) || isRmtView);
   $("#printButton").hidden = requested !== "attendance";
   if (requested === "analysis") { loadAnalytics(); if (state.classes.length) loadKpiDashboard(); }
-  if (requested === "monitoring") loadMonitoringReports();
+  if (requested === "monitoring") loadMonitoringCalendar();
   if (requested === "dutyStatus") loadDutyStatusCalendar();
   if (requested === "dailyDuty" && state.classes.length) loadDutyWeekTemplate(null, true);
   if (requested === "duty") loadWeeklyDuty();
@@ -3049,6 +3157,16 @@ $("#sidebarBackdrop").addEventListener("click", () => setSidebar(false));
 document.querySelectorAll("[data-view-link]").forEach((link) => link.addEventListener("click", () => setSidebar(false)));
 document.addEventListener("keydown", (event) => { if (event.key === "Escape") { setSidebar(false); if (!$("#recordEditModal").hidden) closeRecordEditor(); } });
 $("#monitoringRefresh").addEventListener("click", loadMonitoringReports);
+$("#monitoringCalendarMonth").addEventListener("change", () => {
+  state.monitoring.month = $("#monitoringCalendarMonth").value;
+  state.monitoring.selectedDate = "";
+  state.monitoring.reports = [];
+  loadMonitoringCalendar();
+});
+$("#monitoringCalendar").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-monitoring-date]");
+  if (button) openMonitoringCalendarDate(button.dataset.monitoringDate);
+});
 $("#monitoringPhotos").addEventListener("change", (event) => renderMonitoringPreview(event.target.files));
 $("#monitoringForm").addEventListener("submit", saveMonitoringReport);
 renderMonitoringLocationChecklist();
@@ -3241,7 +3359,6 @@ try { $("#editorName").value = localStorage.getItem(EDITOR_KEY) || ""; } catch {
 activateViewFromHash();
 loadReport();
 loadAnalytics();
-loadMonitoringReports();
 loadOrganization();
 loadPublicContent();
 loadDisciplinePublicSummary();
@@ -3253,7 +3370,7 @@ setInterval(() => {
 
 setInterval(() => {
   const monitoringEditing = $("#monitoringReports").contains(document.activeElement);
-  if (document.visibilityState === "visible" && !monitoringEditing && !state.monitoring.loading) loadMonitoringReports();
+  if (document.visibilityState === "visible" && document.body.dataset.activeView === "monitoring" && !monitoringEditing && !state.monitoring.loading) loadMonitoringReports();
 }, 30000);
 
 setInterval(() => {
