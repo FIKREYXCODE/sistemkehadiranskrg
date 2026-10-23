@@ -197,6 +197,19 @@ async function loadDisciplinePublicSummary() {
     const total = Object.values(fields).reduce((sum, value) => sum + (Number(value) || 0), 0);
     $("#disciplineAlertTotal").textContent = String(total);
     $("#disciplineAlertTotal").classList.toggle("clear", total === 0);
+    $("#disciplineTotalCases").textContent = String(Number(summary.total) || 0);
+    $("#disciplineInProgress").textContent = String(Number(summary.inProgress) || 0);
+    $("#disciplineCompleted").textContent = String(Number(summary.completed) || 0);
+    const trend = Array.isArray(summary.trend) ? summary.trend : [];
+    const trendChart = $("#disciplineTrendChart");
+    if (trendChart) {
+      const max = Math.max(1, ...trend.map((item) => Number(item.count) || 0));
+      trendChart.innerHTML = trend.length ? trend.map((item) => {
+        const count = Number(item.count) || 0;
+        const height = Math.max(7, Math.round((count / max) * 100));
+        return `<div class="discipline-trend-column"><strong>${count}</strong><i><b style="height:${height}%"></b></i><span>${safe(item.label)}</span></div>`;
+      }).join("") : '<p>Trend belum tersedia. Sila muat semula sebentar lagi.</p>';
+    }
     status.textContent = summary.updatedAt ? `Data semasa • ${formatDisplayDateTime(summary.updatedAt)}` : "Data semasa telah dimuatkan";
   } catch (error) {
     console.error(error);
