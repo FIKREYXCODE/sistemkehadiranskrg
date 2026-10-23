@@ -713,6 +713,21 @@ async function fetchSchoolDate(date) {
   return data;
 }
 
+async function fetchSafetyDate(date) {
+  const response = await fetch(`${SAFETY_API_URL}?date=${encodeURIComponent(date)}`, { cache: "no-store" });
+  const data = await responseJson(response, "Laporan pemantauan tidak dapat dibuka.");
+  if (!response.ok) throw new Error(data.error || "Laporan pemantauan tidak dapat dibuka.");
+  return Array.isArray(data.reports) ? data.reports : [];
+}
+
+async function fetchSafetyWeek(dates) {
+  const results = await Promise.allSettled(dates.map(fetchSafetyDate));
+  return {
+    reports: results.map((result) => result.status === "fulfilled" ? result.value : []),
+    failed: results.filter((result) => result.status === "rejected").length,
+  };
+}
+
 function reportAuditMap(data) {
   return new Map((Array.isArray(data.audit) ? data.audit : []).map((item) => [auditKey(item.section, item.recordId, item.fieldName), item]));
 }
@@ -753,15 +768,29 @@ function weeklyDutyEntries(reports, dates, session) {
     .filter((item) => item.note);
 }
 
-function weeklyDutyActionCount(entries) {
+function weeklyDutyNoteActions(entries) {
   const warning = /perlu\s+tindakan|belum\s+selesai|rosak|kotor|bahaya|tidak\s+selamat|masalah|aduan|lewat|gangguan/i;
-  return entries.reduce((total, entry) => total + entry.note.split(/\n+|(?<=[.!?])\s+/).filter((item) => warning.test(item)).length, 0);
+  return entries.flatMap((entry) => entry.note.split(/\n+|(?<=[.!?])\s+/)
+    .map((item) => item.trim()).filter((item) => item && warning.test(item))
+    .map((item) => ({ source: "Catatan guru bertugas", date: entry.date, location: "Catatan mingguan", issue: item, action: "Semak catatan guru bertugas", updatedBy: "" })));
 }
 
-function generateWeeklyDutySummary(session, entries, dates) {
+function weeklyMonitoringData(safetyReports, dates, session) {
+  const all = safetyReports.flatMap((reports, index) => reports.map((report) => ({ ...report, reportDate: report.reportDate || dates[index] })))
+    .filter((report) => !isRmtReport(report) && !isRmtScheduleReport(report) && !isWeeklyDutyReport(report) && report.category !== "opr")
+    .filter((report) => !report.session || report.session === session);
+  const actions = all.filter((report) => report.routeStatus === "attention").map((report) => ({
+    source: "Laporan Pemantauan Sekolah", date: report.reportDate, location: report.location || "Kawasan tidak dinyatakan",
+    issue: cleanMonitoringText(report.issue) || "Kawasan ditandakan perlu tindakan", action: report.action || "Tindakan susulan belum dinyatakan",
+    updatedBy: report.updatedBy || "",
+  }));
+  return { reports: all, actions };
+}
+
+function generateWeeklyDutySummary(session, entries, dates, actionItems = []) {
   const label = SESSION_LABELS[session];
   const range = `${formatDisplayDate(dates[0])} hingga ${formatDisplayDate(dates[4])}`;
-  if (!entries.length) return `Belum ada maklumat untuk dianalisis bagi ${label} untuk minggu ${range}. Sila lengkapkan satu rumusan mingguan sebelum laporan disahkan.`;
+  if (!entries.length && !actionItems.length) return `Belum ada maklumat atau perkara perlu tindakan direkodkan bagi ${label} untuk minggu ${range}.`;
   const allText = entries.map((item) => item.note).join(" ").toLowerCase();
   const findings = [];
   if (/disiplin/.test(allText) && /terkawal|baik|memuaskan/.test(allText)) findings.push("disiplin murid berada dalam keadaan terkawal");
@@ -769,10 +798,11 @@ function generateWeeklyDutySummary(session, entries, dates) {
   if (/pdp|pengajaran|pembelajaran/.test(allText) && /jadual|berjalan|dijalankan/.test(allText)) findings.push("PdP berjalan mengikut jadual");
   if (/rmt/.test(allText)) findings.push("pelaksanaan RMT turut direkodkan");
   if (/sukan|sukantara|latihan/.test(allText)) findings.push("aktiviti sukan dilaksanakan mengikut perancangan");
-  const actionCount = weeklyDutyActionCount(entries);
+  const actionCount = actionItems.length;
   const opening = `Laporan guru bertugas ${label} bagi minggu ${range} dirumuskan dalam satu laporan mingguan.`;
-  const analysis = findings.length ? ` Secara keseluruhan, ${findings.join(", ")}.` : " Catatan sepanjang minggu telah dikumpulkan untuk semakan dan pengesahan.";
-  const action = actionCount ? ` Terdapat ${actionCount} perkara yang memerlukan perhatian atau tindakan susulan.` : " Tiada isu utama yang memerlukan tindakan susulan dikenal pasti daripada catatan yang direkodkan.";
+  const analysis = findings.length ? ` Secara keseluruhan, ${findings.join(", ")}.` : entries.length ? " Catatan sepanjang minggu telah dikumpulkan untuk semakan dan pengesahan." : " Tiada catatan tambahan guru bertugas direkodkan.";
+  const locations = [...new Set(actionItems.map((item) => item.location).filter(Boolean))].slice(0, 4);
+  const action = actionCount ? ` Terdapat ${actionCount} perkara perlu tindakan daripada laporan minggu ini${locations.length ? ` melibatkan ${locations.join(", ")}` : ""}.` : " Tiada perkara perlu tindakan direkodkan dalam laporan minggu ini.";
   return `${opening}${analysis}${action}`;
 }
 
@@ -796,14 +826,20 @@ async function fetchStoredWeeklyDutyReports(anchor) {
   return stored;
 }
 
-function buildWeeklyDutyReport(reports, dates, session, stored = null) {
+function buildWeeklyDutyReport(reports, dates, session, stored = null, safetyWeek = { reports: [], failed: 0 }) {
   const fields = weeklyDutyMetaFields(session);
   const anchorMeta = reports[0]?.meta || {};
   const entries = weeklyDutyEntries(reports, dates, session);
+  const monitoring = weeklyMonitoringData(safetyWeek.reports, dates, session);
+  const actionItems = [...monitoring.actions, ...weeklyDutyNoteActions(entries)];
+  const generated = generateWeeklyDutySummary(session, entries, dates, actionItems);
+  const sourceFingerprint = JSON.stringify({ entries, actionItems: actionItems.map(({ date, location, issue, action }) => ({ date, location, issue, action })) });
+  const storedMatchesSources = Boolean(stored?.summary) && stored?.sourceFingerprint === sourceFingerprint;
   const latestValue = (field) => reports.map((report) => String(report?.meta?.[field] || "").trim()).filter(Boolean).pop() || "";
   return {
-    summary: String(stored?.summary || "").trim() || generateWeeklyDutySummary(session, entries, dates), generated: generateWeeklyDutySummary(session, entries, dates),
-    saved: Boolean(stored?.summary), editing: false, entries,
+    summary: storedMatchesSources ? String(stored.summary).trim() : generated, generated, sourceFingerprint,
+    saved: storedMatchesSources, editing: false, entries, actionItems,
+    sourceCounts: { monitoring: monitoring.reports.length, dutyNotes: entries.length, unavailableDays: safetyWeek.failed },
     preparedBy: String(stored?.preparedBy || "").trim() || String(anchorMeta[fields.preparedBy] || "").trim() || latestValue(fields.preparedBy),
     approvedBy: String(stored?.approvedBy || "").trim() || String(anchorMeta[fields.approvedBy] || "").trim() || latestValue(fields.approvedBy),
     approvedTitle: String(stored?.approvedTitle || "").trim() || String(anchorMeta[fields.approvedTitle] || "").trim() || latestValue(fields.approvedTitle),
@@ -820,14 +856,17 @@ function renderWeeklyDutyReport() {
   $("#dutyRosterCount").textContent = `${names.length} orang`;
   $("#weeklyReportState").textContent = report.saved ? "✓ Laporan disahkan" : "Draf automatik";
   $("#weeklyReportState").classList.toggle("saved", report.saved);
-  $("#weeklyReportActionCount").textContent = String(weeklyDutyActionCount(report.entries));
+  $("#weeklyReportActionCount").textContent = String(report.actionItems.length);
+  const actionSource = $("#weeklyReportActionSources");
+  actionSource.hidden = !report.actionItems.length;
+  actionSource.innerHTML = report.actionItems.length ? `<summary>Lihat sumber ${report.actionItems.length} perkara minggu ini</summary><div>${report.actionItems.map((item) => `<article><div><strong>${safe(item.location)}</strong><span>${safe(formatDisplayDate(item.date))} • ${safe(item.source)}</span></div><p>${safe(item.issue)}</p><small><b>Tindakan:</b> ${safe(item.action)}${item.updatedBy ? ` • Diisi oleh ${safe(item.updatedBy)}` : ""}</small></article>`).join("")}</div>` : "";
   $("#weeklyReportSummary").value = report.summary;
   $("#weeklyReportSummary").readOnly = !report.editing;
   $("#weeklyReportSummary").setAttribute("aria-readonly", String(!report.editing));
   $("#weeklyReportPreparedBy").value = report.preparedBy || "";
   $("#weeklyReportApprovedBy").value = report.approvedBy || "";
   $("#weeklyReportApprovedTitle").value = report.approvedTitle || "";
-  $("#weeklyReportSources").textContent = report.entries.length ? "Analisis awal disediakan daripada rekod sedia ada. Hanya satu laporan disimpan bagi sidang ini untuk minggu tersebut." : "Lengkapkan dan sahkan satu laporan sahaja bagi sidang ini untuk minggu tersebut.";
+  $("#weeklyReportSources").textContent = `Sumber minggu ini: ${report.sourceCounts.monitoring} rekod Pemantauan Sekolah • ${report.sourceCounts.dutyNotes} catatan guru bertugas. Hanya rekod ${formatDisplayDate(state.dutyWeek.anchor)} hingga ${formatDisplayDate(state.dutyWeek.end)} digunakan.${report.sourceCounts.unavailableDays ? ` ${report.sourceCounts.unavailableDays} hari belum dapat disemak; cuba jana semula.` : ""}`;
   $("#weeklyReportEdit").textContent = report.editing ? "✓ Selesai edit" : "✎ Semak & edit";
   $("#weeklyReportSave").textContent = report.saved ? "✓ Simpan versi baharu" : "✓ Sahkan laporan minggu";
 }
@@ -851,9 +890,10 @@ async function loadDutyWeekTemplate(currentData = null, force = false) {
   state.dutyWeek.loading = true;
   if ($("#dutyWeekState")) $("#dutyWeekState").textContent = "Memuatkan…";
   try {
-    const [reports, storedReports] = await Promise.all([
+    const [reports, storedReports, safetyWeek] = await Promise.all([
       Promise.all(dates.map(fetchSchoolDate)),
       fetchStoredWeeklyDutyReports(dates[0]),
+      fetchSafetyWeek(dates),
     ]);
     const sourceIndexes = {
       morning: reports.findIndex((report) => dutyNamesFromReport(report, "morning").some(Boolean)),
@@ -869,7 +909,7 @@ async function loadDutyWeekTemplate(currentData = null, force = false) {
       ...state.dutyWeek,
       anchor: dates[0], end: dates[4], sourceDate: firstSourceIndex >= 0 ? dates[firstSourceIndex] : "",
       editing: !hasWeeklyNames, locked: hasWeeklyNames, loading: false, loadedKey: weekKey, loadedAt: Date.now(), dates, reports,
-      summaries: { morning: buildWeeklyDutyReport(reports, dates, "morning", storedReports.morning), afternoon: buildWeeklyDutyReport(reports, dates, "afternoon", storedReports.afternoon) },
+      summaries: { morning: buildWeeklyDutyReport(reports, dates, "morning", storedReports.morning, safetyWeek), afternoon: buildWeeklyDutyReport(reports, dates, "afternoon", storedReports.afternoon, safetyWeek) },
     };
     renderDutyTeachers();
     setDailyDutySession(state.dutyWeek.session || "morning");
@@ -917,6 +957,7 @@ async function saveWeeklyDutyReport() {
   if (!preparedBy) { setStatus("Pilih nama guru yang menyediakan laporan.", "error"); return; }
   const details = {
     session, anchor: state.dutyWeek.anchor, end: state.dutyWeek.end, summary,
+    sourceFingerprint: report.sourceFingerprint,
     preparedBy, approvedBy: $("#weeklyReportApprovedBy").value.trim(), approvedTitle: $("#weeklyReportApprovedTitle").value.trim(),
   };
   const payload = {
