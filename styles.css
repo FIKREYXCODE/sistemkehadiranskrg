@@ -1483,3 +1483,72 @@ body[data-active-view="staff"] .identity-bar>div small{margin-top:1px;font-size:
     box-shadow:inset 0 1px 0 #ffffff80,0 4px 12px #00152f38;
   }
 }
+
+/* v156: carta trend dan prestasi kelas kekal bersebelahan pada telefon. */
+@media(max-width:800px){
+  #attendanceAnalysis .analysis-chart-layout{
+    grid-template-columns:minmax(0,1.55fr) minmax(124px,.75fr);
+    align-items:stretch;
+    gap:5px;
+  }
+  #attendanceAnalysis .analysis-chart-layout>.chart-shell{
+    min-width:0;
+    padding:7px 5px;
+    border-radius:10px;
+  }
+  #attendanceAnalysis .chart-title-row{display:grid;gap:3px}
+  #attendanceAnalysis .chart-title-row strong{font-size:.61rem;line-height:1.15}
+  #attendanceAnalysis .chart-legend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;font-size:.4rem;line-height:1.05}
+  #attendanceAnalysis .chart-legend span{gap:2px;min-width:0}
+  #attendanceAnalysis .chart-legend i{width:9px;height:2px;flex:none}
+  #attendanceAnalysis .attendance-chart{width:100%;min-width:0;margin-top:1px;overflow:hidden}
+  #attendanceAnalysis .attendance-chart svg{width:100%;max-width:100%;height:auto;min-width:0}
+  #attendanceAnalysis .chart-axis-text{font-size:7px}
+  #attendanceAnalysis .chart-line{stroke-width:3}
+  #attendanceAnalysis .chart-line-dot{stroke-width:1.5}
+  #attendanceAnalysis .chart-value-label{font-size:7px;stroke-width:2px}
+  #attendanceAnalysis .analysis-best-card{
+    grid-template-columns:1fr;
+    grid-template-rows:auto auto minmax(0,1fr);
+    align-content:stretch;
+    gap:4px;
+    min-width:0;
+    padding:6px;
+    border-radius:10px;
+  }
+  #attendanceAnalysis .analysis-best-head{grid-row:auto;gap:4px;min-width:0}
+  #attendanceAnalysis .analysis-best-head>div>span{font-size:.4rem}
+  #attendanceAnalysis .analysis-best-head>div>strong{font-size:.58rem;line-height:1.12}
+  #attendanceAnalysis .analysis-best-head label{font-size:.43rem}
+  #attendanceAnalysis .analysis-best-head select{height:25px;margin-top:2px;padding:2px 4px;font-size:.5rem}
+  #attendanceAnalysis .analysis-best-card>#analysisBestRange{display:block;font-size:.4rem;line-height:1.15}
+  #attendanceAnalysis .analysis-best-list{
+    grid-column:auto;
+    grid-row:auto;
+    grid-template-columns:1fr;
+    grid-template-rows:repeat(3,minmax(0,1fr));
+    gap:3px;
+    min-height:0;
+  }
+  #attendanceAnalysis .analysis-best-list button{
+    grid-template-columns:auto minmax(0,1fr);
+    grid-template-rows:auto auto;
+    gap:1px 3px;
+    min-width:0;
+    padding:4px;
+    border-radius:7px;
+    text-align:left;
+  }
+  #attendanceAnalysis .analysis-best-list button>span{grid-row:1/3;font-size:.65rem}
+  #attendanceAnalysis .analysis-best-list button strong{font-size:.5rem}
+  #attendanceAnalysis .analysis-best-list button>b{grid-column:2;grid-row:2;font-size:.55rem;text-align:left}
+  #attendanceAnalysis .analysis-best-list button small,
+  #attendanceAnalysis .analysis-best-list button>em,
+  #attendanceAnalysis .analysis-best-card>.analysis-best-insight{display:none}
+}
+@media(max-width:430px){
+  #attendanceAnalysis .analysis-chart-layout{grid-template-columns:minmax(0,1.5fr) minmax(112px,.8fr);gap:4px}
+  #attendanceAnalysis .analysis-chart-layout>.chart-shell{padding:6px 4px}
+  #attendanceAnalysis .analysis-best-card{grid-template-columns:1fr;padding:5px}
+  #attendanceAnalysis .analysis-best-list{min-height:0}
+}
