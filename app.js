@@ -1237,7 +1237,7 @@ function addMonitoringItem(selectedLocation = "") {
   const card = document.createElement("details");
   card.className = "monitoring-item-card";
   card.open = true;
-  card.innerHTML = `<summary><span class="monitoring-step">${index}</span><span><strong data-monitoring-item-title>${safe(location)}</strong><small data-monitoring-item-status>Baik • Gambar belum dipilih</small></span><button class="monitoring-remove" type="button" aria-label="Buang ${safe(location)}">Buang</button></summary><div class="monitoring-item-content"><input data-monitoring-field="location" type="hidden" value="${safe(location)}"><label class="other-location"${location === "Lain-lain" ? "" : " hidden"}>Nama kawasan<input data-monitoring-field="otherLocation" maxlength="180" placeholder="Contoh: Bilik Kesihatan"></label><div class="monitoring-item-grid"><label>Status<select data-monitoring-field="status" required><option value="controlled">🟢 Baik</option><option value="not_applicable">🟡 Memuaskan</option><option value="attention">🔴 Perlu Tindakan</option></select></label><label class="monitoring-photo-control">Gambar kawasan<input data-monitoring-field="photos" type="file" accept="image/*,.heic,.heif" multiple required></label></div><div class="monitoring-preview" data-monitoring-preview></div><label>Catatan ringkas — pilihan<textarea data-monitoring-field="note" rows="2" maxlength="1500" placeholder="Catat perkara penting sahaja"></textarea></label><label class="follow-up" hidden>Tindakan susulan<textarea data-monitoring-field="action" rows="2" maxlength="1500" placeholder="Nyatakan tindakan yang perlu dibuat"></textarea></label></div>`;
+  card.innerHTML = `<summary><span class="monitoring-step">${index}</span><span><strong data-monitoring-item-title>${safe(location)}</strong><small data-monitoring-item-status>Baik</small></span><button class="monitoring-remove" type="button" aria-label="Buang ${safe(location)}">Buang</button></summary><div class="monitoring-item-content"><input data-monitoring-field="location" type="hidden" value="${safe(location)}"><label class="other-location"${location === "Lain-lain" ? "" : " hidden"}>Nama kawasan<input data-monitoring-field="otherLocation" maxlength="180" placeholder="Contoh: Bilik Kesihatan"></label><div class="monitoring-item-grid status-only"><label>Status kawasan<select data-monitoring-field="status" required><option value="controlled">🟢 Baik</option><option value="not_applicable">🟡 Memuaskan</option><option value="attention">🔴 Perlu Tindakan</option></select></label></div><label>Catatan ringkas — pilihan<textarea data-monitoring-field="note" rows="2" maxlength="1500" placeholder="Catat perkara penting sahaja"></textarea></label><label class="follow-up" hidden>Tindakan susulan<textarea data-monitoring-field="action" rows="2" maxlength="1500" placeholder="Nyatakan tindakan yang perlu dibuat"></textarea></label></div>`;
   container.appendChild(card);
   syncMonitoringLocationSelection();
   $("#monitoringFormStatus").textContent = `${container.querySelectorAll(".monitoring-item-card").length} kawasan dimasukkan dalam satu laporan.`;
@@ -1308,6 +1308,8 @@ async function saveMonitoringReport(event) {
   $("#monitoringSave").disabled = true;
   $("#monitoringFormStatus").textContent = `Menyediakan satu laporan lengkap dengan ${cards.length} kawasan…`;
   try {
+    const sharedFiles = validateMonitoringFiles($("#monitoringPhotos").files);
+    const sharedPhotos = await Promise.all(sharedFiles.map(prepareMonitoringPhoto));
     const batchId = `${state.date}-${session}-${Date.now().toString(36)}`;
     for (const card of cards) {
       const field = (name) => card.querySelector(`[data-monitoring-field="${name}"]`);
@@ -1317,15 +1319,15 @@ async function saveMonitoringReport(event) {
       const action = field("action").value.trim();
       if (!location) throw new Error("Sila pilih atau nyatakan lokasi pemantauan.");
       if (status === "attention" && !action) throw new Error("Sila nyatakan tindakan susulan bagi status Perlu Tindakan.");
-      const files = validateMonitoringFiles(field("photos").files);
-      const photos = await Promise.all(files.map(prepareMonitoringPhoto));
       const note = field("note").value.trim() || (status === "controlled" ? "Kawasan dalam keadaan baik." : status === "not_applicable" ? "Kawasan dalam keadaan memuaskan." : "Pemantauan memerlukan tindakan.");
-      const payload = { date: state.date, updatedBy: editorName(), category: "both", session, location, routeStatus: status, parkingStatus: "not_applicable", issue: `[smart-report:${batchId}] ${note}`, action: action || "Tiada tindakan susulan diperlukan.", photos, reportGroupId: batchId };
+      const payload = { date: state.date, updatedBy: editorName(), category: "both", session, location, routeStatus: status, parkingStatus: "not_applicable", issue: `[smart-report:${batchId}] ${note}`, action: action || "Tiada tindakan susulan diperlukan.", photos: sharedPhotos, reportGroupId: batchId };
       const response = await fetch(SAFETY_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const result = await responseJson(response, "Laporan gagal disimpan.");
       if (!response.ok) throw new Error(result.error || "Laporan gagal disimpan.");
     }
     $("#monitoringItems").innerHTML = '<p class="monitoring-empty">Belum ada kawasan dipilih. Scroll senarai di atas dan tekan kawasan yang dipantau.</p>';
+    $("#monitoringPhotos").value = "";
+    clearMonitoringPreview();
     syncMonitoringLocationSelection();
     $("#monitoringFormStatus").textContent = `Satu laporan lengkap dengan ${cards.length} kawasan berjaya disimpan.`;
     await loadMonitoringReports();
@@ -2411,8 +2413,7 @@ $("#monitoringReports").addEventListener("click", (event) => {
 $("#monitoringItems").addEventListener("click", (event) => { const button = event.target.closest(".monitoring-remove"); if (!button) return; event.preventDefault(); button.closest(".monitoring-item-card").remove(); const count = $("#monitoringItems").querySelectorAll(".monitoring-item-card").length; if (!count) $("#monitoringItems").innerHTML = '<p class="monitoring-empty">Belum ada kawasan dipilih. Scroll senarai di atas dan tekan kawasan yang dipantau.</p>'; syncMonitoringLocationSelection(); $("#monitoringFormStatus").textContent = count ? `${count} kawasan dalam laporan ini.` : ""; });
 $("#monitoringItems").addEventListener("change", (event) => {
   const card = event.target.closest(".monitoring-item-card"); if (!card) return;
-  if (event.target.matches('[data-monitoring-field="status"]')) { const follow = card.querySelector(".follow-up"); follow.hidden = event.target.value !== "attention"; follow.querySelector("textarea").required = event.target.value === "attention"; card.querySelector("[data-monitoring-item-status]").textContent = `${monitoringStatusLabel(event.target.value)} • ${card.querySelector('[data-monitoring-field="photos"]').files.length ? "Gambar tersedia" : "Gambar belum dipilih"}`; }
-  if (event.target.matches('[data-monitoring-field="photos"]')) { const preview = card.querySelector("[data-monitoring-preview]"); try { const files = validateMonitoringFiles(event.target.files); preview.innerHTML = files.map((file, index) => `<figure><img src="${URL.createObjectURL(file)}" alt="Pratonton ${index + 1}"><figcaption>Gambar ${index + 1}</figcaption></figure>`).join(""); card.querySelector("[data-monitoring-item-status]").textContent = `${monitoringStatusLabel(card.querySelector('[data-monitoring-field="status"]').value)} • ${files.length} gambar`; } catch (error) { event.target.value = ""; preview.textContent = error.message; } }
+  if (event.target.matches('[data-monitoring-field="status"]')) { const follow = card.querySelector(".follow-up"); follow.hidden = event.target.value !== "attention"; follow.querySelector("textarea").required = event.target.value === "attention"; card.querySelector("[data-monitoring-item-status]").textContent = monitoringStatusLabel(event.target.value); }
 });
 $("#oprPhotos").addEventListener("change", (event) => renderOprPreview(event.target.files));
 $("#oprForm").addEventListener("submit", saveOprReport);
