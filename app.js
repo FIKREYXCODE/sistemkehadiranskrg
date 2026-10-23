@@ -12,6 +12,7 @@ const state = {
   monitoring: { reports: [], loading: false, previewUrls: [], filter: "all" },
   weeklyDuty: { loading: false }, completion: { loading: false }, calendar: { loading: false }, rmtPreviewUrls: [], rmtReports: [], rmtLoading: false,
   rmtMonth: "", rmtSelectedDate: "", rmtShowAll: false, rmtScheduleLoading: false,
+  dutyWeek: { anchor: "", end: "", sourceDate: "", session: "morning", editing: false, locked: false, loading: false, loadedKey: "", loadedAt: 0 },
   opr: { reports: [], loading: false, previewUrls: [] }, editingRecord: null,
   organization: { items: [], adminItems: [], deletedIds: [], loading: false },
   content: { announcements: [], adminAnnouncements: [], deletedAnnouncementIds: [], latestLetters: [], letters: [], loading: false },
@@ -310,7 +311,8 @@ function applyAttendanceAudit(updates, updatedBy, updatedAt) {
 function updateEditingAccess() {
   const allowed = Boolean(editorName());
   document.querySelectorAll("#attendanceBody input,#staffMorningBody input,#staffAfternoonBody input,.report-notes input:not([readonly]),.report-notes textarea").forEach((element) => { element.readOnly = false; });
-  document.querySelectorAll("#dutyMorningBody select,#dutyAfternoonBody select,#staffMorningBody select,#staffAfternoonBody select,.report-notes select").forEach((element) => { element.disabled = false; });
+  document.querySelectorAll("#staffMorningBody select,#staffAfternoonBody select,.report-notes select").forEach((element) => { element.disabled = false; });
+  document.querySelectorAll("#dutyMorningBody select,#dutyAfternoonBody select").forEach((element) => { element.disabled = !state.dutyWeek.editing; });
   $("#editorName").classList.toggle("invalid", !allowed);
   $("#monitoringSave").disabled = !allowed;
   $("#rmtPhotoSave").disabled = !allowed;
@@ -729,6 +731,84 @@ function schoolWeekDates(anchorValue) {
   const anchor = dateObject(anchorValue);
   const monday = addDays(anchor, -((anchor.getUTCDay() + 6) % 7));
   return Array.from({ length: 5 }, (_, index) => dateValue(addDays(monday, index)));
+}
+
+function dutyNamesFromReport(data, session) {
+  const names = [];
+  for (const item of Array.isArray(data?.dutyTeachers) ? data.dutyTeachers : []) {
+    if (item.session !== session) continue;
+    names[Math.max(0, Number(item.rowOrder || 1) - 1)] = String(item.teacherName || "").trim();
+  }
+  return names.slice(0, 5);
+}
+
+function setDailyDutySession(session = "morning") {
+  state.dutyWeek.session = session;
+  document.querySelectorAll("[data-daily-duty-tab]").forEach((button) => {
+    const active = button.dataset.dailyDutyTab === session;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+  document.querySelectorAll("[data-daily-duty-panel]").forEach((panel) => { panel.hidden = panel.dataset.dailyDutyPanel !== session; });
+}
+
+async function loadDutyWeekTemplate(currentData = null, force = false) {
+  const dates = schoolWeekDates(state.date);
+  const weekKey = dates.join(":");
+  if (state.dutyWeek.loading) return;
+  if (!force && state.dutyWeek.loadedKey === weekKey && Date.now() - state.dutyWeek.loadedAt < 60000) return;
+  state.dutyWeek.loading = true;
+  if ($("#dutyWeekState")) $("#dutyWeekState").textContent = "Memuatkan…";
+  try {
+    const reports = await Promise.all(dates.map((date) => currentData && date === state.date ? currentData : fetchSchoolDate(date)));
+    const sourceIndexes = {
+      morning: reports.findIndex((report) => dutyNamesFromReport(report, "morning").some(Boolean)),
+      afternoon: reports.findIndex((report) => dutyNamesFromReport(report, "afternoon").some(Boolean)),
+    };
+    const hasWeeklyNames = Object.values(sourceIndexes).some((index) => index >= 0);
+    const firstSourceIndex = Object.values(sourceIndexes).filter((index) => index >= 0).sort((a, b) => a - b)[0] ?? -1;
+    state.dutyTeachers = {
+      morning: sourceIndexes.morning >= 0 ? dutyNamesFromReport(reports[sourceIndexes.morning], "morning") : [],
+      afternoon: sourceIndexes.afternoon >= 0 ? dutyNamesFromReport(reports[sourceIndexes.afternoon], "afternoon") : [],
+    };
+    state.dutyWeek = {
+      ...state.dutyWeek,
+      anchor: dates[0], end: dates[4], sourceDate: firstSourceIndex >= 0 ? dates[firstSourceIndex] : "",
+      editing: !hasWeeklyNames, locked: hasWeeklyNames, loading: false, loadedKey: weekKey, loadedAt: Date.now(),
+    };
+    renderDutyTeachers();
+    setDailyDutySession(state.dutyWeek.session || "morning");
+  } catch (error) {
+    console.error(error);
+    state.dutyWeek.loading = false;
+    if ($("#dutyWeekState")) $("#dutyWeekState").textContent = "Senarai minggu belum dapat dimuatkan";
+  }
+}
+
+async function saveDutyWeekTemplate() {
+  if (!editorName()) { updateEditingAccess(); setStatus("Pilih nama pengisi dahulu.", "error"); return; }
+  const selectedCount = ["morning", "afternoon"].flatMap((session) => state.dutyTeachers[session] || []).filter(Boolean).length;
+  if (!selectedCount) { setStatus("Pilih sekurang-kurangnya seorang guru bertugas.", "error"); return; }
+  const button = $("#dutyWeekSave");
+  button.disabled = true;
+  $("#dutyWeekState").textContent = "Menyimpan senarai minggu…";
+  try {
+    const dutyTeacherUpdates = ["morning", "afternoon"].map((session) => ({ session, teachers: Array.from({ length: 5 }, (_, index) => state.dutyTeachers[session]?.[index] || "") }));
+    const response = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ date: state.dutyWeek.anchor, attendanceUpdates: [], dutyTeacherUpdates, updatedBy: editorName() }) });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Senarai mingguan gagal disimpan.");
+    state.dutyWeek.editing = false;
+    state.dutyWeek.locked = true;
+    state.dutyWeek.sourceDate = state.dutyWeek.anchor;
+    state.dutyWeek.loadedAt = Date.now();
+    renderDutyTeachers();
+    setDailyDutySession(state.dutyWeek.session || "morning");
+    setStatus("Senarai guru bertugas minggu ini telah disimpan dan dikunci.", "saved");
+  } catch (error) {
+    console.error(error);
+    $("#dutyWeekState").textContent = error.message || "Senarai mingguan gagal disimpan.";
+    setStatus("Senarai mingguan belum tersimpan.", "error");
+  } finally { button.disabled = false; }
 }
 
 async function loadWeeklyDuty() {
@@ -1853,6 +1933,7 @@ function renderTotals() {
 }
 
 function renderDutyTeachers() {
+  const editing = Boolean(state.dutyWeek.editing);
   for (const session of ["morning", "afternoon"]) {
     while (state.dutyTeachers[session].length < 5) state.dutyTeachers[session].push("");
     state.dutyTeachers[session] = state.dutyTeachers[session].slice(0, 5);
@@ -1860,9 +1941,16 @@ function renderDutyTeachers() {
     target.innerHTML = state.dutyTeachers[session].map((teacherName, index) => {
       const recordId = `${session}:${index + 1}`;
       const details = auditDetails("duty", recordId, "teacherName");
-      return `<tr data-duty-session="${session}" data-duty-index="${index}"><td>${index + 1}</td><td><select class="cell-input staff-name-select${details.className}" data-field="teacherName" aria-label="Guru bertugas ${SESSION_LABELS[session]} ${index + 1}" title="${safe(details.title)}">${staffSelectOptions(teacherName, "Pilih nama guru")}</select></td></tr>`;
+      return `<tr data-duty-session="${session}" data-duty-index="${index}"${!editing && !teacherName ? " hidden" : ""}><td>${index + 1}</td><td><select class="cell-input staff-name-select${details.className}" data-field="teacherName" aria-label="Guru bertugas ${SESSION_LABELS[session]} ${index + 1}" title="${safe(details.title)}"${editing ? "" : " disabled"}>${staffSelectOptions(teacherName, "Pilih nama guru")}</select></td></tr>`;
     }).join("");
   }
+  const dates = state.dutyWeek.anchor && state.dutyWeek.end ? `${formatDisplayDate(state.dutyWeek.anchor)} – ${formatDisplayDate(state.dutyWeek.end)}` : "Memuatkan minggu…";
+  $("#dutyWeekLabel").textContent = dates;
+  const selectedCount = ["morning", "afternoon"].flatMap((session) => state.dutyTeachers[session] || []).filter(Boolean).length;
+  $("#dutyWeekState").textContent = editing ? (selectedCount ? "Sedang diedit" : "Belum diisi") : `🔒 Terkunci • ${selectedCount} guru`;
+  $("#dutyWeekState").classList.toggle("locked", !editing && selectedCount > 0);
+  $("#dutyWeekEdit").hidden = editing || !selectedCount;
+  $("#dutyWeekSave").hidden = !editing;
   updateEditingAccess();
 }
 
@@ -2230,6 +2318,7 @@ async function loadReport(silent = false) {
     state.audit = new Map((Array.isArray(data.audit) ? data.audit : []).map((item) => [auditKey(item.section, item.recordId, item.fieldName), item]));
     const restoredDraft = !silent && restoreDraft();
     renderAttendance(); renderDutyTeachers(); renderStaff(); renderMeta(); updateSessionVisibility();
+    if (HASH_VIEWS[window.location.hash.replace(/^#/, "")] === "dailyDuty") await loadDutyWeekTemplate(data);
     if (HASH_VIEWS[window.location.hash.replace(/^#/, "")] === "analysis") await loadKpiDashboard();
     if (!silent) {
       setStatus(restoredDraft ? "Menyambung simpanan tertangguh…" : "Data bersama sedia", restoredDraft ? "" : "saved");
@@ -2372,11 +2461,16 @@ for (const selector of ["#dutyMorningBody", "#dutyAfternoonBody"]) {
     const row = input.closest("tr[data-duty-session]");
     const session = row.dataset.dutySession;
     state.dutyTeachers[session][Number(row.dataset.dutyIndex)] = input.value;
-    state.dutyDirtySessions.add(session);
-    saveDraft(); scheduleSave();
+    state.dutyWeek.editing = true;
+    renderDutyTeachers();
+    setDailyDutySession(session);
   };
   $(selector).addEventListener("change", updateDutyTeacher);
 }
+
+document.querySelectorAll("[data-daily-duty-tab]").forEach((button) => button.addEventListener("click", () => setDailyDutySession(button.dataset.dailyDutyTab)));
+$("#dutyWeekEdit").addEventListener("click", () => { state.dutyWeek.editing = true; renderDutyTeachers(); setDailyDutySession(state.dutyWeek.session || "morning"); });
+$("#dutyWeekSave").addEventListener("click", saveDutyWeekTemplate);
 
 [["#reportNoteMorning", "noteMorning"], ["#preparedByMorning", "preparedByMorning"], ["#reportNoteAfternoon", "noteAfternoon"], ["#preparedByAfternoon", "preparedByAfternoon"], ["#approvedByMorning", "approvedByMorning"], ["#approvedTitleMorning", "approvedTitleMorning"], ["#approvedByAfternoon", "approvedByAfternoon"], ["#approvedTitleAfternoon", "approvedTitleAfternoon"]].forEach(([selector, field]) => {
   const updateMeta = (event) => {
@@ -2436,6 +2530,7 @@ function activateViewFromHash() {
   $("#printButton").hidden = requested !== "attendance";
   if (requested === "analysis") { loadAnalytics(); if (state.classes.length) loadKpiDashboard(); }
   if (requested === "monitoring") loadMonitoringReports();
+  if (requested === "dailyDuty" && state.classes.length) loadDutyWeekTemplate(null, true);
   if (requested === "duty") loadWeeklyDuty();
   if (requested === "completion") loadCompletionView();
   if (requested === "calendar") loadCalendarRecord();
@@ -2725,7 +2820,7 @@ window.addEventListener("beforeunload", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=121", { scope: "./", updateViaCache: "none" })
+    navigator.serviceWorker.register("./service-worker.js?v=124", { scope: "./", updateViaCache: "none" })
       .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
   });
 }

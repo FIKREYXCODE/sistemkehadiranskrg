@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="HEM SMARTTRACK">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="manifest" href="manifest.webmanifest?v=121">
+  <link rel="manifest" href="manifest.webmanifest?v=124">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=121">
+  <link rel="stylesheet" href="styles.css?v=124">
 </head>
 <body>
   <header class="topbar no-print">
@@ -210,31 +210,41 @@
       </div>
     </section>
 
-    <section id="dailyDutyView" class="utility-card app-view no-print" data-view-panel="dailyDuty" hidden>
+    <section id="dailyDutyView" class="utility-card app-view no-print compact-daily-duty" data-view-panel="dailyDuty" hidden>
       <div class="utility-head">
-        <div><p class="eyebrow">Rekod 03</p><h2>Senarai Guru Bertugas Harian</h2><p>Senarai, catatan laporan dan pengesahan diasingkan bagi sidang pagi dan petang.</p></div>
+        <div><p class="eyebrow">Rekod 03</p><h2>Guru Bertugas Harian</h2><p>Nama guru dipilih sekali dan dikunci untuk minggu tersebut. Catatan laporan kekal mengikut tarikh.</p></div>
         <div class="utility-controls"><label>Tarikh rekod<input id="dailyDutyDate" type="date" required></label></div>
       </div>
+      <div class="duty-week-toolbar">
+        <div><small>Senarai bertugas minggu ini</small><strong id="dutyWeekLabel">Memuatkan minggu…</strong></div>
+        <span id="dutyWeekState" class="duty-week-state">Memuatkan…</span>
+        <button id="dutyWeekEdit" class="secondary-button" type="button" hidden>✎ Edit senarai</button>
+        <button id="dutyWeekSave" class="primary-button" type="button" hidden>🔒 Simpan &amp; kunci</button>
+      </div>
+      <nav class="daily-duty-tabs" aria-label="Pilih sidang guru bertugas">
+        <button class="active morning" type="button" data-daily-duty-tab="morning" aria-pressed="true">🌅 <b>Sidang Pagi</b></button>
+        <button class="afternoon" type="button" data-daily-duty-tab="afternoon" aria-pressed="false">🌇 <b>Sidang Petang</b></button>
+      </nav>
       <div class="duty-session-grid standalone-duty-grid">
-        <div class="duty-session-card morning-card">
+        <div class="duty-session-card morning-card" data-daily-duty-panel="morning">
           <h4>Sidang Pagi</h4>
           <table class="duty-table"><thead><tr><th>Bil</th><th>Nama guru bertugas</th></tr></thead><tbody id="dutyMorningBody"></tbody></table>
         </div>
-        <div class="duty-session-card afternoon-card">
+        <div class="duty-session-card afternoon-card" data-daily-duty-panel="afternoon" hidden>
           <h4>Sidang Petang</h4>
           <table class="duty-table"><thead><tr><th>Bil</th><th>Nama guru bertugas</th></tr></thead><tbody id="dutyAfternoonBody"></tbody></table>
         </div>
       </div>
       <section class="report-notes standalone-report-notes">
         <div class="session-notes-grid">
-          <div class="session-note-card morning-card">
+          <div class="session-note-card morning-card" data-daily-duty-panel="morning">
             <h4>Sidang Pagi</h4>
             <label>Catatan laporan<textarea id="reportNoteMorning" rows="3" placeholder="Catatan laporan sidang pagi"></textarea></label>
             <label>Disediakan oleh<select id="preparedByMorning" class="staff-choice"><option value="">Pilih nama guru</option></select></label>
             <label>Disahkan oleh<select id="approvedByMorning" class="staff-choice"><option value="">Pilih nama pegawai</option></select></label>
             <label>Jawatan pegawai pengesah<input id="approvedTitleMorning" type="text" readonly aria-readonly="true"></label>
           </div>
-          <div class="session-note-card afternoon-card">
+          <div class="session-note-card afternoon-card" data-daily-duty-panel="afternoon" hidden>
             <h4>Sidang Petang</h4>
             <label>Catatan laporan<textarea id="reportNoteAfternoon" rows="3" placeholder="Catatan laporan sidang petang"></textarea></label>
             <label>Disediakan oleh<select id="preparedByAfternoon" class="staff-choice"><option value="">Pilih nama guru</option></select></label>
@@ -622,7 +632,7 @@
     <div class="news-ticker-viewport"><div id="newsTickerTrack" class="news-ticker-track"></div></div>
   </aside>
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
-  <script src="class-demographics.js?v=121" defer></script>
-  <script src="app.js?v=121" defer></script>
+  <script src="class-demographics.js?v=124" defer></script>
+  <script src="app.js?v=124" defer></script>
 </body>
 </html>
