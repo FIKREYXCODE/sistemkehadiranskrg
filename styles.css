@@ -310,6 +310,70 @@ body{background:#fff;color:#000}
   #rmtStatusView .rmt-duty-editor .rmt-template-actions{align-items:stretch;gap:5px}
 }
 
+/* v167: paparan kalender dokumen HEM padat dalam satu skrin. */
+body.opr-view-active{overflow:hidden}
+#oprView:not([hidden]){display:grid;grid-template-columns:minmax(0,1.45fr) minmax(310px,.55fr);grid-template-rows:auto minmax(0,1fr);gap:12px;height:calc(100dvh - 164px);min-height:510px;max-height:760px;overflow:hidden}
+#oprView>.monitoring-head{grid-column:1/-1;margin:0;min-height:0}
+#oprView>.monitoring-head h2{margin:3px 0;font-size:clamp(1.2rem,2vw,1.65rem)}
+#oprView>.monitoring-head>div>p:last-child{margin:3px 0 0;font-size:.72rem}
+#oprView>.opr-calendar-shell{grid-column:1;grid-row:2;display:flex;min-height:0;flex-direction:column;margin:0;padding:12px 14px;overflow:hidden}
+#oprView>.opr-calendar-detail{grid-column:2;grid-row:2;min-height:0;margin:0;padding:13px;overflow-y:auto;overscroll-behavior:contain}
+#oprView .opr-calendar-toolbar h3{font-size:1.02rem}
+#oprView .opr-calendar-toolbar .eyebrow{font-size:.55rem}
+#oprView .opr-filter-tabs{margin-top:8px}
+#oprView .opr-calendar-summary{margin:7px 0}
+#oprView .opr-calendar-summary article{padding:7px 9px}
+#oprView .opr-calendar-legend{margin:4px 0}
+#oprView .opr-calendar-weekdays span{padding:3px}
+#oprView .opr-calendar-grid{flex:1;grid-auto-rows:minmax(38px,1fr);min-height:0}
+#oprView .opr-calendar-day,#oprView .opr-calendar-blank{min-height:0}
+#oprView .opr-calendar-shell>.monitoring-list-status{display:none}
+#oprView .opr-detail-heading{align-items:flex-start;flex-direction:column;gap:8px}
+#oprView .opr-detail-actions{width:100%}
+#oprView .opr-detail-actions button{flex:1;padding:9px 7px;font-size:.66rem}
+.opr-detail-close{display:none!important;max-width:38px;border:1px solid #c3d4e5!important;background:#fff!important;color:#48617e!important;font-size:1rem!important}
+#oprView .opr-detail-section-title{margin:10px 0 7px;padding-top:9px}
+#oprView .opr-calendar-detail .opr-gallery,#oprView .opr-calendar-detail .hem-letter-grid{display:grid;overflow:visible;padding:0;scroll-snap-type:none}
+#oprView .opr-calendar-detail .opr-gallery .monitoring-report,#oprView .opr-calendar-detail .hem-letter-card{width:100%;max-width:none;flex-basis:auto}
+#oprView .opr-calendar-detail .monitoring-photo-grid{height:120px;min-height:120px}
+.opr-entry-panel{position:fixed;z-index:70;top:96px;bottom:44px;left:50%;width:min(820px,calc(100vw - 28px));margin:0!important;overflow-y:auto;overscroll-behavior:contain;transform:translateX(-50%);box-shadow:0 28px 80px #061b3b55}
+body.opr-entry-open::before{content:"";position:fixed;z-index:69;inset:0;background:#061b3b88;backdrop-filter:blur(4px)}
+
+@media(max-width:700px){
+  #oprView:not([hidden]){display:flex;height:calc(100dvh - 118px);min-height:0;max-height:none;flex-direction:column;gap:8px;padding:9px 8px;overflow:hidden}
+  #oprView>.monitoring-head{flex:0 0 auto;align-items:center;flex-direction:row;gap:8px}
+  #oprView>.monitoring-head h2{font-size:1rem;line-height:1.12}
+  #oprView>.monitoring-head>div>p:last-child{display:none}
+  #oprView .opr-storage-menu summary{padding:7px 9px;font-size:.61rem}
+  #oprView>.opr-calendar-shell{flex:1;padding:8px 7px}
+  #oprView .opr-calendar-toolbar{display:grid;grid-template-columns:1fr;gap:4px}
+  #oprView .opr-calendar-toolbar h3{font-size:.9rem}
+  #oprView .opr-calendar-toolbar .eyebrow{display:none}
+  #oprView .opr-month-controls{grid-template-columns:30px minmax(0,1fr) auto 30px 30px}
+  #oprView .opr-month-controls input,#oprView .opr-month-controls button{height:34px}
+  #oprView .opr-month-controls button:first-child,#oprView .opr-month-controls button:last-child{width:30px}
+  #oprView .opr-filter-tabs{margin-top:4px;padding:3px}
+  #oprView .opr-filter-tabs button{min-height:29px;font-size:.57rem}
+  #oprView .opr-calendar-summary{margin:4px 0}
+  #oprView .opr-calendar-summary article{padding:4px 2px}
+  #oprView .opr-calendar-summary span{font-size:.42rem}
+  #oprView .opr-calendar-summary strong{font-size:.78rem}
+  #oprView .opr-calendar-legend{margin:2px 0}
+  #oprView .opr-calendar-legend span{padding:3px 6px;font-size:.48rem}
+  #oprView .opr-calendar-weekdays span{padding:2px 0;font-size:.46rem}
+  #oprView .opr-calendar-grid{gap:2px;grid-auto-rows:minmax(34px,1fr)}
+  #oprView .opr-calendar-day{min-height:0;padding:1px;border-radius:7px}
+  #oprView .opr-calendar-day>span:first-child{font-size:.66rem}
+  #oprView .opr-day-counts small{font-size:.36rem}
+  #oprView>.opr-calendar-detail{position:fixed;z-index:65;right:7px;bottom:39px;left:7px;display:block;max-height:72dvh;padding:12px 10px;border-radius:18px 18px 10px 10px;transform:translateY(calc(100% + 55px));transition:transform .22s ease;box-shadow:0 -20px 55px #061b3b55}
+  #oprView>.opr-calendar-detail.is-open{transform:translateY(0)}
+  #oprView .opr-detail-heading{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start}
+  #oprView .opr-detail-actions{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr 36px}
+  .opr-detail-close{display:block!important}
+  .opr-entry-panel{top:82px;right:7px;bottom:39px;left:7px;width:auto;padding:11px 9px;transform:none}
+  .opr-entry-heading{position:sticky;z-index:2;top:-11px;padding:8px 3px;background:#f7fbff}
+}
+
 /* Organisasi HEM pada laman utama. */
 .home-hem-panel{margin-top:22px;border:1px solid var(--line);border-radius:24px;background:linear-gradient(145deg,#fff,#f5faff);padding:24px;box-shadow:0 14px 34px #143d7a10}.hem-year-badge{align-self:center;padding:7px 11px;border-radius:999px;background:#e3f1ff;color:#0755b5;font-size:.7rem;font-weight:900;letter-spacing:.08em}.hem-leadership{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}.hem-leadership article{display:flex;align-items:center;gap:12px;min-width:0;padding:15px;border:1px solid #ccdbed;border-radius:15px;background:#fff}.hem-leadership article.primary{border-color:#7db9e8;background:#edf7ff}.hem-leadership article>span{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:12px;background:#e8f3ff;font-size:1.3rem}.hem-leadership small,.hem-leadership strong{display:block}.hem-leadership small{margin-bottom:4px;color:#5a6b87;font-size:.68rem;font-weight:800;text-transform:uppercase}.hem-leadership strong{color:#10234d;font-size:.82rem}.hem-units{margin-top:14px;border:1px solid #cbdced;border-radius:15px;background:#fff;overflow:hidden}.hem-units summary{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 16px;color:#0755b5;font-weight:900;cursor:pointer;list-style-position:inside}.hem-units summary small{flex:none;color:#667792;font-size:.7rem}.hem-unit-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;padding:0 14px 14px}.hem-unit-grid article{display:grid;align-content:start;gap:5px;padding:12px;border-radius:11px;background:#f3f8ff}.hem-unit-grid strong{color:#073876;font-size:.75rem}.hem-unit-grid span{color:#4e607d;font-size:.72rem;line-height:1.45}.hem-units[open] summary{border-bottom:1px solid #e0e9f4;margin-bottom:14px}
 @media(max-width:800px){.hem-leadership,.hem-unit-grid{grid-template-columns:1fr}.home-hem-panel{padding:18px}.hem-leadership{gap:9px}.hem-unit-grid{padding:0 10px 10px}.hem-units summary{align-items:flex-start}.hem-units summary span{max-width:210px}}

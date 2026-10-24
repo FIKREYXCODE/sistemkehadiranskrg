@@ -2324,6 +2324,7 @@ function openOprEntry(type) {
   const date = state.opr.selectedDate || state.date;
   $("#oprEntryPanel").hidden = type !== "opr";
   $("#letterEntryPanel").hidden = type !== "letter";
+  document.body.classList.add("opr-entry-open");
   if (type === "opr") { $("#oprDate").value = date; $("#oprProgram").focus(); }
   else { $("#letterDate").value = date; $("#letterName").focus(); }
   syncAllLocalizedDateInputs();
@@ -2355,6 +2356,7 @@ async function saveOprReport(event) {
       : "OPR HEM berjaya disimpan dalam sistem dan dua simpanan Google Drive.";
     state.opr.month = date.slice(0, 7); state.opr.selectedDate = date;
     $("#oprEntryPanel").hidden = true;
+    document.body.classList.remove("opr-entry-open");
     await loadOprReports();
   } catch (error) {
     $("#oprFormStatus").textContent = error.message || "OPR HEM gagal disimpan.";
@@ -2607,6 +2609,7 @@ async function saveLetter(event) {
     const savedDate = payload.letterDate || state.date;
     state.opr.month = savedDate.slice(0, 7); state.opr.selectedDate = savedDate;
     $("#letterEntryPanel").hidden = true;
+    document.body.classList.remove("opr-entry-open");
     await loadOprReports();
     $("#letterStatus").textContent = data.archive?.ok === false
       ? `Surat selamat dalam sistem. ${data.archive.warning || "Salinan Google Drive belum berjaya."}`
@@ -3356,7 +3359,14 @@ function activateViewFromHash() {
   }
   const isRmtView = RMT_VIEWS.includes(requested);
   const isDutyView = DUTY_VIEWS.includes(requested);
+  if (requested === "opr") window.scrollTo({ top: 0, behavior: "auto" });
   document.body.classList.toggle("rmt-view-active", isRmtView);
+  document.body.classList.toggle("opr-view-active", requested === "opr");
+  if (requested !== "opr") {
+    $("#oprCalendarDetail").classList.remove("is-open");
+    $("#oprEntryPanel").hidden = true; $("#letterEntryPanel").hidden = true;
+    document.body.classList.remove("opr-entry-open");
+  }
   document.body.dataset.activeView = requested;
   document.querySelectorAll("[data-view-panel]").forEach((panel) => {
     panel.hidden = panel.dataset.viewPanel !== requested;
@@ -3549,12 +3559,13 @@ $("#oprMonthPrevious").addEventListener("click", () => shiftOprMonth(-1));
 $("#oprMonthNext").addEventListener("click", () => shiftOprMonth(1));
 $("#oprMonthToday").addEventListener("click", () => { state.opr.month = localDateValue().slice(0, 7); state.opr.selectedDate = localDateValue(); $("#oprCalendarMonth").value = state.opr.month; loadOprReports(); });
 $("#oprCalendarMonth").addEventListener("change", (event) => { state.opr.month = event.target.value || state.date.slice(0, 7); state.opr.selectedDate = ""; loadOprReports(); });
-$("#oprCalendarGrid").addEventListener("click", (event) => { const button = event.target.closest("[data-opr-date]"); if (!button) return; state.opr.selectedDate = button.dataset.oprDate; renderOprCalendar(); $("#oprCalendarDetail").scrollIntoView({ behavior: "smooth", block: "start" }); });
+$("#oprCalendarGrid").addEventListener("click", (event) => { const button = event.target.closest("[data-opr-date]"); if (!button) return; state.opr.selectedDate = button.dataset.oprDate; renderOprCalendar(); $("#oprCalendarDetail").classList.add("is-open"); });
 document.querySelectorAll("[data-opr-filter]").forEach((button) => button.addEventListener("click", () => { state.opr.filter = button.dataset.oprFilter; renderOprCalendar(); }));
 $("#oprAddButton").addEventListener("click", () => openOprEntry("opr"));
 $("#letterAddButton").addEventListener("click", () => openOprEntry("letter"));
-$("#oprFormClose").addEventListener("click", () => { $("#oprEntryPanel").hidden = true; });
-$("#letterFormClose").addEventListener("click", () => { $("#letterEntryPanel").hidden = true; });
+$("#oprDetailClose").addEventListener("click", () => { $("#oprCalendarDetail").classList.remove("is-open"); });
+$("#oprFormClose").addEventListener("click", () => { $("#oprEntryPanel").hidden = true; document.body.classList.remove("opr-entry-open"); });
+$("#letterFormClose").addEventListener("click", () => { $("#letterEntryPanel").hidden = true; document.body.classList.remove("opr-entry-open"); });
 $("#oprGallery").addEventListener("click", (event) => { const button = event.target.closest("[data-edit-opr]"); if (button) openRecordEditor("opr", button.dataset.editOpr); });
 $("#letterArchiveToggle").addEventListener("click", toggleLetterArchive);
 $("#latestLetterGrid").addEventListener("click", (event) => { const button = event.target.closest("[data-edit-letter]"); if (button) openRecordEditor("letter", button.dataset.editLetter); });
