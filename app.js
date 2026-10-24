@@ -2267,7 +2267,10 @@ function renderOprCalendar() {
     const day = Number(date.slice(-2));
     const weekday = new Date(`${date}T00:00:00Z`).getUTCDay();
     const type = shownOpr && shownLetters ? "both" : shownOpr ? "opr-only" : shownLetters ? "letter-only" : "empty";
-    const labels = [shownOpr ? `<small class="opr-count">📸 ${shownOpr}</small>` : "", shownLetters ? `<small class="letter-count">📄 ${shownLetters}</small>` : ""].join("");
+    const labels = [
+      shownOpr ? `<small class="opr-count" title="${shownOpr} OPR HEM"><span class="opr-doc-icon" aria-hidden="true">📸</span><b>${shownOpr}</b><em>OPR</em></small>` : "",
+      shownLetters ? `<small class="letter-count" title="${shownLetters} Surat Menyurat"><span class="opr-doc-icon" aria-hidden="true">✉️</span><b>${shownLetters}</b><em>Surat</em></small>` : "",
+    ].join("");
     return `<button class="opr-calendar-day ${type}${weekday === 0 || weekday === 6 ? " weekend" : ""}${date === state.opr.selectedDate ? " selected" : ""}${date === today ? " today" : ""}" type="button" data-opr-date="${date}" aria-label="${safe(formatDisplayDate(date))}, ${oprCount} OPR dan ${letterCount} surat"><span>${day}</span><span class="opr-day-counts">${labels || "<small>Tiada rekod</small>"}</span></button>`;
   });
   const trailingCount = (7 - ((leading + dates.length) % 7)) % 7;

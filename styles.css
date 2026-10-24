@@ -565,6 +565,26 @@ body.opr-entry-open::before{content:"";position:fixed;z-index:69;inset:0;backgro
 .admin-letter-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;padding:18px;border:1px solid #d6e2f2;border-radius:16px;background:#f8fbff}.admin-letter-form label{color:var(--ink);font-size:.78rem;font-weight:850}.admin-letter-form input,.admin-letter-form select,.admin-letter-form textarea{display:block;width:100%;margin-top:7px;border:1px solid #bfcde0;border-radius:10px;padding:11px;background:#fff;color:var(--ink);font:inherit}.admin-letter-note,.admin-letter-file,.admin-letter-form .admin-save-row{grid-column:1/-1}.admin-letter-list{margin-top:22px}.admin-letter-list>h3{margin:0 0 12px}
 
 @media(prefers-reduced-motion:reduce){.news-ticker-track.is-running{animation:none}.news-ticker-viewport{overflow:auto}}
+
+/* v170: penanda OPR dan surat dalam kalender lebih besar dan mudah dibezakan. */
+#oprView .opr-day-counts{display:grid;width:100%;max-width:88px;gap:3px;margin-top:3px}
+#oprView .opr-day-counts small.opr-count,#oprView .opr-day-counts small.letter-count{display:grid;grid-template-columns:auto auto;grid-template-rows:auto auto;min-width:0;min-height:25px;align-items:center;justify-content:center;column-gap:4px;padding:2px 5px;border:1px solid transparent;border-radius:7px;overflow:visible;font-style:normal;line-height:1;white-space:nowrap}
+#oprView .opr-day-counts .opr-count{border-color:#88b9ef;background:#fff;color:#0755b5}
+#oprView .opr-day-counts .letter-count{border-color:#bba4e9;background:#fff;color:#6542ac}
+#oprView .opr-day-counts .opr-doc-icon{grid-row:1/3;font-size:1rem;line-height:1}
+#oprView .opr-day-counts b{align-self:end;font-size:.64rem;line-height:1}
+#oprView .opr-day-counts em{font-size:.47rem;font-style:normal;font-weight:950;letter-spacing:.015em;text-transform:uppercase}
+@media(max-width:700px){
+  #oprView .opr-calendar-day{align-content:center;padding:2px}
+  #oprView .opr-calendar-day>span:first-child{font-size:.72rem}
+  #oprView .opr-day-counts{max-width:54px;gap:2px;margin-top:2px}
+  #oprView .opr-day-counts small.opr-count,#oprView .opr-day-counts small.letter-count{min-height:24px;column-gap:2px;padding:1px;border-radius:5px}
+  #oprView .opr-day-counts .opr-doc-icon{font-size:.92rem}
+  #oprView .opr-day-counts b{font-size:.56rem}
+  #oprView .opr-day-counts em{font-size:.36rem}
+  #oprView .opr-day-counts small:not(.opr-count):not(.letter-count){font-size:.38rem}
+}
+
 @media(max-width:800px){.hem-letter-grid{grid-template-columns:1fr}.letter-upload-grid{grid-template-columns:1fr}.letter-upload-note,.letter-upload-file{grid-column:auto}.admin-announcement-row{grid-template-columns:32px minmax(0,1fr)}.admin-announcement-row .announcement-actions{grid-column:1/-1}.admin-letter-form{grid-template-columns:1fr}.admin-letter-note,.admin-letter-file,.admin-letter-form .admin-save-row{grid-column:auto}.letter-archive-heading{align-items:stretch;flex-direction:column}.letter-archive-heading a{align-self:flex-start}.record-edit-fields{grid-template-columns:1fr}.record-edit-wide{grid-column:auto}.letter-swipe-hint{display:block}#latestLetterGrid{display:flex;gap:12px;overflow-x:auto;padding:2px 2px 13px;scroll-snap-type:x mandatory;overscroll-behavior-inline:contain;scrollbar-width:thin}#latestLetterGrid .hem-letter-card{flex:0 0 min(82vw,340px);scroll-snap-align:start}.hem-letter-archive .hem-letter-grid{display:grid;grid-template-columns:1fr;overflow:visible}}
 @media(max-width:600px){.global-news-ticker{min-height:36px}.global-news-ticker>strong{padding:0 8px;font-size:.61rem;letter-spacing:.02em}.ticker-sequence{padding-left:20px;font-size:.7rem;line-height:1.2}.ticker-divider{padding:0 20px}.ticker-visible{padding-bottom:calc(40px + env(safe-area-inset-bottom))}.ticker-preview{flex-direction:column}.ticker-preview>strong{padding:8px 11px}.hem-letter-card{padding:13px 14px}.hem-letter-card h4{margin:9px 0 7px;font-size:.96rem}.hem-letter-card dl{gap:6px;margin-bottom:10px}.hem-letter-card dl div{padding-top:6px}.hem-letter-card dd{font-size:.72rem}.letter-upload-form{padding:16px 14px}.letter-upload-form .primary-button{width:100%}.admin-content-section{margin-top:24px;padding-top:20px}.record-edit-modal{padding:24px 16px}.record-edit-modal .admin-save-row{align-items:stretch;flex-direction:column}.record-edit-modal .primary-button{width:100%}}
 
