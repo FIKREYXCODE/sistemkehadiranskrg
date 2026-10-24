@@ -11,7 +11,7 @@
   <link rel="manifest" href="manifest.webmanifest?v=130">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=164">
+  <link rel="stylesheet" href="styles.css?v=166">
 </head>
 <body>
   <header class="topbar no-print">
@@ -385,9 +385,31 @@
 
     <section id="oprView" class="monitoring-card app-view no-print" data-view-panel="opr" aria-labelledby="oprTitle" hidden>
       <div class="monitoring-head">
-        <div><p class="eyebrow">One Page Report</p><h2 id="oprTitle">Template OPR HEM</h2><p>Rekod program HEM bersama gambar, tarikh dan nama penyedia. Semua laporan yang disimpan boleh dilihat pada pelbagai peranti.</p></div>
-        <span class="opr-badge">OPR HEM</span>
+        <div><p class="eyebrow">Arkib dokumen HEM</p><h2 id="oprTitle">Kalender OPR HEM &amp; Surat Menyurat</h2><p>Pilih tarikh untuk melihat, menambah atau mengemas kini rekod OPR dan surat dalam satu paparan.</p></div>
+        <details class="opr-storage-menu"><summary>Simpanan Drive</summary><div><strong>OPR HEM</strong><a href="https://drive.google.com/drive/folders/1YP8_ko7EgwcPCGuU2xKYvmtH0ogCm2IQ" target="_blank" rel="noopener">Simpanan 1 ↗</a><a href="https://drive.google.com/drive/folders/1klaopuebuVSOlNUI-b7pBarL_Mr1qzto" target="_blank" rel="noopener">Simpanan 2 (MOE) ↗</a><strong>Surat Menyurat</strong><a href="https://drive.google.com/drive/folders/15ZcrKi-vr0-2ZNUrkMAmjucGPOPaldnx" target="_blank" rel="noopener">Simpanan 1 ↗</a><a href="https://drive.google.com/drive/folders/15nbwLjnsjVx-DNqdJLwAdUznLb0EPlQY" target="_blank" rel="noopener">Simpanan 2 (MOE) ↗</a></div></details>
       </div>
+
+      <section class="opr-calendar-shell" aria-labelledby="oprCalendarTitle">
+        <div class="opr-calendar-toolbar">
+          <div><p class="eyebrow">Paparan bulanan</p><h3 id="oprCalendarTitle">Arkib Kalender HEM</h3></div>
+          <div class="opr-month-controls"><button id="oprMonthPrevious" type="button" aria-label="Bulan sebelumnya">‹</button><label>Bulan<input id="oprCalendarMonth" type="month"></label><button id="oprMonthToday" type="button">Bulan ini</button><button id="oprMonthNext" type="button" aria-label="Bulan seterusnya">›</button><button id="oprRefresh" type="button" aria-label="Muat semula kalender">↻</button></div>
+        </div>
+        <div class="opr-filter-tabs" role="tablist" aria-label="Tapis jenis dokumen"><button class="active" type="button" data-opr-filter="all" role="tab" aria-selected="true">Semua</button><button type="button" data-opr-filter="opr" role="tab" aria-selected="false">OPR HEM</button><button type="button" data-opr-filter="letter" role="tab" aria-selected="false">Surat Menyurat</button></div>
+        <div id="oprCalendarSummary" class="opr-calendar-summary" aria-live="polite"></div>
+        <div class="opr-calendar-legend" aria-label="Petunjuk warna"><span class="opr-only">Biru: OPR HEM</span><span class="letter-only">Ungu: Surat</span><span class="both">Dua warna: Kedua-duanya</span><span class="empty">Kelabu: Tiada rekod</span></div>
+        <div class="opr-calendar-weekdays" aria-hidden="true"><span>Isn</span><span>Sel</span><span>Rab</span><span>Kha</span><span>Jum</span><span>Sab</span><span>Ahd</span></div>
+        <div id="oprCalendarGrid" class="opr-calendar-grid" aria-live="polite"></div>
+        <p id="oprCalendarStatus" class="monitoring-list-status" role="status">Memuatkan kalender dokumen HEM…</p>
+      </section>
+
+      <section id="oprCalendarDetail" class="opr-calendar-detail" aria-live="polite">
+        <div class="opr-detail-heading"><div><p class="eyebrow">Tarikh dipilih</p><h3 id="oprCalendarDetailTitle">Pilih tarikh pada kalender</h3><p id="oprCalendarDetailCount">OPR dan surat untuk tarikh pilihan akan dipaparkan di sini.</p></div><div class="opr-detail-actions"><button id="oprAddButton" class="primary-button" type="button">+ Tambah OPR</button><button id="letterAddButton" class="secondary-button" type="button">+ Tambah Surat</button></div></div>
+        <section id="oprDetailSection"><div class="opr-detail-section-title"><h4>OPR HEM</h4><span id="oprListStatus"></span></div><div id="oprGallery" class="monitoring-gallery opr-gallery"></div></section>
+        <section id="letterDetailSection"><div class="opr-detail-section-title"><h4>Surat Menyurat HEM</h4><span id="letterListStatus"></span></div><div id="latestLetterGrid" class="hem-letter-grid" aria-live="polite"></div></section>
+      </section>
+
+      <section id="oprEntryPanel" class="opr-entry-panel" hidden>
+        <div class="opr-entry-heading"><div><p class="eyebrow">Rekod baharu</p><h3>Tambah OPR HEM</h3></div><button id="oprFormClose" type="button" aria-label="Tutup borang OPR">×</button></div>
       <form id="oprForm" class="monitoring-form opr-form">
         <div class="monitoring-grid">
           <label>Nama program<input id="oprProgram" type="text" maxlength="180" placeholder="Taip nama program" required></label>
@@ -398,24 +420,11 @@
         <div id="oprPreview" class="monitoring-preview" aria-live="polite"></div>
         <div class="monitoring-submit-row"><button id="oprSave" class="primary-button" type="submit">Simpan OPR HEM</button><p id="oprFormStatus" class="form-message" role="status"></p></div>
       </form>
-      <div class="monitoring-gallery-head"><div><h3>4 OPR HEM terkini</h3><p>Empat laporan terkini dipaparkan di sini. Setiap fail turut disalin ke dua simpanan Google Drive dan diasingkan mengikut bulan.</p></div><div class="opr-gallery-actions"><a class="secondary-button" href="https://drive.google.com/drive/folders/1YP8_ko7EgwcPCGuU2xKYvmtH0ogCm2IQ" target="_blank" rel="noopener">Simpanan 1 ↗</a><a class="secondary-button" href="https://drive.google.com/drive/folders/1klaopuebuVSOlNUI-b7pBarL_Mr1qzto" target="_blank" rel="noopener">Simpanan 2 (MOE) ↗</a><button id="oprRefresh" class="secondary-button" type="button">Muat semula</button></div></div>
-      <div id="oprListStatus" class="monitoring-list-status" role="status">Memuatkan OPR HEM…</div>
-      <p class="opr-swipe-hint">Leret ke kiri atau kanan untuk melihat OPR lain.</p>
-      <div id="oprGallery" class="monitoring-gallery opr-gallery"></div>
-      <section class="hem-letters-section" aria-labelledby="hemLettersTitle">
-        <div class="monitoring-gallery-head">
-          <div><p class="eyebrow">Dokumen rasmi unit</p><h3 id="hemLettersTitle">Surat Menyurat HEM</h3><p>Semua guru dan AKP boleh memasukkan surat berkaitan HEM. Setiap fail turut disalin ke dua simpanan Google Drive dan diasingkan mengikut bulan.</p></div>
-          <div class="opr-gallery-actions letter-drive-actions">
-            <a class="secondary-button" href="https://drive.google.com/drive/folders/15ZcrKi-vr0-2ZNUrkMAmjucGPOPaldnx" target="_blank" rel="noopener">Simpanan 1 ↗</a>
-            <a class="secondary-button" href="https://drive.google.com/drive/folders/15nbwLjnsjVx-DNqdJLwAdUznLb0EPlQY" target="_blank" rel="noopener">Simpanan 2 (MOE) ↗</a>
-            <button id="letterArchiveToggle" class="secondary-button" type="button" aria-expanded="false">Lihat Semua Surat HEM</button>
-          </div>
-        </div>
+      </section>
+
+      <section id="letterEntryPanel" class="opr-entry-panel" hidden aria-labelledby="letterUploadTitle">
+        <div class="opr-entry-heading"><div><p class="eyebrow">Rekod baharu</p><h3 id="letterUploadTitle">Tambah Surat Menyurat HEM</h3></div><button id="letterFormClose" type="button" aria-label="Tutup borang surat">×</button></div>
         <form id="letterForm" class="letter-upload-form" aria-labelledby="letterUploadTitle">
-          <div class="letter-upload-heading">
-            <h4 id="letterUploadTitle">Masukkan surat berkaitan HEM</h4>
-            <p>Isi maklumat surat dan pilih fail, atau masukkan pautan Google Drive. Surat yang disimpan boleh dilihat oleh semua guru pada pelbagai peranti.</p>
-          </div>
           <div class="letter-upload-grid">
             <label>Tajuk surat<input id="letterName" type="text" maxlength="220" placeholder="Contoh: Surat Makluman Program HEM" required></label>
             <label>Tarikh surat<input id="letterDate" type="date" required></label>
@@ -428,15 +437,8 @@
           </div>
           <div class="monitoring-submit-row"><button id="letterSave" class="primary-button" type="submit">Simpan Surat HEM</button><p id="letterStatus" class="form-message" role="status" aria-live="polite"></p></div>
         </form>
-        <p id="letterListStatus" class="monitoring-list-status" role="status">Memuatkan surat HEM…</p>
-        <p class="letter-swipe-hint">Leret ke kiri atau kanan untuk melihat surat lain.</p>
-        <div id="latestLetterGrid" class="hem-letter-grid" aria-live="polite"></div>
-        <div id="letterArchive" class="hem-letter-archive" hidden>
-          <div class="letter-archive-heading"><h3>Arkib Surat HEM</h3></div>
-          <p id="letterArchiveStatus" class="monitoring-list-status" role="status"></p>
-          <div id="letterArchiveGrid" class="hem-letter-grid"></div>
-        </div>
       </section>
+      <button id="letterArchiveToggle" type="button" hidden aria-expanded="false"></button><div id="letterArchive" hidden><p id="letterArchiveStatus"></p><div id="letterArchiveGrid"></div></div>
     </section>
 
     <section id="attendanceAnalysis" class="analysis-card app-view no-print" data-view-panel="analysis" aria-labelledby="analysisTitle" hidden>
@@ -693,6 +695,6 @@
   </aside>
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
   <script src="class-demographics.js?v=130" defer></script>
-  <script src="app.js?v=165" defer></script>
+  <script src="app.js?v=166" defer></script>
 </body>
 </html>

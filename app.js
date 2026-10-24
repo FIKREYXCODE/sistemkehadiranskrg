@@ -14,7 +14,7 @@ const state = {
   weeklyDuty: { loading: false }, completion: { loading: false }, calendar: { loading: false }, rmtPreviewUrls: [], rmtReports: [], rmtLoading: false,
   rmtMonth: "", rmtSelectedDate: "", rmtShowAll: false, rmtScheduleLoading: false,
   dutyWeek: { anchor: "", end: "", sourceDate: "", session: "morning", editing: false, locked: false, loading: false, loadedKey: "", loadedAt: 0, dates: [], reports: [], summaries: { morning: null, afternoon: null } },
-  opr: { reports: [], loading: false, previewUrls: [] }, editingRecord: null,
+  opr: { reports: [], allReports: [], loading: false, previewUrls: [], month: "", selectedDate: "", filter: "all" }, editingRecord: null,
   organization: { items: [], adminItems: [], deletedIds: [], loading: false },
   content: { announcements: [], adminAnnouncements: [], deletedAnnouncementIds: [], latestLetters: [], letters: [], loading: false },
   staffVisibleRows: { morning: 1, afternoon: 1 },
@@ -2206,24 +2206,128 @@ function renderOprReports() {
     const audit = report.lastEditedAt ? `<p class="record-audit">Dikemas kini oleh <strong>${safe(report.lastEditedBy || "—")}</strong> • ${safe(formatAuditTime(report.lastEditedAt))}</p>` : `<p class="record-audit">Rekod asal • ${safe(created)}</p>`;
     return `<article class="monitoring-report"><div class="monitoring-photo-grid">${photos}</div><div class="monitoring-report-body"><div class="monitoring-report-top"><span class="category-badge">OPR HEM</span><time>${safe(created)}</time></div><h3>${safe(report.location)}</h3><p class="monitoring-by">Disediakan oleh <strong>${safe(report.updatedBy || "—")}</strong></p><dl><div><dt>Tarikh program</dt><dd>${safe(formatDisplayDate(report.reportDate))}</dd></div></dl>${audit}<button class="record-edit-button" type="button" data-edit-opr="${safe(report.id)}">✎ Edit OPR</button></div></article>`;
   }).join("");
-  $("#oprListStatus").textContent = state.opr.reports.length ? `${state.opr.reports.length} OPR HEM ditemui pada tarikh ini.` : "Belum ada OPR HEM pada tarikh dipilih.";
+  $("#oprListStatus").textContent = state.opr.reports.length ? `${state.opr.reports.length} rekod` : "Tiada rekod";
+}
+
+function oprCalendarDate(value) {
+  return String(value || "").slice(0, 10);
+}
+
+function oprCalendarMonthDates() {
+  const month = state.opr.month || state.date.slice(0, 7);
+  const [year, monthNumber] = month.split("-").map(Number);
+  const lastDay = new Date(Date.UTC(year, monthNumber, 0)).getUTCDate();
+  return Array.from({ length: lastDay }, (_, index) => `${month}-${String(index + 1).padStart(2, "0")}`);
+}
+
+function selectedOprLetters() {
+  return (state.content.letters || []).filter((letter) => oprCalendarDate(letter.letterDate) === state.opr.selectedDate);
+}
+
+function renderOprCalendarDetail() {
+  const selectedDate = state.opr.selectedDate;
+  state.opr.reports = (state.opr.allReports || []).filter((report) => oprCalendarDate(report.reportDate) === selectedDate);
+  const letters = selectedOprLetters();
+  $("#oprCalendarDetailTitle").textContent = selectedDate ? formatDisplayDate(selectedDate) : "Pilih tarikh pada kalender";
+  $("#oprCalendarDetailCount").textContent = selectedDate ? `${state.opr.reports.length} OPR HEM • ${letters.length} surat` : "OPR dan surat untuk tarikh pilihan akan dipaparkan di sini.";
+  $("#oprDetailSection").hidden = state.opr.filter === "letter";
+  $("#letterDetailSection").hidden = state.opr.filter === "opr";
+  $("#oprAddButton").hidden = state.opr.filter === "letter";
+  $("#letterAddButton").hidden = state.opr.filter === "opr";
+  renderOprReports();
+  $("#latestLetterGrid").innerHTML = letters.map((item) => letterCard(item)).join("");
+  $("#letterListStatus").textContent = letters.length ? `${letters.length} rekod` : "Tiada rekod";
+}
+
+function renderOprCalendar() {
+  const dates = oprCalendarMonthDates();
+  if (!dates.length) return;
+  const month = state.opr.month;
+  const firstDay = new Date(`${dates[0]}T00:00:00Z`).getUTCDay();
+  const leading = (firstDay + 6) % 7;
+  const today = localDateValue();
+  const oprByDate = new Map();
+  const letterByDate = new Map();
+  (state.opr.allReports || []).forEach((report) => { const date = oprCalendarDate(report.reportDate); if (date.startsWith(month)) oprByDate.set(date, (oprByDate.get(date) || 0) + 1); });
+  (state.content.letters || []).forEach((letter) => { const date = oprCalendarDate(letter.letterDate); if (date.startsWith(month)) letterByDate.set(date, (letterByDate.get(date) || 0) + 1); });
+  const monthOpr = Array.from(oprByDate.values()).reduce((sum, count) => sum + count, 0);
+  const monthLetters = Array.from(letterByDate.values()).reduce((sum, count) => sum + count, 0);
+  const activeDates = new Set([...oprByDate.keys(), ...letterByDate.keys()]);
+  const contributors = new Set([
+    ...(state.opr.allReports || []).filter((item) => oprCalendarDate(item.reportDate).startsWith(month)).map((item) => item.updatedBy).filter(Boolean),
+    ...(state.content.letters || []).filter((item) => oprCalendarDate(item.letterDate).startsWith(month)).map((item) => item.updatedBy).filter(Boolean),
+  ]).size;
+  $("#oprCalendarSummary").innerHTML = `<article><span>OPR bulan ini</span><strong>${monthOpr}</strong></article><article><span>Surat bulan ini</span><strong>${monthLetters}</strong></article><article><span>Tarikh berisi</span><strong>${activeDates.size}</strong></article><article><span>Pengisi</span><strong>${contributors}</strong></article>`;
+  const blank = '<span class="opr-calendar-blank" aria-hidden="true"></span>';
+  const cells = dates.map((date) => {
+    const oprCount = oprByDate.get(date) || 0;
+    const letterCount = letterByDate.get(date) || 0;
+    const shownOpr = state.opr.filter !== "letter" ? oprCount : 0;
+    const shownLetters = state.opr.filter !== "opr" ? letterCount : 0;
+    const day = Number(date.slice(-2));
+    const weekday = new Date(`${date}T00:00:00Z`).getUTCDay();
+    const type = shownOpr && shownLetters ? "both" : shownOpr ? "opr-only" : shownLetters ? "letter-only" : "empty";
+    const labels = [shownOpr ? `<small class="opr-count">📸 ${shownOpr}</small>` : "", shownLetters ? `<small class="letter-count">📄 ${shownLetters}</small>` : ""].join("");
+    return `<button class="opr-calendar-day ${type}${weekday === 0 || weekday === 6 ? " weekend" : ""}${date === state.opr.selectedDate ? " selected" : ""}${date === today ? " today" : ""}" type="button" data-opr-date="${date}" aria-label="${safe(formatDisplayDate(date))}, ${oprCount} OPR dan ${letterCount} surat"><span>${day}</span><span class="opr-day-counts">${labels || "<small>Tiada rekod</small>"}</span></button>`;
+  });
+  const trailingCount = (7 - ((leading + dates.length) % 7)) % 7;
+  $("#oprCalendarGrid").innerHTML = blank.repeat(leading) + cells.join("") + blank.repeat(trailingCount);
+  $("#oprCalendarMonth").value = month;
+  $("#oprCalendarStatus").textContent = `${monthOpr} OPR HEM dan ${monthLetters} surat ditemui untuk bulan ini.`;
+  document.querySelectorAll("[data-opr-filter]").forEach((button) => {
+    const active = button.dataset.oprFilter === state.opr.filter;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-selected", String(active));
+  });
+  renderOprCalendarDetail();
 }
 
 async function loadOprReports() {
   if (state.opr.loading) return;
   state.opr.loading = true;
-  $("#oprListStatus").textContent = "Memuatkan OPR HEM…";
+  $("#oprCalendarStatus").textContent = "Memuatkan kalender dokumen HEM…";
   try {
-    const response = await fetch(`${SAFETY_API_URL}?category=opr&limit=4`, { cache: "no-store" });
-    const data = await responseJson(response, "OPR HEM tidak dapat dibuka.");
-    if (!response.ok) throw new Error(data.error || "OPR HEM tidak dapat dibuka.");
-    state.opr.reports = (Array.isArray(data.reports) ? data.reports : []).filter((report) => report.category === "opr").slice(0, 4);
-    renderOprReports();
+    const [oprResponse, letterResponse] = await Promise.all([
+      fetch(`${SAFETY_API_URL}?category=opr&limit=250`, { cache: "no-store" }),
+      fetch(`${CONTENT_API_URL}?mode=letters&all=1`, { cache: "no-store" }),
+    ]);
+    const [oprData, letterData] = await Promise.all([
+      responseJson(oprResponse, "OPR HEM tidak dapat dibuka."),
+      responseJson(letterResponse, "Surat HEM tidak dapat dibuka."),
+    ]);
+    if (!oprResponse.ok) throw new Error(oprData.error || "OPR HEM tidak dapat dibuka.");
+    if (!letterResponse.ok) throw new Error(letterData.error || "Surat HEM tidak dapat dibuka.");
+    state.opr.allReports = (Array.isArray(oprData.reports) ? oprData.reports : []).filter((report) => report.category === "opr");
+    state.content.letters = Array.isArray(letterData.letters) ? letterData.letters : [];
+    state.opr.month = $("#oprCalendarMonth").value || state.opr.month || state.date.slice(0, 7);
+    const datesWithRecords = [...state.opr.allReports.map((item) => oprCalendarDate(item.reportDate)), ...state.content.letters.map((item) => oprCalendarDate(item.letterDate))].filter((date) => date.startsWith(state.opr.month)).sort();
+    if (!state.opr.selectedDate.startsWith(state.opr.month)) state.opr.selectedDate = state.date.startsWith(state.opr.month) ? state.date : datesWithRecords.at(-1) || `${state.opr.month}-01`;
+    renderOprCalendar();
   } catch (error) {
-    state.opr.reports = [];
+    state.opr.reports = []; state.opr.allReports = [];
     $("#oprGallery").innerHTML = "";
-    $("#oprListStatus").textContent = error.message || "OPR HEM tidak dapat dibuka.";
+    $("#oprCalendarGrid").innerHTML = "";
+    $("#oprCalendarStatus").textContent = error.message || "Kalender dokumen HEM tidak dapat dibuka.";
   } finally { state.opr.loading = false; }
+}
+
+function shiftOprMonth(amount) {
+  const [year, month] = (state.opr.month || state.date.slice(0, 7)).split("-").map(Number);
+  const shifted = new Date(Date.UTC(year, month - 1 + amount, 1));
+  state.opr.month = `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, "0")}`;
+  state.opr.selectedDate = "";
+  $("#oprCalendarMonth").value = state.opr.month;
+  loadOprReports();
+}
+
+function openOprEntry(type) {
+  const date = state.opr.selectedDate || state.date;
+  $("#oprEntryPanel").hidden = type !== "opr";
+  $("#letterEntryPanel").hidden = type !== "letter";
+  if (type === "opr") { $("#oprDate").value = date; $("#oprProgram").focus(); }
+  else { $("#letterDate").value = date; $("#letterName").focus(); }
+  syncAllLocalizedDateInputs();
+  $(`#${type === "opr" ? "opr" : "letter"}EntryPanel`).scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 async function saveOprReport(event) {
@@ -2249,6 +2353,8 @@ async function saveOprReport(event) {
     $("#oprFormStatus").textContent = result.archive?.ok === false
       ? `OPR HEM selamat dalam sistem. ${result.archive.warning || "Salinan Google Drive belum berjaya."}`
       : "OPR HEM berjaya disimpan dalam sistem dan dua simpanan Google Drive.";
+    state.opr.month = date.slice(0, 7); state.opr.selectedDate = date;
+    $("#oprEntryPanel").hidden = true;
     await loadOprReports();
   } catch (error) {
     $("#oprFormStatus").textContent = error.message || "OPR HEM gagal disimpan.";
@@ -2375,6 +2481,7 @@ async function saveRecordEdit(event) {
     else {
       await loadPublicContent();
       if (!$("#letterArchive").hidden) { $("#letterArchive").hidden = true; await toggleLetterArchive(); }
+      await loadOprReports();
     }
     closeRecordEditor(); setStatus(`Rekod berjaya dikemas kini oleh ${editor}.`, "saved");
   } catch (error) { $("#recordEditStatus").textContent = error.message || "Rekod gagal dikemas kini."; }
@@ -2382,6 +2489,7 @@ async function saveRecordEdit(event) {
 }
 
 function renderPublicLetters() {
+  if (document.body.dataset.activeView === "opr" && state.opr.allReports.length) { renderOprCalendarDetail(); return; }
   $("#latestLetterGrid").innerHTML = state.content.latestLetters.map((item) => letterCard(item)).join("");
   $("#letterListStatus").textContent = state.content.latestLetters.length ? `${state.content.latestLetters.length} surat HEM terbaharu.` : "Belum ada surat HEM dimuat naik.";
 }
@@ -2496,6 +2604,10 @@ async function saveLetter(event) {
     $("#letterForm").reset(); $("#letterDate").value = state.date; syncAllLocalizedDateInputs(); refreshStaffNameChoices();
     await loadPublicContent();
     if (!$("#letterArchive").hidden) { $("#letterArchive").hidden = true; await toggleLetterArchive(); }
+    const savedDate = payload.letterDate || state.date;
+    state.opr.month = savedDate.slice(0, 7); state.opr.selectedDate = savedDate;
+    $("#letterEntryPanel").hidden = true;
+    await loadOprReports();
     $("#letterStatus").textContent = data.archive?.ok === false
       ? `Surat selamat dalam sistem. ${data.archive.warning || "Salinan Google Drive belum berjaya."}`
       : file
@@ -3433,7 +3545,16 @@ $("#monitoringItems").addEventListener("change", (event) => {
 $("#oprPhotos").addEventListener("change", (event) => renderOprPreview(event.target.files));
 $("#oprForm").addEventListener("submit", saveOprReport);
 $("#oprRefresh").addEventListener("click", loadOprReports);
-$("#oprDate").addEventListener("change", loadOprReports);
+$("#oprMonthPrevious").addEventListener("click", () => shiftOprMonth(-1));
+$("#oprMonthNext").addEventListener("click", () => shiftOprMonth(1));
+$("#oprMonthToday").addEventListener("click", () => { state.opr.month = localDateValue().slice(0, 7); state.opr.selectedDate = localDateValue(); $("#oprCalendarMonth").value = state.opr.month; loadOprReports(); });
+$("#oprCalendarMonth").addEventListener("change", (event) => { state.opr.month = event.target.value || state.date.slice(0, 7); state.opr.selectedDate = ""; loadOprReports(); });
+$("#oprCalendarGrid").addEventListener("click", (event) => { const button = event.target.closest("[data-opr-date]"); if (!button) return; state.opr.selectedDate = button.dataset.oprDate; renderOprCalendar(); $("#oprCalendarDetail").scrollIntoView({ behavior: "smooth", block: "start" }); });
+document.querySelectorAll("[data-opr-filter]").forEach((button) => button.addEventListener("click", () => { state.opr.filter = button.dataset.oprFilter; renderOprCalendar(); }));
+$("#oprAddButton").addEventListener("click", () => openOprEntry("opr"));
+$("#letterAddButton").addEventListener("click", () => openOprEntry("letter"));
+$("#oprFormClose").addEventListener("click", () => { $("#oprEntryPanel").hidden = true; });
+$("#letterFormClose").addEventListener("click", () => { $("#letterEntryPanel").hidden = true; });
 $("#oprGallery").addEventListener("click", (event) => { const button = event.target.closest("[data-edit-opr]"); if (button) openRecordEditor("opr", button.dataset.editOpr); });
 $("#letterArchiveToggle").addEventListener("click", toggleLetterArchive);
 $("#latestLetterGrid").addEventListener("click", (event) => { const button = event.target.closest("[data-edit-letter]"); if (button) openRecordEditor("letter", button.dataset.editLetter); });
@@ -3558,6 +3679,9 @@ $("#editorName").addEventListener("change", (event) => {
 });
 
 state.date = localDateValue();
+state.opr.month = state.date.slice(0, 7);
+state.opr.selectedDate = state.date;
+$("#oprCalendarMonth").value = state.opr.month;
 state.dutyStatus.month = state.date.slice(0, 7);
 $("#dutyStatusMonth").value = state.dutyStatus.month;
 syncReportDateInputs();
