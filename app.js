@@ -82,8 +82,21 @@ const ABSENCE_REASONS = [
 ];
 const KPI_TARGET = 96;
 const MONITORING_LOCATIONS = ["Kawasan Perhimpunan", "Bilik Darjah", "Koridor", "Tangga", "Padang", "Dewan", "Tandas Murid Lelaki", "Tandas Murid Perempuan", "Tandas Guru", "Surau / Bilik Solat", "Kantin", "Kawasan RMT", "Penyediaan Makanan RMT", "Pengendalian Makanan RMT", "Pintu Pagar", "Laluan Keluar / Masuk", "Kawasan Letak Kenderaan", "Laluan Pejalan Kaki", "Kawasan Sekitar Sekolah", "Longkang & Saliran", "Tempat Pembuangan Sampah", "Landskap / Kawasan Hijau", "Bilik UBK", "Makmal Komputer", "Pusat Sumber", "Bilik Sains", "Bilik Muzik", "Stor", "Bilik khas lain", "Lain-lain"];
+const CLASS_ENROLMENT_PROFILES = window.CLASS_ENROLMENT_PROFILES || {};
 const CLASS_ETHNICITY_COUNTS = window.CLASS_ETHNICITY_COUNTS || {};
 const IDME_POSITION_KEY = "skrg-idme-position-v1";
+
+function withLatestClassProfiles(classes) {
+  return (Array.isArray(classes) ? classes : []).map((row) => {
+    const profile = CLASS_ENROLMENT_PROFILES[String(row.id)] || {};
+    return {
+      ...row,
+      ...profile,
+      enrolMale: profile.maleEnrol ?? row.enrolMale,
+      enrolFemale: profile.femaleEnrol ?? row.enrolFemale,
+    };
+  });
+}
 
 function draftKey(date = state.date) { return `${DRAFT_PREFIX}${date}`; }
 
@@ -801,7 +814,7 @@ function reportClassCompleted(data, classId) {
 }
 
 function filterReportClasses(data, session) {
-  const classes = Array.isArray(data.classes) ? data.classes : [];
+  const classes = withLatestClassProfiles(data.classes);
   return session === "all" ? classes : classes.filter((row) => classSession(row) === session);
 }
 
@@ -1183,7 +1196,7 @@ async function loadCalendarRecord() {
   try {
     const date = $("#calendarDate").value || state.date;
     const data = await fetchSchoolDate(date), audits = Array.isArray(data.audit) ? data.audit : [];
-    const classes = Array.isArray(data.classes) ? data.classes : [];
+    const classes = withLatestClassProfiles(data.classes);
     $("#calendarTableBody").innerHTML = classes.map((row) => {
       const classAudits = audits.filter((item) => item.section === "attendance" && String(item.recordId) === String(row.id)).sort((a, b) => Number(b.updatedAt) - Number(a.updatedAt));
       const latest = classAudits[0], completed = classAudits.length > 0, figures = classFigures(row);
@@ -3104,7 +3117,7 @@ async function loadReport(silent = false) {
     const response = await fetch(`${API_URL}?date=${encodeURIComponent(state.date)}`, { cache: "no-store" });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "Data tidak dapat dibuka");
-    state.classes = Array.isArray(data.classes) ? data.classes : [];
+    state.classes = withLatestClassProfiles(data.classes);
     state.staffAbsences = { morning: [], afternoon: [] };
     state.staffVisibleRows = { morning: 1, afternoon: 1 };
     for (const item of Array.isArray(data.staffAbsences) ? data.staffAbsences : []) {
