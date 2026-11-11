@@ -8,10 +8,10 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="HEM SMARTTRACK">
   <title>HEM SMARTTRACK | SK Ranggu</title>
-  <link rel="manifest" href="manifest.webmanifest?v=176">
+  <link rel="manifest" href="manifest.webmanifest?v=177">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-smarttrack-choice-192.png">
   <link rel="apple-touch-icon" sizes="180x180" href="icon-smarttrack-choice-180.png">
-  <link rel="stylesheet" href="styles.css?v=176">
+  <link rel="stylesheet" href="styles.css?v=177">
 </head>
 <body>
   <header class="topbar no-print">
@@ -178,7 +178,7 @@
       </header>
 
       <section class="table-section">
-        <div class="section-heading"><div><span>1</span><h3>e-JKM — Rekod Kehadiran Murid</h3></div><div class="attendance-section-tools"><div class="completion-legend" aria-label="Petunjuk status pengisian"><span class="complete">● Selesai di pelayan</span><span class="saving">● Sedang disimpan</span><span class="incomplete">● Belum selesai</span></div><button id="prepareIdmeAttendance" class="idme-transfer-button" type="button">Salin data &amp; buka idMe ↗</button></div></div>
+        <div class="section-heading"><div><span>1</span><h3>e-JKM — Rekod Kehadiran Murid</h3></div><div class="completion-legend" aria-label="Petunjuk status pengisian"><span class="complete">● Selesai di pelayan</span><span class="saving">● Sedang disimpan</span><span class="incomplete">● Belum selesai</span></div></div>
         <div id="attendanceSyncStatus" class="attendance-sync-status" role="status" aria-live="polite">Memuatkan status simpanan…</div>
         <div id="classCompletionLists" class="class-completion-lists" aria-live="polite"></div>
         <div class="table-scroll">
@@ -194,25 +194,6 @@
       </section>
 
     </article>
-    <dialog id="idmeAttendanceDialog" class="idme-transfer-dialog" aria-labelledby="idmeTransferTitle">
-      <div class="idme-transfer-head">
-        <div><span>iDMe</span><div><small>PEMBANTU PEMINDAHAN DATA</small><h3 id="idmeTransferTitle">Kehadiran siap untuk disalin</h3></div></div>
-        <button id="closeIdmeAttendance" type="button" aria-label="Tutup">×</button>
-      </div>
-      <div class="idme-transfer-body">
-        <p>Pilih kelas. Sistem menyediakan ringkasan daripada rekod E-JKM yang sudah disahkan oleh pelayan.</p>
-        <label>Kelas
-          <select id="idmeAttendanceClass"></select>
-        </label>
-        <div id="idmeTransferStatus" class="idme-transfer-status" role="status"></div>
-        <textarea id="idmeAttendanceSummary" rows="11" readonly aria-label="Ringkasan kehadiran untuk disalin ke idMe"></textarea>
-      </div>
-      <div class="idme-transfer-actions">
-        <button id="copyIdmeAttendance" class="secondary-button" type="button">Salin data sahaja</button>
-        <button id="copyAndOpenIdme" class="primary-button" type="button">Salin &amp; buka idMe ↗</button>
-      </div>
-      <small class="idme-transfer-note">Log masuk menggunakan akaun idMe guru sendiri. HEM SmartTrack tidak menyimpan kata laluan idMe.</small>
-    </dialog>
     </section>
 
     <section id="staffView" class="utility-card app-view no-print compact-staff-view" data-view-panel="staff" hidden>
@@ -715,6 +696,6 @@
   </aside>
   <footer class="site-footer"><strong>HEM SMARTTRACK</strong><span>Dibangunkan oleh Mohammad Fikrey Bin Abdul Gapar</span></footer>
   <script src="class-demographics.js?v=172" defer></script>
-  <script src="app.js?v=176" defer></script>
+  <script src="app.js?v=177" defer></script>
 </body>
 </html>
