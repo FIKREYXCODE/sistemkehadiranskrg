@@ -1754,3 +1754,17 @@ body[data-active-view="staff"] .identity-bar>div small{margin-top:1px;font-size:
   #attendanceAnalysis .attendance-chart,
   #attendanceAnalysis .attendance-chart svg{min-height:176px}
 }
+
+/* v175: pemindahan ringkasan E-JKM ke idMe tanpa menyimpan kelayakan log masuk. */
+.attendance-section-tools{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.idme-transfer-button{min-height:36px;padding:8px 13px;border:1px solid #92cce9;border-radius:10px;background:linear-gradient(135deg,#0a315f,#071a34);color:#fff;font:inherit;font-size:.7rem;font-weight:900;cursor:pointer;box-shadow:0 6px 14px #06254d24}
+.idme-transfer-button:hover{transform:translateY(-1px);box-shadow:0 8px 18px #06254d32}
+.idme-transfer-dialog{width:min(560px,calc(100% - 24px));max-height:calc(100dvh - 24px);padding:0;border:0;border-radius:20px;background:#fff;color:#10234d;box-shadow:0 28px 80px #00152f66;overflow:auto}
+.idme-transfer-dialog::backdrop{background:#03152d9c;backdrop-filter:blur(4px)}
+.idme-transfer-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 18px;background:linear-gradient(120deg,#082b58,#091b34);color:#fff}
+.idme-transfer-head>div{display:flex;align-items:center;gap:12px}.idme-transfer-head>div>span{display:grid;place-items:center;width:52px;height:52px;border:1px solid #7be2ff;border-radius:14px;background:#fff;color:#0755b5;font-size:1rem;font-weight:950}.idme-transfer-head small{display:block;color:#6fe0ff;font-size:.57rem;font-weight:900;letter-spacing:.12em}.idme-transfer-head h3{margin:3px 0 0;font-size:1.05rem}.idme-transfer-head>button{width:34px;height:34px;border:1px solid #ffffff65;border-radius:50%;background:#ffffff17;color:#fff;font-size:1.35rem;cursor:pointer}
+.idme-transfer-body{display:grid;gap:11px;padding:17px 18px 12px}.idme-transfer-body>p{margin:0;color:#5d6f89;font-size:.75rem;line-height:1.5}.idme-transfer-body label{display:grid;gap:5px;color:#213b63;font-size:.67rem;font-weight:900}.idme-transfer-body select,.idme-transfer-body textarea{width:100%;border:1px solid #b9cce2;border-radius:11px;background:#f8fbff;color:#13294c;font:inherit}.idme-transfer-body select{height:43px;padding:0 11px;font-size:.78rem;font-weight:850}.idme-transfer-body textarea{padding:12px;resize:vertical;font-size:.72rem;line-height:1.5}
+.idme-transfer-status{padding:9px 11px;border-radius:10px;background:#fff3cc;color:#775000;font-size:.68rem;font-weight:850}.idme-transfer-status.ready{background:#dff8e9;color:#087246}.idme-transfer-status.error{background:#ffe4e8;color:#a51e34}
+.idme-transfer-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:0 18px 11px}.idme-transfer-actions button{min-height:42px;border-radius:11px;font:inherit;font-size:.72rem;font-weight:900;cursor:pointer}.idme-transfer-actions .secondary-button{border:1px solid #a9bfd9;background:#fff;color:#174779}.idme-transfer-actions .primary-button{border:0;background:#0755b5;color:#fff}
+.idme-transfer-note{display:block;padding:0 18px 17px;color:#71809a;font-size:.59rem;line-height:1.45}
+@media(max-width:780px){.section-heading{align-items:flex-start}.attendance-section-tools{width:100%;justify-content:space-between}.attendance-section-tools .completion-legend{flex:1}.idme-transfer-button{width:100%;font-size:.72rem}.idme-transfer-dialog{border-radius:16px}.idme-transfer-actions{grid-template-columns:1fr}.idme-transfer-head h3{font-size:.93rem}.idme-transfer-head>div>span{width:46px;height:46px}.idme-transfer-body textarea{min-height:205px}}

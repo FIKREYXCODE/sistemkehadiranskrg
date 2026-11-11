@@ -436,6 +436,82 @@ function verifiedAttendanceReceipts(updates, data) {
   });
 }
 
+function normalizedPersonName(value) {
+  return String(value || "").trim().toLocaleUpperCase("ms").replace(/[^A-Z0-9@ ]/g, " ").replace(/\s+/g, " ");
+}
+
+function idmeAttendanceSummary(row) {
+  const figures = classFigures(row);
+  return [
+    "RINGKASAN KEHADIRAN MURID",
+    `Tarikh: ${formatDisplayDate(state.date)}`,
+    `Kelas: ${row.name}`,
+    `Guru kelas: ${row.teacherName || "—"}`,
+    "",
+    `Dalam daftar: ${figures.enrolTotal} orang (L: ${figures.enrolMale}, P: ${figures.enrolFemale})`,
+    `Hadir: ${figures.presentTotal} orang (L: ${figures.presentMale}, P: ${figures.presentFemale})`,
+    `Tidak hadir: ${figures.absentTotal} orang (L: ${figures.absentMale}, P: ${figures.absentFemale})`,
+    `Peratus kehadiran: ${percent(figures.presentTotal, figures.enrolTotal)}`,
+    "",
+    `Senarai murid tidak hadir: ${figures.absentTotal === 0 ? "Semua murid hadir" : (String(row.note || "").trim() || "Belum dilengkapkan")}`,
+    "",
+    `Disediakan oleh: ${editorName() || row.teacherName || "—"}`,
+    "Sumber: E-JKM HEM SmartTrack SK Ranggu",
+  ].join("\n");
+}
+
+function renderIdmeAttendanceTransfer() {
+  const select = $("#idmeAttendanceClass");
+  const status = $("#idmeTransferStatus");
+  const summary = $("#idmeAttendanceSummary");
+  const classId = select.value;
+  const row = state.classes.find((item) => String(item.id) === String(classId));
+  const ready = Boolean(row && classSyncState(row.id) === "complete");
+  if (!row) {
+    summary.value = "";
+    status.textContent = "Pilih kelas untuk menyediakan ringkasan.";
+    status.className = "idme-transfer-status";
+  } else {
+    summary.value = idmeAttendanceSummary(row);
+    status.textContent = ready
+      ? "Rekod kelas ini sudah disahkan oleh pelayan dan sedia disalin ke idMe."
+      : "Rekod kelas ini belum selesai di pelayan. Lengkapkan dan tunggu status hijau sebelum menyalin.";
+    status.className = `idme-transfer-status ${ready ? "ready" : "error"}`;
+  }
+  $("#copyIdmeAttendance").disabled = !ready;
+  $("#copyAndOpenIdme").disabled = !ready;
+}
+
+async function openIdmeAttendanceTransfer() {
+  if (hasPendingChanges() || state.savePromise) await flushSave();
+  const select = $("#idmeAttendanceClass");
+  const currentName = normalizedPersonName(editorName());
+  const matched = state.classes.find((row) => currentName && normalizedPersonName(row.teacherName) === currentName);
+  const choices = state.classes.length ? state.classes : visibleClasses();
+  select.innerHTML = choices.map((row) => `<option value="${safe(row.id)}">${safe(row.name)} — ${safe(row.teacherName || "Guru kelas")}</option>`).join("");
+  if (matched) select.value = matched.id;
+  else if (visibleClasses()[0]) select.value = visibleClasses()[0].id;
+  renderIdmeAttendanceTransfer();
+  $("#idmeAttendanceDialog").showModal();
+}
+
+async function copyIdmeAttendanceSummary() {
+  const textarea = $("#idmeAttendanceSummary");
+  const text = textarea.value;
+  if (!text) return false;
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch {
+    textarea.focus();
+    textarea.select();
+    if (!document.execCommand("copy")) return false;
+  }
+  const status = $("#idmeTransferStatus");
+  status.textContent = "Data sudah disalin. Tampal ke ruangan berkaitan selepas log masuk idMe.";
+  status.className = "idme-transfer-status ready";
+  return true;
+}
+
 function updateEditingAccess() {
   const allowed = Boolean(editorName());
   document.querySelectorAll("#attendanceBody input,#staffMorningBody input,#staffAfternoonBody input,.report-notes input:not([readonly]),.report-notes textarea").forEach((element) => { element.readOnly = false; });
@@ -3354,6 +3430,18 @@ $("#attendanceBody").addEventListener("click", (event) => {
   scheduleSave();
 });
 
+$("#prepareIdmeAttendance").addEventListener("click", openIdmeAttendanceTransfer);
+$("#idmeAttendanceClass").addEventListener("change", renderIdmeAttendanceTransfer);
+$("#closeIdmeAttendance").addEventListener("click", () => $("#idmeAttendanceDialog").close());
+$("#idmeAttendanceDialog").addEventListener("click", (event) => {
+  if (event.target === $("#idmeAttendanceDialog")) $("#idmeAttendanceDialog").close();
+});
+$("#copyIdmeAttendance").addEventListener("click", copyIdmeAttendanceSummary);
+$("#copyAndOpenIdme").addEventListener("click", async () => {
+  window.open("https://idme.moe.gov.my/login", "_blank", "noopener,noreferrer");
+  await copyIdmeAttendanceSummary();
+});
+
 function updateStaffRow(event) {
   const input = event.target.closest("input[data-field],select[data-field]");
   if (!input) return;
@@ -3899,7 +3987,7 @@ window.addEventListener("beforeunload", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=174", { scope: "./", updateViaCache: "none" })
+    navigator.serviceWorker.register("./service-worker.js?v=175", { scope: "./", updateViaCache: "none" })
       .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
   });
 }
