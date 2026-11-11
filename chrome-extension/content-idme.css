@@ -1,0 +1,6 @@
+.hem-idme-filled {
+  outline: 3px solid #20b66a !important;
+  outline-offset: 2px !important;
+  background-color: #eafff2 !important;
+  transition: outline-color .2s ease;
+}

@@ -1,0 +1,12 @@
+{
+  "name": "hem-smarttrack-idme-extension",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "node tests/matcher.test.cjs && node tests/dom.test.cjs",
+    "check": "node --check popup.js && node --check content-smarttrack.js && node --check matcher.js && node --check content-idme.js"
+  },
+  "devDependencies": {
+    "jsdom": "^27.1.0"
+  }
+}

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ms">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>HEM SmartTrack → idMe</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <img src="icons/icon-48.png" alt="">
+    <div><small>PEMBANTU KEHADIRAN</small><h1>HEM → idMe</h1></div>
+  </header>
+  <main>
+    <div id="pageState" class="state">Memeriksa halaman…</div>
+
+    <section id="smarttrackPanel" hidden>
+      <h2>1. Ambil rekod E-JKM</h2>
+      <p>Hanya kelas berstatus hijau dan disahkan pelayan boleh dipilih.</p>
+      <button id="scanSmarttrack" class="primary">Baca rekod halaman ini</button>
+      <label id="classPickerWrap" hidden>Kelas
+        <select id="classPicker"></select>
+      </label>
+      <div id="recordPreview" class="preview" hidden></div>
+      <button id="saveRecord" class="success" hidden>Simpan untuk idMe</button>
+      <button id="openIdme" class="secondary">Buka idMe ↗</button>
+    </section>
+
+    <section id="idmePanel" hidden>
+      <h2>2. Isi borang idMe</h2>
+      <div id="savedPreview" class="preview"></div>
+      <button id="analyzeIdme" class="secondary">Semak medan halaman ini</button>
+      <div id="matchResult" class="match-result" hidden></div>
+      <button id="fillIdme" class="success" disabled>Isi medan yang sepadan</button>
+      <div class="warning"><strong>Semak sebelum hantar.</strong> Extension tidak menekan butang hantar dan tidak menyimpan kata laluan.</div>
+    </section>
+
+    <section id="otherPanel" hidden>
+      <h2>Mulakan daripada E-JKM</h2>
+      <p>Buka HEM SmartTrack atau halaman kehadiran idMe, kemudian tekan ikon extension ini semula.</p>
+      <button id="openSmarttrack" class="primary">Buka E-JKM ↗</button>
+    </section>
+  </main>
+  <footer><button id="clearRecord" class="link">Padam rekod sementara</button><span>v1.0.0</span></footer>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "HEM SmartTrack → idMe",
+  "short_name": "HEM → idMe",
+  "version": "1.0.0",
+  "description": "Membantu guru memindahkan rekod kehadiran E-JKM yang telah disahkan ke borang idMe untuk semakan sebelum dihantar.",
+  "minimum_chrome_version": "102",
+  "permissions": ["storage", "activeTab", "tabs"],
+  "host_permissions": [
+    "https://fikreyxcode.github.io/sistemkehadiranskrg/*",
+    "https://idme.moe.gov.my/*"
+  ],
+  "action": {
+    "default_title": "HEM SmartTrack → idMe",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://fikreyxcode.github.io/sistemkehadiranskrg/*"],
+      "js": ["content-smarttrack.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://idme.moe.gov.my/*"],
+      "js": ["matcher.js", "content-idme.js"],
+      "css": ["content-idme.css"],
+      "run_at": "document_idle",
+      "all_frames": true,
+      "match_origin_as_fallback": true
+    }
+  ]
+}
