@@ -311,9 +311,16 @@ function attendanceConfirmed(classId, audits = state.audit, row = state.classes.
   if (!row) return false;
   const hasMale = audits.has(auditKey("attendance", classId, "absentMale"));
   const hasFemale = audits.has(auditKey("attendance", classId, "absentFemale"));
+  const hasNote = audits.has(auditKey("attendance", classId, "note"));
   const absentTotal = count(row.absentMale) + count(row.absentFemale);
-  const hasRequiredNote = absentTotal === 0 || (String(row.note || "").trim() && audits.has(auditKey("attendance", classId, "note")));
-  return hasMale && hasFemale && Boolean(hasRequiredNote);
+  if (absentTotal === 0) return hasMale && hasFemale;
+
+  // Rekod lama hanya mengaudit ruangan yang benar-benar disentuh. Jika satu
+  // jantina bernilai 0, ruangan itu mungkin tiada audit walaupun laporan lengkap
+  // sudah diterima pelayan. Anggap lengkap apabila sekurang-kurangnya satu kiraan
+  // disahkan dan senarai murid tidak hadir turut diterima.
+  const hasRequiredNote = Boolean(String(row.note || "").trim() && hasNote);
+  return (hasMale || hasFemale) && hasRequiredNote && count(row.updatedAt) > 0;
 }
 
 function classSyncState(classId) {
@@ -3870,7 +3877,7 @@ window.addEventListener("beforeunload", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=172", { scope: "./", updateViaCache: "none" })
+    navigator.serviceWorker.register("./service-worker.js?v=173", { scope: "./", updateViaCache: "none" })
       .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
   });
 }
