@@ -98,7 +98,7 @@ body{margin:0;background:linear-gradient(135deg,#edf7ff 0%,#fff 46%,#e9f3ff 100%
 .section-heading span{background:var(--pale);color:var(--blue);font-weight:900;padding:7px 10px;border-radius:9px}
 .section-heading h3{margin:0;font-size:1.05rem}
 .section-heading p{margin:0;color:var(--muted);font-size:.8rem}
-.completion-legend{display:flex;align-items:center;gap:13px;font-size:.76rem;font-weight:900}.completion-legend .complete{color:#08733d}.completion-legend .incomplete{color:#b51f35}
+.completion-legend{display:flex;align-items:center;gap:13px;flex-wrap:wrap;font-size:.76rem;font-weight:900}.completion-legend .complete{color:#08733d}.completion-legend .saving{color:#9a6200}.completion-legend .incomplete{color:#b51f35}
 .class-completion-lists{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:15px}.completion-list{padding:13px 14px;border:1px solid var(--line);border-radius:13px;background:#f9fcff}.completion-list.complete{border-color:#a9ddc3;background:#f0fbf5}.completion-list.incomplete{border-color:#f0b9c1;background:#fff5f6}.completion-list h4{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 10px;font-size:.78rem}.completion-list.complete h4{color:#08733d}.completion-list.incomplete h4{color:#a61f32}.completion-list h4 strong{display:grid;place-items:center;min-width:27px;height:27px;padding:0 7px;border-radius:999px;background:#fff;font-size:.72rem}.class-chip-list{display:flex;flex-wrap:wrap;gap:7px}.class-chip{display:inline-flex;align-items:center;padding:6px 9px;border-radius:8px;background:#fff;border:1px solid #c9d9e7;color:#34435c;font-size:.7rem;font-weight:800}.completion-list.complete .class-chip{border-color:#b7dfca}.completion-list.incomplete .class-chip{border-color:#efc2c8}.class-list-empty{margin:0;color:var(--muted);font-size:.72rem;font-style:italic}
 .table-scroll{overflow:auto;border:1px solid #bfcfe0;border-radius:11px}
 table{width:100%;border-collapse:collapse;font-size:.77rem}
@@ -109,8 +109,11 @@ thead th{background:var(--navy);color:#fff;font-size:.69rem;text-transform:upper
 .attendance-table .name-col{min-width:280px;text-align:left}
 .attendance-table .note-col{min-width:150px}
 .attendance-table .status-col{min-width:96px}
-.class-status{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:86px;padding:6px 8px;border-radius:999px;font-size:.67rem;font-weight:900;white-space:nowrap}.class-status:before{content:"";width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 3px #ffffff80}.class-status.complete{background:#dff7ea;color:#08733d}.class-status.complete:before{background:#0db76f}.class-status.incomplete{background:#ffe5e8;color:#a61f32}.class-status.incomplete:before{background:#df2d46}
+.class-status{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:86px;padding:6px 8px;border-radius:999px;font-size:.67rem;font-weight:900;white-space:nowrap}.class-status:before{content:"";width:9px;height:9px;border-radius:50%;box-shadow:0 0 0 3px #ffffff80}.class-status.complete{background:#dff7ea;color:#08733d}.class-status.complete:before{background:#0db76f}.class-status.saving,.class-status.pending{background:#fff2bd;color:#845500}.class-status.saving:before,.class-status.pending:before{background:#f1ac17}.class-status.error,.class-status.incomplete{background:#ffe5e8;color:#a61f32}.class-status.error:before,.class-status.incomplete:before{background:#df2d46}
 .attendance-table tr.class-complete>td:first-child{box-shadow:inset 4px 0 #0db76f}.attendance-table tr.class-incomplete>td:first-child{box-shadow:inset 4px 0 #df2d46}
+.attendance-table tr.class-saving>td:first-child,.attendance-table tr.class-pending>td:first-child{box-shadow:inset 4px 0 #f1ac17}
+.attendance-sync-status{display:flex;align-items:center;justify-content:center;min-height:38px;margin:0 0 12px;padding:8px 12px;border:1px solid #bdd7ee;border-radius:11px;background:#eef7ff;color:#174d7d;font-size:.76rem;font-weight:900;text-align:center}.attendance-sync-status.saved{border-color:#9bd8bb;background:#eaf9f1;color:#08733d}.attendance-sync-status.error{border-color:#efb4bd;background:#fff0f2;color:#a61f32}
+.class-confirm-button{display:block;margin-top:6px;padding:4px 8px;border:1px solid #96bce0;border-radius:8px;background:#fff;color:#0755b5;font:inherit;font-size:.61rem;font-weight:900;line-height:1.15;cursor:pointer}.class-confirm-button:hover{background:#eaf4ff}.class-confirm-button:disabled{cursor:wait;opacity:.65}
 .attendance-table td:nth-child(2){text-align:left;font-weight:700}
 .absent-head{background:#a51831!important}
 tbody tr:nth-child(even){background:#f5f9fd}
@@ -1194,8 +1197,11 @@ body[data-active-view="staff"] .identity-bar>div small{margin-top:1px;font-size:
 #viewAttendance .attendance-completion-badge .completion-check{display:inline-grid;place-items:center;width:18px;height:18px;border:2px solid currentColor;border-radius:50%;box-shadow:inset 0 0 0 1px #d8ac35;font-size:.7rem;font-weight:950;line-height:1}
 #viewAttendance .attendance-completion-badge em{font-family:"Segoe Script","Brush Script MT",cursive;font-size:.67rem;font-weight:800;line-height:1}
 #viewAttendance .attendance-completion-badge.incomplete{padding:2px 5px;border-radius:999px;background:#fff0f2;color:#a61f32;font-size:.52rem;font-weight:900}
+#viewAttendance .attendance-completion-badge.saving,#viewAttendance .attendance-completion-badge.pending{padding:2px 5px;border-radius:999px;background:#fff2bd;color:#845500;font-size:.52rem;font-weight:900}
+#viewAttendance .attendance-completion-badge.error{padding:2px 5px;border-radius:999px;background:#ffdce2;color:#a61f32;font-size:.52rem;font-weight:900}
 #viewAttendance .attendance-table tr.class-complete .attendance-teacher{background:#c9f7dc;color:#075c34;box-shadow:inset 4px 0 #10ad62}
 #viewAttendance .attendance-table tr.class-incomplete .attendance-teacher{background:#ffdce2;color:#8f1f32;box-shadow:inset 4px 0 #df4760}
+#viewAttendance .attendance-table tr.class-saving .attendance-teacher,#viewAttendance .attendance-table tr.class-pending .attendance-teacher{background:#fff1ba;color:#765000;box-shadow:inset 4px 0 #f1ac17}
 @media(max-width:700px){
   #viewAttendance .table-section{padding:14px 10px 5px}
   #viewAttendance .table-scroll{overflow:visible;border:0}
@@ -1293,6 +1299,7 @@ body[data-active-view="staff"] .identity-bar>div small{margin-top:1px;font-size:
   #viewAttendance .attendance-table .attendance-teacher{position:sticky;left:0;z-index:4;width:145px;min-width:145px;max-width:145px;background:#fff;text-align:left}
   #viewAttendance .attendance-table tr.class-complete .attendance-teacher{background:#bff4d5;color:#075c34;box-shadow:inset 4px 0 #0dab60}
   #viewAttendance .attendance-table tr.class-incomplete .attendance-teacher{background:#ffd6dd;color:#8f1f32;box-shadow:inset 4px 0 #dc3f59}
+  #viewAttendance .attendance-table tr.class-saving .attendance-teacher,#viewAttendance .attendance-table tr.class-pending .attendance-teacher{background:#fff1ba;color:#765000;box-shadow:inset 4px 0 #f1ac17}
   #viewAttendance .attendance-table thead .name-col{z-index:7;background:var(--navy)}
   #viewAttendance .attendance-table thead tr:first-child th:nth-child(3),
   #viewAttendance .attendance-table .attendance-class{position:sticky;left:145px;z-index:4;width:58px;min-width:58px;max-width:58px;background:#f7fbff}
@@ -1301,6 +1308,8 @@ body[data-active-view="staff"] .identity-bar>div small{margin-top:1px;font-size:
   #viewAttendance .attendance-completion-badge .completion-check{width:14px;height:14px;border-width:1.5px;font-size:.52rem}
   #viewAttendance .attendance-completion-badge em{font-size:.54rem}
   #viewAttendance .attendance-completion-badge.incomplete{padding:1px 4px;font-size:.46rem}
+  #viewAttendance .attendance-completion-badge.saving,#viewAttendance .attendance-completion-badge.pending,#viewAttendance .attendance-completion-badge.error{padding:1px 4px;font-size:.46rem}
+  #viewAttendance .class-confirm-button{margin-top:3px;padding:3px 5px;font-size:.48rem}
   #viewAttendance .attendance-table .attendance-class{padding:4px 2px;font-size:.56rem}
   #viewAttendance .attendance-table .attendance-status{display:none}
   #viewAttendance .attendance-table .attendance-metric,

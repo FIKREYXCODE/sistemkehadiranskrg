@@ -1,11 +1,11 @@
-const CACHE_NAME = "hem-smarttrack-v171";
+const CACHE_NAME = "hem-smarttrack-v172";
 const APP_SHELL = [
   "./",
   "./index.html",
-  "./styles.css?v=171",
-  "./class-demographics.js?v=171",
-  "./app.js?v=171",
-  "./manifest.webmanifest?v=171",
+  "./styles.css?v=172",
+  "./class-demographics.js?v=172",
+  "./app.js?v=172",
+  "./manifest.webmanifest?v=172",
   "./logo-kpm-cutout.png",
   "./logo-skrg-cutout.png",
   "./idme-official-icon.png",

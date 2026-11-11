@@ -6,7 +6,7 @@ const DISCIPLINE_PUBLIC_API_URL = "https://hem-smartdisiplin-ranggu.afiqzkablemo
 const $ = (selector) => document.querySelector(selector);
 const state = {
   date: "", classes: [], staffAbsences: { morning: [], afternoon: [] }, dutyTeachers: { morning: [], afternoon: [] }, meta: {}, loading: false, saveTimer: null,
-  savePromise: null, pendingAttendance: new Map(), staffDirty: false, dutyDirtySessions: new Set(), pendingMeta: {}, audit: new Map(), adminPin: "", session: "all",
+  savePromise: null, pendingAttendance: new Map(), savingAttendance: new Set(), failedAttendance: new Set(), lastAttendanceEditAt: 0, staffDirty: false, dutyDirtySessions: new Set(), pendingMeta: {}, audit: new Map(), adminPin: "", session: "all",
   staffDirectory: [], adminStaffDirectory: [], schoolStats: { teachers: 58, akp: 3 },
   analytics: { period: "week", date: "", loading: false, filtersReady: false, filterPromise: null, annualLoadingYear: "", annualCache: new Map() },
   monitoring: { reports: [], loading: false, previewUrls: [], filter: "all", month: "", calendarLoading: false, calendarRecords: new Map(), selectedDate: "", requestedMode: "", requestedSession: "" },
@@ -307,22 +307,54 @@ function auditDetails(section, recordId, fieldName) {
   return { className: " has-audit", title: `Diisi oleh: ${item.updatedBy} • ${time}` };
 }
 
+function attendanceConfirmed(classId, audits = state.audit, row = state.classes.find((item) => String(item.id) === String(classId))) {
+  if (!row) return false;
+  const hasMale = audits.has(auditKey("attendance", classId, "absentMale"));
+  const hasFemale = audits.has(auditKey("attendance", classId, "absentFemale"));
+  const absentTotal = count(row.absentMale) + count(row.absentFemale);
+  const hasRequiredNote = absentTotal === 0 || (String(row.note || "").trim() && audits.has(auditKey("attendance", classId, "note")));
+  return hasMale && hasFemale && Boolean(hasRequiredNote);
+}
+
+function classSyncState(classId) {
+  if (state.savingAttendance.has(classId)) return "saving";
+  if (state.failedAttendance.has(classId)) return "error";
+  if (state.pendingAttendance.has(classId)) return "pending";
+  return attendanceConfirmed(classId) ? "complete" : "incomplete";
+}
+
 function classIsCompleted(classId) {
-  const pending = state.pendingAttendance.get(classId);
-  if (pending && ["absentMale", "absentFemale", "note"].some((field) => Object.prototype.hasOwnProperty.call(pending, field))) return true;
-  return ["absentMale", "absentFemale", "note"].some((field) => state.audit.has(auditKey("attendance", classId, field)));
+  return classSyncState(classId) === "complete";
 }
 
 function classStatusMarkup(classId) {
-  const complete = classIsCompleted(classId);
-  return `<span class="class-status ${complete ? "complete" : "incomplete"}" title="${complete ? "Pengisian kelas telah diterima" : "Kelas belum membuat pengisian"}">${complete ? "Selesai" : "Belum selesai"}</span>`;
+  const syncState = classSyncState(classId);
+  const labels = {
+    complete: ["Selesai", "Pengisian lengkap telah diterima oleh pelayan"],
+    saving: ["Sedang disimpan", "Data sedang dihantar ke pelayan"],
+    pending: ["Menunggu simpanan", "Perubahan belum disahkan oleh pelayan"],
+    error: ["Belum tersimpan", "Simpanan gagal; data masih tersimpan pada telefon ini untuk dicuba semula"],
+    incomplete: ["Belum selesai", "Pengisian lengkap belum diterima oleh pelayan"],
+  };
+  const [label, title] = labels[syncState];
+  return `<span class="class-status ${syncState}" title="${title}">${label}</span>`;
 }
 
 function teacherCompletionBadgeMarkup(classId) {
-  const complete = classIsCompleted(classId);
-  return complete
-    ? '<span class="attendance-completion-badge complete" title="Pengisian kelas telah diterima"><span class="completion-check" aria-hidden="true">✓</span><em>Selesai</em></span>'
-    : '<span class="attendance-completion-badge incomplete" title="Kelas belum membuat pengisian">Belum</span>';
+  const syncState = classSyncState(classId);
+  if (syncState === "complete") return '<span class="attendance-completion-badge complete" title="Pengisian lengkap telah diterima oleh pelayan"><span class="completion-check" aria-hidden="true">✓</span><em>Selesai</em></span>';
+  if (syncState === "saving") return '<span class="attendance-completion-badge saving">Menyimpan…</span>';
+  if (syncState === "pending") return '<span class="attendance-completion-badge pending">Menunggu</span>';
+  if (syncState === "error") return '<span class="attendance-completion-badge error">Gagal simpan</span>';
+  return '<span class="attendance-completion-badge incomplete" title="Pengisian lengkap belum diterima oleh pelayan">Belum</span>';
+}
+
+function classConfirmButtonMarkup(classId) {
+  const syncState = classSyncState(classId);
+  if (syncState === "complete") return "";
+  const disabled = syncState === "saving" ? " disabled" : "";
+  const label = syncState === "error" ? "Cuba simpan semula" : syncState === "pending" ? "Simpan sekarang" : "Sahkan 0 / data";
+  return `<button class="class-confirm-button" type="button" data-class-confirm="${safe(classId)}"${disabled}>${label}</button>`;
 }
 
 function renderClassCompletionLists() {
@@ -331,7 +363,7 @@ function renderClassCompletionLists() {
   const classes = visibleClasses();
   const renderList = (complete) => {
     const items = classes.filter((row) => classIsCompleted(row.id) === complete);
-    const label = complete ? "Kelas selesai" : "Kelas belum selesai";
+    const label = complete ? "Kelas selesai (disahkan pelayan)" : "Belum diterima sepenuhnya";
     const chips = items.length
       ? `<div class="class-chip-list">${items.map((row) => `<span class="class-chip">${safe(row.name)}</span>`).join("")}</div>`
       : `<p class="class-list-empty">Tiada kelas dalam kategori ini.</p>`;
@@ -343,13 +375,21 @@ function renderClassCompletionLists() {
 function updateClassCompletionStatus(classId) {
   const row = document.querySelector(`tr[data-class-id="${CSS.escape(String(classId))}"]`);
   if (!row) return;
-  const complete = classIsCompleted(classId);
+  const syncState = classSyncState(classId);
+  const complete = syncState === "complete";
   row.classList.toggle("class-complete", complete);
   row.classList.toggle("class-incomplete", !complete);
+  row.classList.toggle("class-saving", syncState === "saving");
+  row.classList.toggle("class-pending", syncState === "pending");
+  row.classList.toggle("class-error", syncState === "error");
   const cell = row.querySelector("[data-class-status]");
   if (cell) cell.innerHTML = classStatusMarkup(classId);
   const teacherBadge = row.querySelector(".attendance-completion-badge");
   if (teacherBadge) teacherBadge.outerHTML = teacherCompletionBadgeMarkup(classId);
+  const oldButton = row.querySelector("[data-class-confirm]");
+  const newButton = classConfirmButtonMarkup(classId);
+  if (oldButton) oldButton.outerHTML = newButton;
+  else if (newButton) row.querySelector(".attendance-teacher")?.insertAdjacentHTML("beforeend", newButton);
   renderClassCompletionLists();
 }
 
@@ -810,7 +850,8 @@ function reportAuditMap(data) {
 
 function reportClassCompleted(data, classId) {
   const audits = reportAuditMap(data);
-  return ["absentMale", "absentFemale", "note"].some((field) => audits.has(auditKey("attendance", classId, field)));
+  const row = withLatestClassProfiles(data.classes).find((item) => String(item.id) === String(classId));
+  return attendanceConfirmed(classId, audits, row);
 }
 
 function filterReportClasses(data, session) {
@@ -1199,7 +1240,7 @@ async function loadCalendarRecord() {
     const classes = withLatestClassProfiles(data.classes);
     $("#calendarTableBody").innerHTML = classes.map((row) => {
       const classAudits = audits.filter((item) => item.section === "attendance" && String(item.recordId) === String(row.id)).sort((a, b) => Number(b.updatedAt) - Number(a.updatedAt));
-      const latest = classAudits[0], completed = classAudits.length > 0, figures = classFigures(row);
+      const latest = classAudits[0], completed = reportClassCompleted(data, row.id), figures = classFigures(row);
       const time = latest ? formatDisplayDateTime(latest.updatedAt) : "—";
       return `<tr><td><strong>${safe(row.name)}</strong></td><td>${safe(row.teacherName || "—")}</td><td>${percent(figures.presentTotal, figures.enrolTotal)}</td><td>${completed ? '<span class="class-status complete">Selesai</span>' : '<span class="class-status incomplete">Belum selesai</span>'}</td><td>${safe(latest?.updatedBy || "—")}</td><td>${safe(time)}</td></tr>`;
     }).join("");
@@ -2650,6 +2691,11 @@ function setStatus(message, type = "") {
   const element = $("#saveStatus");
   element.textContent = message;
   element.className = `save-status ${type}`.trim();
+  const attendanceStatus = $("#attendanceSyncStatus");
+  if (attendanceStatus) {
+    attendanceStatus.textContent = message;
+    attendanceStatus.className = `attendance-sync-status ${type}`.trim();
+  }
 }
 
 function updateDateHeading() {
@@ -2668,9 +2714,10 @@ function renderAttendance() {
   $("#sessionReportLabel").textContent = SESSION_LABELS[state.session] || SESSION_LABELS.all;
   $("#attendanceBody").innerHTML = rows.map((row, index) => {
     const f = classFigures(row);
-    const complete = classIsCompleted(row.id);
-    return `<tr class="${complete ? "class-complete" : "class-incomplete"}" data-class-id="${safe(row.id)}">
-      <td class="attendance-index" data-label="Bil">${index + 1}</td><td class="attendance-teacher" data-label="Guru kelas">${safe(row.teacherName || "—")}${teacherCompletionBadgeMarkup(row.id)}</td><td class="attendance-class" data-label="Kelas"><strong>${safe(row.name)}</strong></td><td class="attendance-status" data-class-status>${classStatusMarkup(row.id)}</td>
+    const syncState = classSyncState(row.id);
+    const complete = syncState === "complete";
+    return `<tr class="${complete ? "class-complete" : "class-incomplete"}${syncState === "saving" ? " class-saving" : ""}${syncState === "pending" ? " class-pending" : ""}${syncState === "error" ? " class-error" : ""}" data-class-id="${safe(row.id)}">
+      <td class="attendance-index" data-label="Bil">${index + 1}</td><td class="attendance-teacher" data-label="Guru kelas">${safe(row.teacherName || "—")}${teacherCompletionBadgeMarkup(row.id)}${classConfirmButtonMarkup(row.id)}</td><td class="attendance-class" data-label="Kelas"><strong>${safe(row.name)}</strong></td><td class="attendance-status" data-class-status>${classStatusMarkup(row.id)}</td>
       <td class="attendance-metric" data-label="Daftar L">${f.enrolMale}</td><td class="attendance-metric" data-label="Daftar P">${f.enrolFemale}</td><td class="attendance-metric" data-label="Daftar Jumlah"><strong>${f.enrolTotal}</strong></td>
       <td class="attendance-metric" data-label="Hadir L">${f.presentMale}</td><td class="attendance-metric" data-label="Hadir P">${f.presentFemale}</td><td class="attendance-metric" data-label="Hadir Jumlah"><strong>${f.presentTotal}</strong></td><td class="attendance-percent" data-label="Peratus hadir"><strong>${percent(f.presentTotal, f.enrolTotal)}</strong></td>
       <td class="attendance-metric attendance-edit" data-label="Tidak hadir L"><input class="cell-input num-input${auditDetails("attendance", row.id, "absentMale").className}" type="number" inputmode="numeric" min="0" max="${f.enrolMale}" value="${f.absentMale}" data-field="absentMale" aria-label="Lelaki tidak hadir ${safe(row.name)}" title="${safe(auditDetails("attendance", row.id, "absentMale").title)}"></td>
@@ -3180,6 +3227,12 @@ async function flushSave() {
     metaUpdates: { ...state.pendingMeta },
     updatedBy: editorName(),
   };
+  const attendanceIds = snapshot.attendanceUpdates.map((item) => item.id);
+  for (const classId of attendanceIds) {
+    state.savingAttendance.add(classId);
+    state.failedAttendance.delete(classId);
+    updateClassCompletionStatus(classId);
+  }
   state.pendingAttendance.clear(); state.staffDirty = false; state.dutyDirtySessions.clear(); state.pendingMeta = {};
   const payload = { date: snapshot.date, attendanceUpdates: snapshot.attendanceUpdates, updatedBy: snapshot.updatedBy };
   if (snapshot.staffAbsences) payload.staffAbsences = snapshot.staffAbsences;
@@ -3191,12 +3244,17 @@ async function flushSave() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Simpanan gagal");
       const time = new Date(data.savedAt || Date.now()).toLocaleTimeString("ms-MY", { hour: "2-digit", minute: "2-digit" });
+      for (const classId of attendanceIds) state.savingAttendance.delete(classId);
       applyAttendanceAudit(snapshot.attendanceUpdates, snapshot.updatedBy, data.savedAt || Date.now());
       if (!hasPendingChanges()) setStatus(`Tersimpan ${time}`, "saved");
       saveDraft();
       if (!hasPendingChanges() && !["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName || "")) loadReport(true);
     } catch (error) {
       console.error(error);
+      for (const classId of attendanceIds) {
+        state.savingAttendance.delete(classId);
+        state.failedAttendance.add(classId);
+      }
       for (const oldPatch of snapshot.attendanceUpdates) {
         const newerPatch = state.pendingAttendance.get(oldPatch.id) || { id: oldPatch.id };
         state.pendingAttendance.set(oldPatch.id, { ...oldPatch, ...newerPatch });
@@ -3206,6 +3264,7 @@ async function flushSave() {
       state.pendingMeta = { ...snapshot.metaUpdates, ...state.pendingMeta };
       saveDraft();
       setStatus("Belum tersimpan — cuba lagi", "error");
+      for (const classId of attendanceIds) updateClassCompletionStatus(classId);
     }
   })();
   await state.savePromise;
@@ -3226,12 +3285,44 @@ $("#attendanceBody").addEventListener("input", (event) => {
     item[field] = Math.min(count(input.value), maximum);
     input.value = item[field];
   }
-  const pending = state.pendingAttendance.get(item.id) || { id: item.id };
-  pending[field] = item[field];
+  const pending = {
+    id: item.id,
+    absentMale: count(item.absentMale),
+    absentFemale: count(item.absentFemale),
+    note: String(item.note || ""),
+  };
   state.pendingAttendance.set(item.id, pending);
+  state.failedAttendance.delete(item.id);
+  state.lastAttendanceEditAt = Date.now();
   updateClassCompletionStatus(item.id);
   saveDraft();
   renderTotals(); scheduleSave();
+});
+
+$("#attendanceBody").addEventListener("click", (event) => {
+  const button = event.target.closest("[data-class-confirm]");
+  if (!button) return;
+  const classId = button.dataset.classConfirm;
+  const item = state.classes.find((entry) => String(entry.id) === String(classId));
+  if (!item) return;
+  const absentTotal = count(item.absentMale) + count(item.absentFemale);
+  if (absentTotal > 0 && !String(item.note || "").trim()) {
+    setStatus("Sila isi senarai murid tidak hadir sebelum mengesahkan kelas.", "error");
+    const noteInput = document.querySelector(`tr[data-class-id="${CSS.escape(String(classId))}"] input[data-field="note"]`);
+    noteInput?.focus();
+    return;
+  }
+  state.pendingAttendance.set(classId, {
+    id: classId,
+    absentMale: count(item.absentMale),
+    absentFemale: count(item.absentFemale),
+    note: String(item.note || ""),
+  });
+  state.failedAttendance.delete(classId);
+  state.lastAttendanceEditAt = Date.now();
+  updateClassCompletionStatus(classId);
+  saveDraft();
+  scheduleSave();
 });
 
 function updateStaffRow(event) {
@@ -3343,7 +3434,7 @@ async function changeReportDate(event) {
   await flushSave();
   state.date = event.target.value;
   syncReportDateInputs();
-  state.pendingAttendance.clear(); state.staffDirty = false; state.dutyDirtySessions.clear(); state.pendingMeta = {};
+  state.pendingAttendance.clear(); state.savingAttendance.clear(); state.failedAttendance.clear(); state.staffDirty = false; state.dutyDirtySessions.clear(); state.pendingMeta = {};
   loadReport();
   loadMonitoringReports();
 }
@@ -3734,9 +3825,17 @@ loadPublicContent();
 loadDisciplinePublicSummary();
 
 setInterval(() => {
-  const editing = ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName || "");
-  if (document.visibilityState === "visible" && !editing && !state.loading && !state.savePromise && !hasPendingChanges()) loadReport(true);
+  const recentlyEditingAttendance = Date.now() - state.lastAttendanceEditAt < 8000;
+  if (document.visibilityState === "visible" && !recentlyEditingAttendance && !state.loading && !state.savePromise && !hasPendingChanges()) loadReport(true);
 }, 15000);
+
+function refreshSharedAttendanceAfterReturn() {
+  if (document.visibilityState === "visible" && !state.loading && !state.savePromise && !hasPendingChanges()) loadReport(true);
+}
+
+document.addEventListener("visibilitychange", refreshSharedAttendanceAfterReturn);
+window.addEventListener("focus", refreshSharedAttendanceAfterReturn);
+window.addEventListener("pageshow", refreshSharedAttendanceAfterReturn);
 
 setInterval(() => {
   const monitoringEditing = $("#monitoringReports").contains(document.activeElement);
@@ -3771,7 +3870,7 @@ window.addEventListener("beforeunload", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=127", { scope: "./", updateViaCache: "none" })
+    navigator.serviceWorker.register("./service-worker.js?v=172", { scope: "./", updateViaCache: "none" })
       .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
   });
 }
