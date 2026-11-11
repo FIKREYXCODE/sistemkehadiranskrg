@@ -417,6 +417,25 @@ function applyAttendanceAudit(updates, updatedBy, updatedAt) {
   }
 }
 
+function verifiedAttendanceReceipts(updates, data) {
+  const receipts = new Map((Array.isArray(data.attendanceReceipts) ? data.attendanceReceipts : []).map((receipt) => [String(receipt.id || ""), receipt]));
+  return updates.map((patch) => {
+    const receipt = receipts.get(String(patch.id));
+    if (!receipt) throw new Error(`Pelayan belum mengesahkan rekod ${patch.id}.`);
+    const confirmed = new Set(Array.isArray(receipt.confirmedFields) ? receipt.confirmedFields : []);
+    const expectedMale = count(patch.absentMale, 300);
+    const expectedFemale = count(patch.absentFemale, 300);
+    const expectedNote = String(patch.note || "").trim();
+    if (Number(receipt.absentMale) !== expectedMale || Number(receipt.absentFemale) !== expectedFemale || String(receipt.note || "").trim() !== expectedNote) {
+      throw new Error(`Pengesahan pelayan tidak sepadan untuk ${patch.id}.`);
+    }
+    if (!confirmed.has("absentMale") || !confirmed.has("absentFemale") || (expectedNote && !confirmed.has("note"))) {
+      throw new Error(`Pelayan belum mengesahkan semua medan untuk ${patch.id}.`);
+    }
+    return receipt;
+  });
+}
+
 function updateEditingAccess() {
   const allowed = Boolean(editorName());
   document.querySelectorAll("#attendanceBody input,#staffMorningBody input,#staffAfternoonBody input,.report-notes input:not([readonly]),.report-notes textarea").forEach((element) => { element.readOnly = false; });
@@ -3250,9 +3269,12 @@ async function flushSave() {
       const response = await fetch(API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Simpanan gagal");
+      const attendanceReceipts = verifiedAttendanceReceipts(snapshot.attendanceUpdates, data);
       const time = new Date(data.savedAt || Date.now()).toLocaleTimeString("ms-MY", { hour: "2-digit", minute: "2-digit" });
       for (const classId of attendanceIds) state.savingAttendance.delete(classId);
-      applyAttendanceAudit(snapshot.attendanceUpdates, snapshot.updatedBy, data.savedAt || Date.now());
+      for (const receipt of attendanceReceipts) {
+        applyAttendanceAudit([receipt], receipt.updatedBy || snapshot.updatedBy, receipt.updatedAt || data.savedAt || Date.now());
+      }
       if (!hasPendingChanges()) setStatus(`Tersimpan ${time}`, "saved");
       saveDraft();
       if (!hasPendingChanges() && !["INPUT", "TEXTAREA"].includes(document.activeElement?.tagName || "")) loadReport(true);
@@ -3877,7 +3899,7 @@ window.addEventListener("beforeunload", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=173", { scope: "./", updateViaCache: "none" })
+    navigator.serviceWorker.register("./service-worker.js?v=174", { scope: "./", updateViaCache: "none" })
       .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
   });
 }
