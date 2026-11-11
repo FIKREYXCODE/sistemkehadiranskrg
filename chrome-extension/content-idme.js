@@ -126,7 +126,7 @@
   function absentAliases(record) {
     if (Number(record.absentTotal || 0) === 0) return [];
     return String(record.absentNames || "")
-      .split(/[,;\n]+/)
+      .split(/\s*(?:[,;\n/&+]|\bDAN\b)\s*/i)
       .map(normalizeText)
       .filter((name) => name && name !== "SEMUA MURID HADIR");
   }

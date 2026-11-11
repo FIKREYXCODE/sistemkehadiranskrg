@@ -126,6 +126,26 @@ function send(dom, message) {
   assert.equal(moeisDom.window.document.querySelector("#case-hadir-2").checked, true);
   assert.equal(moeisDom.window.document.querySelector("#case-hadir-3").checked, false);
 
+  const conjunctionDom = buildDom(`<!doctype html><html><body>
+    <span id="select2-txtNamakelas-container">TAHUN ENAM JAYYID</span>
+    <input id="tkh_HH" value="11/11/2026">
+    <table id="kehadiran"><tbody>
+      <tr><td>1</td><td><input type="checkbox" id="case-hadir-11" checked></td><td>NUR ALYA BINTI AHMAD</td></tr>
+      <tr><td>2</td><td><input type="checkbox" id="case-hadir-12" checked></td><td>MUHAMMAD AFIF BIN ALI</td></tr>
+      <tr><td>3</td><td><input type="checkbox" id="case-hadir-13" checked></td><td>AMIR HAKIM BIN OSMAN</td></tr>
+    </tbody></table>
+  </body></html>`);
+  conjunctionDom.window.eval(script("matcher.js"));
+  conjunctionDom.window.eval(script("content-idme.js"));
+  const conjunctionFill = await send(conjunctionDom, { type: "HEM_IDME_FILL", record: {
+    date: "2026-11-11", className: "6 Jayyid", enrolTotal: 3,
+    absentTotal: 3, absentNames: "Alya dan Afif & Amir"
+  } });
+  assert.equal(conjunctionFill.ok, true);
+  assert.equal(conjunctionDom.window.document.querySelector("#case-hadir-11").checked, false);
+  assert.equal(conjunctionDom.window.document.querySelector("#case-hadir-12").checked, false);
+  assert.equal(conjunctionDom.window.document.querySelector("#case-hadir-13").checked, false);
+
   console.log("DOM bridge tests passed");
 })().catch((error) => {
   console.error(error);
