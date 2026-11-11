@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "HEM SmartTrack → idMe",
   "short_name": "HEM → idMe",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Membantu guru memindahkan rekod kehadiran E-JKM yang telah disahkan ke borang idMe untuk semakan sebelum dihantar.",
   "minimum_chrome_version": "102",
   "permissions": ["storage", "activeTab", "tabs"],

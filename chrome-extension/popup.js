@@ -3,19 +3,13 @@
 const SMARTTRACK_URL = "https://fikreyxcode.github.io/sistemkehadiranskrg/?v=177&fresh=1#e-jkm";
 const IDME_URL = "https://idme.moe.gov.my/login";
 const MAX_RECORD_AGE = 24 * 60 * 60 * 1000;
-const FIELD_LABELS = {
-  date: "Tarikh", className: "Kelas", enrolTotal: "Dalam daftar", presentMale: "Hadir lelaki",
-  presentFemale: "Hadir perempuan", presentTotal: "Jumlah hadir", absentMale: "Tidak hadir lelaki",
-  absentFemale: "Tidak hadir perempuan", absentTotal: "Jumlah tidak hadir", attendancePercent: "Peratus hadir",
-  absentNames: "Senarai tidak hadir"
-};
 
 let activeTab;
 let extractedRecords = [];
-let selectedRecord = null;
 let savedRecord = null;
 
 const $ = (selector) => document.querySelector(selector);
+const normalizeName = (value) => String(value || "").trim().replace(/\s+/g, " ").toLocaleUpperCase("ms");
 
 function setState(message, kind = "") {
   const target = $("#pageState");
@@ -23,23 +17,38 @@ function setState(message, kind = "") {
   target.className = `state ${kind}`.trim();
 }
 
-function previewMarkup(record) {
-  if (!record) return "<span>Belum ada rekod disimpan.</span>";
-  return `<strong>${escapeHtml(record.className)} · ${escapeHtml(record.date)}</strong>
-    <span>${escapeHtml(record.teacherName || "Guru kelas")}</span><br>
-    <span>Hadir ${record.presentTotal}/${record.enrolTotal} (${record.attendancePercent}%) · Tidak hadir ${record.absentTotal}</span>`;
-}
-
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", "\"": "&quot;" }[char]));
+}
+
+function previewMarkup(record) {
+  if (!record) return "<span>Belum ada data kelas diambil.</span>";
+  return `<strong>${escapeHtml(record.className)} · ${escapeHtml(record.date)}</strong>
+    <span>${escapeHtml(record.teacherName || "Guru kelas")}</span><br>
+    <span>Hadir ${record.presentTotal}/${record.enrolTotal} · Tidak hadir ${record.absentTotal}</span>`;
 }
 
 async function sendMessage(message) {
   try {
     return await chrome.tabs.sendMessage(activeTab.id, message);
-  } catch (error) {
-    throw new Error("Extension belum dapat membaca halaman ini. Muat semula halaman dan cuba lagi.");
+  } catch {
+    throw new Error("Muat semula halaman ini, kemudian tekan ikon extension sekali lagi.");
   }
+}
+
+async function findTabByPrefix(prefix) {
+  const tabs = await chrome.tabs.query({ currentWindow: true });
+  return tabs.find((tab) => String(tab.url || "").startsWith(prefix)) || null;
+}
+
+async function resolveContextTab() {
+  const [current] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const currentUrl = String(current?.url || "");
+  if (currentUrl.startsWith("https://fikreyxcode.github.io/sistemkehadiranskrg/") ||
+      currentUrl.startsWith("https://idme.moe.gov.my/")) return current;
+
+  return await findTabByPrefix("https://fikreyxcode.github.io/sistemkehadiranskrg/") ||
+    await findTabByPrefix("https://idme.moe.gov.my/") || current;
 }
 
 async function readSavedRecord() {
@@ -51,61 +60,72 @@ async function readSavedRecord() {
   return data.attendanceRecord;
 }
 
-function chooseRecord() {
-  selectedRecord = extractedRecords.find((record) => record.classId === $("#classPicker").value) || null;
-  $("#recordPreview").innerHTML = previewMarkup(selectedRecord);
-  $("#recordPreview").hidden = !selectedRecord;
-  $("#saveRecord").hidden = !selectedRecord;
+async function saveRecord(record) {
+  savedRecord = record;
+  await chrome.storage.local.set({ attendanceRecord: record, attendanceSavedAt: Date.now() });
+  $("#recordPreview").innerHTML = previewMarkup(record);
+  $("#recordPreview").hidden = false;
+  $("#classPickerWrap").hidden = true;
+  $("#useSelectedClass").hidden = true;
+  $("#openIdme").hidden = false;
+  setState(`Data ${record.className} sudah sedia. Tekan \"Buka idMe\".`, "ok");
 }
 
-async function scanSmarttrack() {
-  setState("Membaca rekod E-JKM…");
+function chosenPickerRecord() {
+  return extractedRecords.find((record) => record.classId === $("#classPicker").value) || null;
+}
+
+async function takeMyClass() {
+  setState("Sedang mengambil data kelas cikgu…");
   const response = await sendMessage({ type: "HEM_EXTRACT_ATTENDANCE" });
   extractedRecords = (response?.records || []).filter((record) => record.complete);
   if (!extractedRecords.length) {
-    setState("Tiada kelas hijau yang disahkan pelayan pada paparan ini.", "error");
+    setState("Belum ada kelas berstatus Selesai pada tarikh ini.", "error");
     return;
   }
+
+  const activeName = normalizeName(response?.activeTeacherName);
+  const teacherMatches = activeName
+    ? extractedRecords.filter((record) => normalizeName(record.teacherName) === activeName)
+    : [];
+
+  if (teacherMatches.length === 1) {
+    await saveRecord(teacherMatches[0]);
+    return;
+  }
+  if (extractedRecords.length === 1) {
+    await saveRecord(extractedRecords[0]);
+    return;
+  }
+
   const picker = $("#classPicker");
   picker.innerHTML = extractedRecords.map((record) => `<option value="${escapeHtml(record.classId)}">${escapeHtml(record.className)} — ${escapeHtml(record.teacherName)}</option>`).join("");
   $("#classPickerWrap").hidden = false;
-  setState(`${extractedRecords.length} kelas disahkan ditemui.`, "ok");
-  chooseRecord();
-}
-
-async function saveSelectedRecord() {
-  if (!selectedRecord?.complete) return;
-  await chrome.storage.local.set({ attendanceRecord: selectedRecord, attendanceSavedAt: Date.now() });
-  savedRecord = selectedRecord;
-  setState(`${selectedRecord.className} disimpan sementara untuk idMe.`, "ok");
-}
-
-async function analyzeIdme() {
-  if (!savedRecord) {
-    setState("Ambil dan simpan rekod E-JKM dahulu.", "error");
-    return;
-  }
-  setState("Mencari medan kehadiran pada halaman idMe…");
-  const response = await sendMessage({ type: "HEM_IDME_ANALYZE" });
-  const entries = Object.entries(response?.matches || {});
-  const target = $("#matchResult");
-  target.innerHTML = entries.length
-    ? entries.map(([key, match]) => `<span><b>${escapeHtml(FIELD_LABELS[key] || key)}</b><em>${escapeHtml(match.descriptor)}</em></span>`).join("")
-    : "Tiada medan kehadiran yang dapat dikenal pasti pada halaman ini.";
-  target.hidden = false;
-  $("#fillIdme").disabled = entries.length === 0;
-  setState(entries.length ? `${entries.length} medan dijumpai. Semak senarai sebelum mengisi.` : "Buka borang kehadiran dalam idMe dahulu.", entries.length ? "ok" : "error");
+  $("#useSelectedClass").hidden = false;
+  setState("Pilih kelas cikgu daripada senarai ini.");
 }
 
 async function fillIdme() {
-  if (!savedRecord) return;
+  if (!savedRecord) {
+    setState("Ambil data kelas daripada SmartTrack dahulu.", "error");
+    return;
+  }
+  setState("Sedang mengisi maklumat kehadiran…");
+  const analysis = await sendMessage({ type: "HEM_IDME_ANALYZE" });
+  const matchCount = Object.keys(analysis?.matches || {}).length;
+  if (!matchCount) {
+    setState("Buka halaman kehadiran kelas dalam idMe dahulu, kemudian cuba lagi.", "error");
+    return;
+  }
   const response = await sendMessage({ type: "HEM_IDME_FILL", record: savedRecord });
   const count = response?.filled?.length || 0;
-  setState(count ? `${count} medan diisi dan ditandakan hijau. Sila semak sebelum hantar.` : "Tiada medan dapat diisi. Jangan hantar borang.", count ? "ok" : "error");
+  setState(count
+    ? `${count} ruangan sudah diisi. Semak dahulu sebelum tekan Hantar.`
+    : "Ruangan kehadiran tidak dapat dikenal pasti. Jangan hantar borang.", count ? "ok" : "error");
 }
 
 async function init() {
-  [activeTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  activeTab = await resolveContextTab();
   savedRecord = await readSavedRecord();
   const url = activeTab?.url || "";
   const isSmarttrack = url.startsWith("https://fikreyxcode.github.io/sistemkehadiranskrg/");
@@ -113,25 +133,27 @@ async function init() {
   $("#smarttrackPanel").hidden = !isSmarttrack;
   $("#idmePanel").hidden = !isIdme;
   $("#otherPanel").hidden = isSmarttrack || isIdme;
-  if (isSmarttrack) setState("Halaman E-JKM dikesan.", "ok");
-  else if (isIdme) setState("Halaman idMe dikesan.", "ok");
-  else setState("Buka E-JKM atau idMe untuk menggunakan extension.");
+  if (isSmarttrack) setState("Langkah 1: ambil data kelas cikgu.", "ok");
+  else if (isIdme) setState(savedRecord ? "Langkah 2: buka kehadiran kelas, kemudian isi." : "Belum ada data. Mulakan di SmartTrack.", savedRecord ? "ok" : "error");
+  else setState("Buka SmartTrack untuk bermula.");
   $("#savedPreview").innerHTML = previewMarkup(savedRecord);
+  $("#fillIdme").disabled = !savedRecord;
 }
 
-$("#scanSmarttrack").addEventListener("click", () => scanSmarttrack().catch((error) => setState(error.message, "error")));
-$("#classPicker").addEventListener("change", chooseRecord);
-$("#saveRecord").addEventListener("click", () => saveSelectedRecord().catch((error) => setState(error.message, "error")));
+$("#takeMyClass").addEventListener("click", () => takeMyClass().catch((error) => setState(error.message, "error")));
+$("#useSelectedClass").addEventListener("click", () => {
+  const record = chosenPickerRecord();
+  if (record) saveRecord(record).catch((error) => setState(error.message, "error"));
+});
 $("#openIdme").addEventListener("click", () => chrome.tabs.create({ url: IDME_URL }));
 $("#openSmarttrack").addEventListener("click", () => chrome.tabs.create({ url: SMARTTRACK_URL }));
-$("#analyzeIdme").addEventListener("click", () => analyzeIdme().catch((error) => setState(error.message, "error")));
 $("#fillIdme").addEventListener("click", () => fillIdme().catch((error) => setState(error.message, "error")));
 $("#clearRecord").addEventListener("click", async () => {
   await chrome.storage.local.remove(["attendanceRecord", "attendanceSavedAt"]);
   savedRecord = null;
-  selectedRecord = null;
   $("#savedPreview").innerHTML = previewMarkup(null);
-  setState("Rekod sementara dipadam.", "ok");
+  $("#fillIdme").disabled = true;
+  setState("Data sementara sudah dikosongkan.", "ok");
 });
 
 init().catch((error) => setState(error.message, "error"));

@@ -28,7 +28,9 @@
       const absentMale = numberFromCell(row, "Tidak hadir L");
       const absentFemale = numberFromCell(row, "Tidak hadir P");
       const className = textFromCell(row, ".attendance-class");
-      const teacherName = textFromCell(row, ".attendance-teacher").replace(/\s*(Selesai|Belum selesai|Sedang disimpan).*$/i, "").trim();
+      const teacherName = textFromCell(row, ".attendance-teacher")
+        .replace(/\s*[✓✔☑✅]?\s*(Selesai|Belum selesai|Sedang disimpan).*$/i, "")
+        .trim();
       const absentNames = textFromCell(row, ".attendance-note");
       const complete = row.classList.contains("class-complete") && !row.classList.contains("class-error");
       return {
@@ -54,10 +56,14 @@
     }).filter((row) => row.className);
   }
 
+  function activeTeacherName() {
+    return String(document.querySelector("#editorName")?.value || "").trim();
+  }
+
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message?.type !== "HEM_EXTRACT_ATTENDANCE") return false;
     const records = extractRows();
-    sendResponse({ ok: true, records, date: document.querySelector("#reportDate")?.value || "" });
+    sendResponse({ ok: true, records, date: document.querySelector("#reportDate")?.value || "", activeTeacherName: activeTeacherName() });
     return false;
   });
 }());

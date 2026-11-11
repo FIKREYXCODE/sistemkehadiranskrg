@@ -26,8 +26,9 @@ function send(dom, message) {
 (async () => {
   const smartDom = buildDom(`<!doctype html><html><body>
     <input id="reportDate" value="2026-11-11">
+    <select id="editorName"><option selected>MOHAMMAD FIKREY BIN ABDUL GAPAR</option></select>
     <table><tbody id="attendanceBody"><tr class="class-complete" data-class-id="tahun-6-jayyid">
-      <td class="attendance-teacher">MOHAMMAD FIKREY BIN ABDUL GAPAR <em>Selesai</em></td>
+      <td class="attendance-teacher">MOHAMMAD FIKREY BIN ABDUL GAPAR <em>✓ Selesai</em></td>
       <td class="attendance-class"><strong>6 Jayyid</strong></td>
       <td data-label="Daftar L">18</td><td data-label="Daftar P">17</td>
       <td data-label="Hadir L">18</td><td data-label="Hadir P">17</td>
@@ -41,6 +42,8 @@ function send(dom, message) {
   assert.equal(extraction.ok, true);
   assert.equal(extraction.records.length, 1);
   assert.equal(extraction.records[0].className, "6 Jayyid");
+  assert.equal(extraction.records[0].teacherName, "MOHAMMAD FIKREY BIN ABDUL GAPAR");
+  assert.equal(extraction.activeTeacherName, "MOHAMMAD FIKREY BIN ABDUL GAPAR");
   assert.equal(extraction.records[0].enrolTotal, 35);
   assert.equal(extraction.records[0].presentTotal, 35);
   assert.equal(extraction.records[0].absentTotal, 0);

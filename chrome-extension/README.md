@@ -13,14 +13,14 @@ Extension ini membantu guru memindahkan rekod kehadiran yang **sudah hijau dan d
 
 ## Cara guna
 
-1. Buka E-JKM HEM SmartTrack dan tunggu data dipaparkan.
-2. Tekan ikon extension → **Baca rekod halaman ini**.
-3. Pilih kelas hijau → **Simpan untuk idMe**.
-4. Buka idMe dan log masuk menggunakan akaun guru sendiri.
-5. Pergi ke borang kehadiran yang hendak diisi.
-6. Tekan ikon extension → **Semak medan halaman ini**.
-7. Pastikan medan yang dijumpai betul → **Isi medan yang sepadan**.
-8. Medan yang diisi ditandakan hijau. Semak semua nilai sebelum menekan hantar dalam idMe.
+1. Buka E-JKM HEM SmartTrack dan pilih **Nama pengisi**.
+2. Tekan ikon extension → **Ambil data kelas saya**.
+3. Tekan **Buka idMe** dan log masuk menggunakan akaun guru sendiri.
+4. Buka halaman kehadiran kelas dalam idMe.
+5. Tekan ikon extension → **Isi kehadiran sekarang**.
+6. Semak semua nilai yang ditandakan hijau sebelum cikgu sendiri menekan butang hantar.
+
+Jika nama pengisi tidak sama dengan nama guru kelas, extension hanya akan meminta cikgu memilih kelas daripada satu senarai ringkas.
 
 ## Had dan keselamatan
 
