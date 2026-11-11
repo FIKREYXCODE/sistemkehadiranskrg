@@ -77,7 +77,7 @@ draw.polygon([(0, 250), (W, 160), (W, 300), (0, 300)], fill=BLUE)
 draw.ellipse((760, -170, 1160, 230), fill="#0c4c92")
 draw.ellipse((875, -85, 1135, 175), fill=CYAN)
 
-icon = Image.open(ROOT / "chrome-extension/icons/icon-128.png").convert("RGBA").resize((142, 142))
+icon = Image.open(ROOT / "hem-smarttrack-logo-cutout.png").convert("RGBA").resize((142, 142))
 img.paste(icon, (60, 55), icon)
 draw.text((225, 61), "PANDUAN GURU KELAS", font=font(26, True), fill="#83dcff")
 draw.text((225, 99), "SmartTrack → idMe", font=font(54, True), fill=WHITE)

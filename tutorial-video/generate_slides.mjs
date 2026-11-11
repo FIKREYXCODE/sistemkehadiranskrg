@@ -5,8 +5,10 @@ const root = path.resolve(import.meta.dirname, "..");
 const out = path.join(import.meta.dirname, "slides-svg");
 fs.mkdirSync(out, { recursive: true });
 
-const icon = fs.readFileSync(path.join(root, "chrome-extension/icons/icon-128.png")).toString("base64");
+const icon = fs.readFileSync(path.join(root, "hem-smarttrack-logo-cutout.png")).toString("base64");
 const iconUrl = `data:image/png;base64,${icon}`;
+const idmeIcon = fs.readFileSync(path.join(root, "idme-official-icon.png")).toString("base64");
+const idmeIconUrl = `data:image/png;base64,${idmeIcon}`;
 
 const esc = (value) => String(value)
   .replaceAll("&", "&amp;")
@@ -74,7 +76,7 @@ const slides = [
     body: browserFrame(`${textLines(["1. Muat turun fail ZIP extension", "2. Klik dua kali untuk buka ZIP", "3. Simpan folder chrome-extension"], 210, 355, {size:43, weight:800, gap:1.65})}
       <rect x="1010" y="345" width="600" height="330" rx="32" fill="#eef7ff" stroke="#83bdf5" stroke-width="4"/>
       <image href="${iconUrl}" x="1080" y="410" width="190" height="190"/>
-      ${textLines(["HEM SmartTrack", "→ idMe", "Versi 1.3.0"], 1320, 440, {size:38, weight:900, gap:1.4})}
+      ${textLines(["HEM SmartTrack", "→ idMe", "Versi 1.4.0"], 1320, 440, {size:38, weight:900, gap:1.4})}
       ${button(1115, 720, 430, 90, "Fail sudah dibuka", "#18a957")}`, "Fail pemasangan extension")
   },
   {
@@ -123,13 +125,13 @@ const slides = [
     step: "5",
     title: "Masuk idMe menggunakan akaun sendiri",
     subtitle: "Jangan berkongsi kata laluan atau menggunakan akaun guru lain",
-    body: browserFrame(`<rect x="360" y="330" width="1200" height="470" rx="38" fill="#17202a"/>
-      <text x="960" y="425" text-anchor="middle" font-family="Arial" font-size="30" font-weight="800" fill="#fff">KEMENTERIAN PENDIDIKAN</text>
-      <text x="960" y="485" text-anchor="middle" font-family="Arial" font-size="48" font-weight="900" fill="#fff">Sistem Pengurusan Identiti (idMe)</text>
-      <rect x="555" y="540" width="810" height="74" rx="12" fill="#fff" opacity="0.12" stroke="#93a4b4" stroke-width="2"/>
-      <text x="595" y="589" font-family="Arial" font-size="28" fill="#dbe5ed">Nombor Kad Pengenalan / Pasport</text>
-      ${button(555, 650, 810, 80, "Daftar Masuk", "#21a9c3")}
-      <circle cx="430" cy="410" r="70" fill="#fff" opacity="0.12"/><text x="430" y="430" text-anchor="middle" font-family="Arial" font-size="58">🔐</text>`, "https://idme.moe.gov.my")
+    body: browserFrame(`<rect x="545" y="300" width="830" height="540" rx="38" fill="#2c2c2c"/>
+      <image href="${idmeIconUrl}" x="545" y="300" width="830" height="540" preserveAspectRatio="xMidYMid meet"/>
+      <rect x="215" y="390" width="290" height="250" rx="34" fill="#eaf7ff" stroke="#78b6eb" stroke-width="4"/>
+      <text x="360" y="460" text-anchor="middle" font-family="Arial" font-size="32" font-weight="900" fill="#0757ae">PORTAL RASMI</text>
+      <text x="360" y="525" text-anchor="middle" font-family="Arial" font-size="39" font-weight="900" fill="#14213d">idMe KPM</text>
+      <text x="360" y="585" text-anchor="middle" font-family="Arial" font-size="24" font-weight="700" fill="#5a6b82">Log masuk akaun</text>
+      <text x="360" y="618" text-anchor="middle" font-family="Arial" font-size="24" font-weight="700" fill="#5a6b82">guru sendiri</text>`, "https://idme.moe.gov.my")
   },
   {
     step: "6",
@@ -149,9 +151,10 @@ const slides = [
       <text x="1100" y="360" font-family="Arial" font-size="24" font-weight="800" fill="#28a7dc" letter-spacing="3">PEMBANTU KEHADIRAN</text>
       <text x="1100" y="415" font-family="Arial" font-size="39" font-weight="900" fill="#14213d">SmartTrack → idMe</text>
       <rect x="1100" y="470" width="530" height="135" rx="24" fill="#eff7ff"/>
-      ${textLines(["6 Jayyid · 11 November 2026", "Hadir 35/35 · Tidak hadir 0"], 1130, 520, {size:29, weight:800, gap:1.45})}
+      ${textLines(["6 Jayyid · 11 November 2026", "Hadir 32/35 · Tidak hadir 3"], 1130, 520, {size:29, weight:800, gap:1.45})}
       ${button(1100, 650, 530, 94, "Isi kehadiran sekarang")}
-      <text x="1100" y="795" font-family="Arial" font-size="22" font-weight="700" fill="#66758b">Guru tetap perlu menyemak sebelum hantar.</text>
+      <rect x="1100" y="765" width="530" height="64" rx="18" fill="#e9f8ef"/>
+      <text x="1365" y="805" text-anchor="middle" font-family="Arial" font-size="22" font-weight="800" fill="#13713b">Lalai: Masalah Kesihatan → Demam</text>
       ${textLines(["Klik ikon extension sekali lagi.", "Pastikan ringkasan kelas betul."], 230, 430, {size:48, weight:900, gap:1.45})}
       ${arrow(820, 620, 1100, 695, "KLIK UNTUK SEDIAKAN")}`, "MOEIS — Kehadiran Harian")
   },
@@ -161,9 +164,9 @@ const slides = [
     subtitle: "Penghantaran akhir sentiasa di bawah kawalan guru kelas",
     body: browserFrame(`<rect x="200" y="320" width="1080" height="470" rx="28" fill="#fff" stroke="#bed7ef" stroke-width="4"/>
       <text x="250" y="382" font-family="Arial" font-size="37" font-weight="900" fill="#14213d">TAHUN ENAM JAYYID · 11/11/2026</text>
-      <rect x="250" y="425" width="460" height="105" rx="22" fill="#eafaf0"/><text x="480" y="492" text-anchor="middle" font-family="Arial" font-size="38" font-weight="900" fill="#14713a">HADIR 35</text>
-      <rect x="740" y="425" width="460" height="105" rx="22" fill="#fff0f0"/><text x="970" y="492" text-anchor="middle" font-family="Arial" font-size="38" font-weight="900" fill="#b92828">TIDAK HADIR 0</text>
-      ${textLines(["☑ Semak nama murid", "☑ Semak sebab tidak hadir", "☑ Pastikan bilangan betul"], 270, 600, {size:34, weight:800, gap:1.5})}
+      <rect x="250" y="425" width="460" height="105" rx="22" fill="#eafaf0"/><text x="480" y="492" text-anchor="middle" font-family="Arial" font-size="38" font-weight="900" fill="#14713a">HADIR 32</text>
+      <rect x="740" y="425" width="460" height="105" rx="22" fill="#fff0f0"/><text x="970" y="492" text-anchor="middle" font-family="Arial" font-size="38" font-weight="900" fill="#b92828">TIDAK HADIR 3</text>
+      ${textLines(["☑ Semak nama murid", "☑ Ubah sebab jika bukan demam", "☑ Pastikan bilangan betul"], 270, 600, {size:34, weight:800, gap:1.5})}
       ${button(1390, 630, 310, 100, "Kemaskini", "#16a05d")}
       ${arrow(1250, 520, 1490, 645, "AKHIR SEKALI")}
       <rect x="1330" y="340" width="420" height="180" rx="28" fill="#fff4d8" stroke="#efb83c" stroke-width="4"/>
