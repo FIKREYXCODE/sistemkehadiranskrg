@@ -87,6 +87,36 @@ function send(dom, message) {
   assert.equal(idmeDom.window.document.querySelector("#password").value, "");
   assert.equal(idmeDom.window.__submitted, false);
 
+  const moeisDom = buildDom(`<!doctype html><html><body>
+    <span id="select2-txtNamakelas-container">TAHUN ENAM JAYYID</span>
+    <input id="tkh_HH" value="11/11/2026">
+    <table id="kehadiran"><tbody>
+      <tr><td>1</td><td><input type="checkbox" id="case-hadir-1" checked></td><td>AIRIS NUR RAYSHA AMANDA BINTI RIDUAN</td></tr>
+      <tr><td>2</td><td><input type="checkbox" id="case-hadir-2" checked></td><td>ARIZ FAIQH BIN MOHD ROZAIDY</td></tr>
+      <tr><td>3</td><td><input type="checkbox" id="case-hadir-3" checked></td><td>NUR ADILAH BINTI ABDUL MALIK</td></tr>
+    </tbody></table>
+    <button id="kemaskiniKehadiran">Kemaskini</button>
+  </body></html>`);
+  moeisDom.window.__submitted = false;
+  moeisDom.window.document.querySelector("#kemaskiniKehadiran").addEventListener("click", () => {
+    moeisDom.window.__submitted = true;
+  });
+  moeisDom.window.eval(script("matcher.js"));
+  moeisDom.window.eval(script("content-idme.js"));
+  const moeisAnalysis = await send(moeisDom, { type: "HEM_IDME_ANALYZE" });
+  assert.equal(moeisAnalysis.mode, "moeispel");
+  assert.equal(moeisAnalysis.studentCount, 3);
+  const moeisFill = await send(moeisDom, { type: "HEM_IDME_FILL", record: {
+    date: "2026-11-11", className: "6 Jayyid", enrolTotal: 3,
+    absentTotal: 1, absentNames: "Ariz Faiqh"
+  } });
+  assert.equal(moeisFill.ok, true);
+  assert.equal(moeisFill.filled.length, 3);
+  assert.equal(moeisDom.window.document.querySelector("#case-hadir-1").checked, true);
+  assert.equal(moeisDom.window.document.querySelector("#case-hadir-2").checked, false);
+  assert.equal(moeisDom.window.document.querySelector("#case-hadir-3").checked, true);
+  assert.equal(moeisDom.window.__submitted, false);
+
   console.log("DOM bridge tests passed");
 })().catch((error) => {
   console.error(error);

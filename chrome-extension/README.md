@@ -16,9 +16,9 @@ Extension ini membantu guru memindahkan rekod kehadiran yang **sudah hijau dan d
 1. Buka E-JKM HEM SmartTrack dan pilih **Nama pengisi**.
 2. Tekan ikon extension → **Ambil data kelas saya**.
 3. Tekan **Buka idMe** dan log masuk menggunakan akaun guru sendiri.
-4. Buka halaman kehadiran kelas dalam idMe.
-5. Tekan ikon extension → **Isi kehadiran sekarang**.
-6. Semak semua nilai yang ditandakan hijau sebelum cikgu sendiri menekan butang hantar.
+4. Buka **Pengurusan Murid → Pengurusan Sahsiah → Pengurusan Kehadiran**.
+5. Pastikan kelas dan tarikh betul, kemudian tekan ikon extension → **Isi kehadiran sekarang**.
+6. Semak semua murid sebelum cikgu sendiri menekan butang **Kemaskini**.
 
 Jika nama pengisi tidak sama dengan nama guru kelas, extension hanya akan meminta cikgu memilih kelas daripada satu senarai ringkas.
 
@@ -28,5 +28,7 @@ Jika nama pengisi tidak sama dengan nama guru kelas, extension hanya akan memint
 - Rekod disimpan secara setempat dalam extension dan luput selepas 24 jam.
 - Extension tidak membaca atau menyimpan kata laluan.
 - Extension tidak menghantar borang secara automatik.
+- Extension menyemak kelas, tarikh dan bilangan murid sebelum menyediakan tanda kehadiran.
+- Jika nama murid tidak hadir tidak dapat dipadankan dengan tepat, extension berhenti tanpa mengubah senarai.
 - Jika susun atur idMe berubah, padanan medan mungkin perlu dikemas kini.
 - Jangan hantar borang jika medan yang ditandakan hijau tidak sepadan dengan label sebenar.

@@ -2,6 +2,7 @@
 
 const SMARTTRACK_URL = "https://fikreyxcode.github.io/sistemkehadiranskrg/?v=177&fresh=1#e-jkm";
 const IDME_URL = "https://idme.moe.gov.my/login";
+const IDME_APP_PREFIX = "https://moeispel.moe.gov.my/";
 const MAX_RECORD_AGE = 24 * 60 * 60 * 1000;
 
 let activeTab;
@@ -45,9 +46,11 @@ async function resolveContextTab() {
   const [current] = await chrome.tabs.query({ active: true, currentWindow: true });
   const currentUrl = String(current?.url || "");
   if (currentUrl.startsWith("https://fikreyxcode.github.io/sistemkehadiranskrg/") ||
-      currentUrl.startsWith("https://idme.moe.gov.my/")) return current;
+      currentUrl.startsWith("https://idme.moe.gov.my/") ||
+      currentUrl.startsWith(IDME_APP_PREFIX)) return current;
 
   return await findTabByPrefix("https://fikreyxcode.github.io/sistemkehadiranskrg/") ||
+    await findTabByPrefix(IDME_APP_PREFIX) ||
     await findTabByPrefix("https://idme.moe.gov.my/") || current;
 }
 
@@ -113,14 +116,18 @@ async function fillIdme() {
   setState("Sedang mengisi maklumat kehadiran…");
   const analysis = await sendMessage({ type: "HEM_IDME_ANALYZE" });
   const matchCount = Object.keys(analysis?.matches || {}).length;
-  if (!matchCount) {
+  if (!matchCount && analysis?.mode !== "moeispel") {
     setState("Buka halaman kehadiran kelas dalam idMe dahulu, kemudian cuba lagi.", "error");
     return;
   }
   const response = await sendMessage({ type: "HEM_IDME_FILL", record: savedRecord });
+  if (response?.error) {
+    setState(response.error, "error");
+    return;
+  }
   const count = response?.filled?.length || 0;
   setState(count
-    ? `${count} ruangan sudah diisi. Semak dahulu sebelum tekan Hantar.`
+    ? `${count} rekod murid sudah disediakan. Semak dahulu sebelum tekan Kemaskini.`
     : "Ruangan kehadiran tidak dapat dikenal pasti. Jangan hantar borang.", count ? "ok" : "error");
 }
 
@@ -129,7 +136,7 @@ async function init() {
   savedRecord = await readSavedRecord();
   const url = activeTab?.url || "";
   const isSmarttrack = url.startsWith("https://fikreyxcode.github.io/sistemkehadiranskrg/");
-  const isIdme = url.startsWith("https://idme.moe.gov.my/");
+  const isIdme = url.startsWith("https://idme.moe.gov.my/") || url.startsWith(IDME_APP_PREFIX);
   $("#smarttrackPanel").hidden = !isSmarttrack;
   $("#idmePanel").hidden = !isIdme;
   $("#otherPanel").hidden = isSmarttrack || isIdme;
