@@ -127,7 +127,7 @@ async function fillIdme() {
   }
   const count = response?.filled?.length || 0;
   setState(count
-    ? `${count} rekod murid sudah disediakan. Semak dahulu sebelum tekan Kemaskini.`
+    ? `${count} rekod murid sudah disediakan. Sebab lalai Masalah Kesihatan → Demam telah diisi bagi ruangan kosong; guru masih boleh mengubahnya.`
     : "Ruangan kehadiran tidak dapat dikenal pasti. Jangan hantar borang.", count ? "ok" : "error");
 }
 

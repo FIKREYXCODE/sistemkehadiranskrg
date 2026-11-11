@@ -30,6 +30,7 @@ Jika nama pengisi tidak sama dengan nama guru kelas, extension hanya akan memint
 - Extension tidak menghantar borang secara automatik.
 - Nama murid tidak hadir boleh ditaip secara ringkas, contohnya `Hana Afina` atau `TrizuanShah`. Padanan mesti unik; jika dua murid mempunyai nama hampir sama, tambah sedikit lagi rujukan nama.
 - Beberapa nama boleh dipisahkan menggunakan koma, perkataan `dan`, tanda `&`, `/`, `+`, titik koma atau baris baharu.
+- Bagi murid tidak hadir, extension menetapkan `Masalah Kesihatan → Demam` hanya apabila ruangan sebab masih kosong. Guru boleh mengubahnya sebelum menekan `Kemaskini`; pilihan guru yang sedia ada tidak akan ditimpa.
 - Extension menyemak kelas, tarikh dan bilangan murid sebelum menyediakan tanda kehadiran.
 - Jika nama murid tidak hadir tidak dapat dipadankan dengan tepat, extension berhenti tanpa mengubah senarai.
 - Jika susun atur idMe berubah, padanan medan mungkin perlu dikemas kini.

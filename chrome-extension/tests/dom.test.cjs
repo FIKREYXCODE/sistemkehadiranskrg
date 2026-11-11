@@ -92,8 +92,14 @@ function send(dom, message) {
     <input id="tkh_HH" value="11/11/2026">
     <table id="kehadiran"><tbody>
       <tr><td>1</td><td><input type="checkbox" id="case-hadir-1" checked></td><td>AIRIS NUR RAYSHA AMANDA BINTI RIDUAN</td></tr>
-      <tr><td>2</td><td><input type="checkbox" id="case-hadir-2" checked></td><td>ARIZ FAIQH BIN MOHD ROZAIDY</td></tr>
-      <tr><td>3</td><td><input type="checkbox" id="case-hadir-3" checked></td><td>NUR ADILAH BINTI ABDUL MALIK</td></tr>
+      <tr><td>2</td><td><input type="checkbox" id="case-hadir-2" checked></td><td>ARIZ FAIQH BIN MOHD ROZAIDY</td><td>
+        <select class="category"><option value="">---SILA PILIH KATEGORI---</option><option value="health">MASALAH KESIHATAN</option><option value="family">MASALAH KELUARGA</option></select>
+        <select class="reason"><option value="">---SILA PILIH SEBAB---</option><option value="fever">DEMAM</option><option value="family">URUSAN KELUARGA</option></select>
+      </td></tr>
+      <tr><td>3</td><td><input type="checkbox" id="case-hadir-3" checked></td><td>NUR ADILAH BINTI ABDUL MALIK</td><td>
+        <select class="category"><option value="">---SILA PILIH KATEGORI---</option><option value="health">MASALAH KESIHATAN</option></select>
+        <select class="reason"><option value="">---SILA PILIH SEBAB---</option><option value="fever">DEMAM</option></select>
+      </td></tr>
     </tbody></table>
     <button id="kemaskiniKehadiran">Kemaskini</button>
   </body></html>`);
@@ -115,7 +121,19 @@ function send(dom, message) {
   assert.equal(moeisDom.window.document.querySelector("#case-hadir-1").checked, true);
   assert.equal(moeisDom.window.document.querySelector("#case-hadir-2").checked, false);
   assert.equal(moeisDom.window.document.querySelector("#case-hadir-3").checked, true);
+  assert.equal(moeisDom.window.document.querySelector("#case-hadir-2").closest("tr").querySelector(".category").value, "health");
+  assert.equal(moeisDom.window.document.querySelector("#case-hadir-2").closest("tr").querySelector(".reason").value, "fever");
   assert.equal(moeisDom.window.__submitted, false);
+
+  const arizRow = moeisDom.window.document.querySelector("#case-hadir-2").closest("tr");
+  arizRow.querySelector(".category").value = "family";
+  arizRow.querySelector(".reason").value = "family";
+  await send(moeisDom, { type: "HEM_IDME_FILL", record: {
+    date: "2026-11-11", className: "6 Jayyid", enrolTotal: 3,
+    absentTotal: 1, absentNames: "Ariz Faiqh"
+  } });
+  assert.equal(arizRow.querySelector(".category").value, "family");
+  assert.equal(arizRow.querySelector(".reason").value, "family");
 
   const shortNameFill = await send(moeisDom, { type: "HEM_IDME_FILL", record: {
     date: "2026-11-11", className: "6 Jayyid", enrolTotal: 3,
@@ -125,14 +143,16 @@ function send(dom, message) {
   assert.equal(moeisDom.window.document.querySelector("#case-hadir-1").checked, true);
   assert.equal(moeisDom.window.document.querySelector("#case-hadir-2").checked, true);
   assert.equal(moeisDom.window.document.querySelector("#case-hadir-3").checked, false);
+  assert.equal(moeisDom.window.document.querySelector("#case-hadir-3").closest("tr").querySelector(".category").value, "health");
+  assert.equal(moeisDom.window.document.querySelector("#case-hadir-3").closest("tr").querySelector(".reason").value, "fever");
 
   const conjunctionDom = buildDom(`<!doctype html><html><body>
     <span id="select2-txtNamakelas-container">TAHUN ENAM JAYYID</span>
     <input id="tkh_HH" value="11/11/2026">
     <table id="kehadiran"><tbody>
-      <tr><td>1</td><td><input type="checkbox" id="case-hadir-11" checked></td><td>NUR ALYA BINTI AHMAD</td></tr>
-      <tr><td>2</td><td><input type="checkbox" id="case-hadir-12" checked></td><td>MUHAMMAD AFIF BIN ALI</td></tr>
-      <tr><td>3</td><td><input type="checkbox" id="case-hadir-13" checked></td><td>AMIR HAKIM BIN OSMAN</td></tr>
+      <tr><td>1</td><td><input type="checkbox" id="case-hadir-11" checked></td><td>NUR ALYA BINTI AHMAD</td><td><select><option value="">---SILA PILIH KATEGORI---</option><option value="health">MASALAH KESIHATAN</option></select><select><option value="">---SILA PILIH SEBAB---</option><option value="fever">DEMAM</option></select></td></tr>
+      <tr><td>2</td><td><input type="checkbox" id="case-hadir-12" checked></td><td>MUHAMMAD AFIF BIN ALI</td><td><select><option value="">---SILA PILIH KATEGORI---</option><option value="health">MASALAH KESIHATAN</option></select><select><option value="">---SILA PILIH SEBAB---</option><option value="fever">DEMAM</option></select></td></tr>
+      <tr><td>3</td><td><input type="checkbox" id="case-hadir-13" checked></td><td>AMIR HAKIM BIN OSMAN</td><td><select><option value="">---SILA PILIH KATEGORI---</option><option value="health">MASALAH KESIHATAN</option></select><select><option value="">---SILA PILIH SEBAB---</option><option value="fever">DEMAM</option></select></td></tr>
     </tbody></table>
   </body></html>`);
   conjunctionDom.window.eval(script("matcher.js"));
@@ -145,6 +165,7 @@ function send(dom, message) {
   assert.equal(conjunctionDom.window.document.querySelector("#case-hadir-11").checked, false);
   assert.equal(conjunctionDom.window.document.querySelector("#case-hadir-12").checked, false);
   assert.equal(conjunctionDom.window.document.querySelector("#case-hadir-13").checked, false);
+  assert.equal(conjunctionFill.defaultReasonApplied, 3);
 
   console.log("DOM bridge tests passed");
 })().catch((error) => {

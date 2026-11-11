@@ -131,7 +131,52 @@
       .filter((name) => name && name !== "SEMUA MURID HADIR");
   }
 
-  function fillMoeis(record) {
+  const DEFAULT_ABSENCE_CATEGORY = "MASALAH KESIHATAN";
+  const DEFAULT_ABSENCE_REASON = "DEMAM";
+
+  function selectedOptionLabel(select) {
+    return normalizeText(select?.selectedOptions?.[0]?.textContent || "");
+  }
+
+  function isEmptyChoice(select) {
+    const label = selectedOptionLabel(select);
+    return !select?.value || !label || label.includes("SILA PILIH");
+  }
+
+  function chooseOptionByLabel(select, label) {
+    if (!select) return false;
+    const option = [...select.options].find((item) => normalizeText(item.textContent) === label);
+    if (!option) return false;
+    select.value = option.value;
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    return true;
+  }
+
+  async function waitForSelectOption(row, label, timeoutMs = 2500) {
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < timeoutMs) {
+      const match = [...row.querySelectorAll("select")].find((select) =>
+        [...select.options].some((option) => normalizeText(option.textContent) === label));
+      if (match) return match;
+      await new Promise((resolve) => setTimeout(resolve, 80));
+    }
+    return null;
+  }
+
+  async function applyDefaultAbsentReason(student) {
+    const category = await waitForSelectOption(student.row, DEFAULT_ABSENCE_CATEGORY);
+    if (!category) return false;
+
+    const categoryLabel = selectedOptionLabel(category);
+    if (!isEmptyChoice(category) && categoryLabel !== DEFAULT_ABSENCE_CATEGORY) return false;
+    if (isEmptyChoice(category) && !chooseOptionByLabel(category, DEFAULT_ABSENCE_CATEGORY)) return false;
+
+    const reason = await waitForSelectOption(student.row, DEFAULT_ABSENCE_REASON);
+    if (!reason || !isEmptyChoice(reason)) return false;
+    return chooseOptionByLabel(reason, DEFAULT_ABSENCE_REASON);
+  }
+
+  async function fillMoeis(record) {
     const analysis = analyzeMoeis();
     if (!analysis) return { ok: false, error: "Buka senarai Kehadiran Harian kelas dahulu." };
 
@@ -181,11 +226,14 @@
       student.checkbox.classList.add("hem-idme-filled");
     }
 
+    const defaultResults = await Promise.all([...absentStudents].map(applyDefaultAbsentReason));
+
     return {
       ok: true,
       mode: "moeispel",
       filled: students.map(() => "student"),
       matchedAbsent: [...absentStudents].map((student) => student.name),
+      defaultReasonApplied: defaultResults.filter(Boolean).length,
       submitted: false
     };
   }
@@ -204,8 +252,8 @@
     if (message?.type === "HEM_IDME_FILL") {
       const record = message.record || {};
       if (analyzeMoeis()) {
-        sendResponse(fillMoeis(record));
-        return false;
+        fillMoeis(record).then(sendResponse).catch((error) => sendResponse({ ok: false, error: error.message }));
+        return true;
       }
       const { matches } = analyze();
       const filled = [];
