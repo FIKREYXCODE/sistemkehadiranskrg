@@ -3438,8 +3438,9 @@ $("#idmeAttendanceDialog").addEventListener("click", (event) => {
 });
 $("#copyIdmeAttendance").addEventListener("click", copyIdmeAttendanceSummary);
 $("#copyAndOpenIdme").addEventListener("click", async () => {
+  const copyPromise = copyIdmeAttendanceSummary();
   window.open("https://idme.moe.gov.my/login", "_blank", "noopener,noreferrer");
-  await copyIdmeAttendanceSummary();
+  await copyPromise;
 });
 
 function updateStaffRow(event) {
@@ -3987,7 +3988,7 @@ window.addEventListener("beforeunload", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=175", { scope: "./", updateViaCache: "none" })
+    navigator.serviceWorker.register("./service-worker.js?v=176", { scope: "./", updateViaCache: "none" })
       .catch((error) => console.warn("PWA tidak dapat diaktifkan:", error));
   });
 }
