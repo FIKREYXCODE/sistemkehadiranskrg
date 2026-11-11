@@ -58,5 +58,77 @@
     return value === 0 ? "0" : String(value ?? "");
   }
 
-  return { FIELD_RULES, normalize, scoreRule, matchFields, valueFor };
+  function normalizePersonName(value) {
+    return String(value || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^A-Z0-9@]+/gi, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .toUpperCase();
+  }
+
+  function compactPersonName(value) {
+    return normalizePersonName(value).replace(/\s+/g, "");
+  }
+
+  function editDistance(left, right) {
+    const a = String(left || "");
+    const b = String(right || "");
+    const previous = Array.from({ length: b.length + 1 }, (_, index) => index);
+    for (let i = 1; i <= a.length; i += 1) {
+      let diagonal = previous[0];
+      previous[0] = i;
+      for (let j = 1; j <= b.length; j += 1) {
+        const above = previous[j];
+        previous[j] = Math.min(
+          previous[j] + 1,
+          previous[j - 1] + 1,
+          diagonal + (a[i - 1] === b[j - 1] ? 0 : 1)
+        );
+        diagonal = above;
+      }
+    }
+    return previous[b.length];
+  }
+
+  function tokenMatches(aliasToken, candidateToken) {
+    if (aliasToken === candidateToken) return true;
+    if (aliasToken.length >= 4 && (candidateToken.startsWith(aliasToken) || aliasToken.startsWith(candidateToken))) return true;
+    const tolerance = aliasToken.length >= 9 ? 2 : aliasToken.length >= 5 ? 1 : 0;
+    return tolerance > 0 && editDistance(aliasToken, candidateToken) <= tolerance;
+  }
+
+  function personNameMatches(alias, fullName) {
+    const normalizedAlias = normalizePersonName(alias);
+    const normalizedFullName = normalizePersonName(fullName);
+    if (!normalizedAlias || !normalizedFullName) return false;
+
+    const compactAlias = compactPersonName(normalizedAlias);
+    const compactFullName = compactPersonName(normalizedFullName);
+    if (compactAlias.length >= 4 && compactFullName.includes(compactAlias)) return true;
+
+    const aliasTokens = normalizedAlias.split(" ").filter((token) => token.length >= 3);
+    const fullNameTokens = normalizedFullName.split(" ").filter((token) => token.length >= 2);
+    if (!aliasTokens.length) return false;
+    return aliasTokens.every((aliasToken) => fullNameTokens.some((candidateToken) => tokenMatches(aliasToken, candidateToken)));
+  }
+
+  function findUniquePerson(candidates, alias, nameKey = "name") {
+    const matches = candidates.filter((candidate) => personNameMatches(alias, candidate?.[nameKey]));
+    return { match: matches.length === 1 ? matches[0] : null, count: matches.length };
+  }
+
+  return {
+    FIELD_RULES,
+    normalize,
+    scoreRule,
+    matchFields,
+    valueFor,
+    normalizePersonName,
+    compactPersonName,
+    editDistance,
+    personNameMatches,
+    findUniquePerson
+  };
 }));

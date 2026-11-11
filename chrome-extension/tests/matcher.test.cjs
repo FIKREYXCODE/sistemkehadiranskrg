@@ -22,4 +22,28 @@ assert.equal(matches.absentNames.index, 5);
 assert.equal(Object.values(matches).some((item) => item.index === 6), false);
 assert.equal(matcher.valueFor({ absentTotal: 0 }, "absentTotal"), "0");
 
+assert.equal(matcher.personNameMatches("Hana Afina", "NUR HANA AFINA BINTI ABDULLAH"), true);
+assert.equal(matcher.personNameMatches("TrizuanShah", "MOHAMMAD TRIZUAN SHAH BIN ALI"), true);
+assert.equal(matcher.personNameMatches("Nazry", "MUHAMMAD NAZRI BIN OSMAN"), true);
+assert.equal(matcher.personNameMatches("Aisyah", "NUR AISYAH BINTI AHMAD"), true);
+assert.equal(matcher.personNameMatches("Aisyah", "NUR ALYA BINTI AHMAD"), false);
+
+const pupils = [
+  { name: "MUHAMMAD AIMAN BIN ALI" },
+  { name: "NUR AIMAN BINTI OSMAN" },
+  { name: "MUHAMMAD TRIZUAN SHAH BIN ALI" }
+];
+assert.equal(matcher.findUniquePerson(pupils, "TrizuanShah").match.name, "MUHAMMAD TRIZUAN SHAH BIN ALI");
+assert.equal(matcher.findUniquePerson(pupils, "Aiman").match, null);
+assert.equal(matcher.findUniquePerson(pupils, "Aiman").count, 2);
+
+const sixKhoir = [
+  { name: "MOHAMAD NAZRI BIN LASEAL" },
+  { name: "MOHAMMAD TRIZUANSHAH BIN MOHAMMAD HANAPIAH" },
+  { name: "NUR SYUHADAH BINTI YASMIN" }
+];
+assert.equal(matcher.findUniquePerson(sixKhoir, "nazri").match.name, "MOHAMAD NAZRI BIN LASEAL");
+assert.equal(matcher.findUniquePerson(sixKhoir, "trizuanshah").match.name, "MOHAMMAD TRIZUANSHAH BIN MOHAMMAD HANAPIAH");
+assert.equal(matcher.findUniquePerson(sixKhoir, "syuhada").match.name, "NUR SYUHADAH BINTI YASMIN");
+
 console.log("matcher tests passed");

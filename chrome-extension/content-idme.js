@@ -155,17 +155,23 @@
     const aliases = absentAliases(record);
     const absentStudents = new Set();
     const unresolved = [];
+    const ambiguous = [];
     for (const alias of aliases) {
-      const candidates = students.filter((student) => student.normalizedName.includes(alias));
-      if (candidates.length === 1) absentStudents.add(candidates[0]);
+      const result = HEMMatcher.findUniquePerson(students, alias);
+      if (result.match) absentStudents.add(result.match);
+      else if (result.count > 1) ambiguous.push(alias);
       else unresolved.push(alias);
     }
 
     const expectedAbsent = Number(record.absentTotal || 0);
-    if (unresolved.length || absentStudents.size !== expectedAbsent) {
+    if (unresolved.length || ambiguous.length || absentStudents.size !== expectedAbsent) {
+      const details = [
+        unresolved.length ? `tidak ditemui: ${unresolved.join(", ")}` : "",
+        ambiguous.length ? `perlu rujukan tambahan: ${ambiguous.join(", ")}` : ""
+      ].filter(Boolean).join("; ");
       return {
         ok: false,
-        error: `Nama murid tidak hadir belum dapat dipadankan sepenuhnya (${absentStudents.size}/${expectedAbsent}). Semak ejaan nama dalam E-JKM.`
+        error: `Rujukan nama murid belum dapat dipadankan dengan selamat (${absentStudents.size}/${expectedAbsent})${details ? ` — ${details}` : ""}. Nama ringkas dibenarkan, tetapi mesti merujuk kepada seorang murid sahaja.`
       };
     }
 

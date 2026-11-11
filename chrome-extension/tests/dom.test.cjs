@@ -117,6 +117,15 @@ function send(dom, message) {
   assert.equal(moeisDom.window.document.querySelector("#case-hadir-3").checked, true);
   assert.equal(moeisDom.window.__submitted, false);
 
+  const shortNameFill = await send(moeisDom, { type: "HEM_IDME_FILL", record: {
+    date: "2026-11-11", className: "6 Jayyid", enrolTotal: 3,
+    absentTotal: 1, absentNames: "N. Adilah"
+  } });
+  assert.equal(shortNameFill.ok, true);
+  assert.equal(moeisDom.window.document.querySelector("#case-hadir-1").checked, true);
+  assert.equal(moeisDom.window.document.querySelector("#case-hadir-2").checked, true);
+  assert.equal(moeisDom.window.document.querySelector("#case-hadir-3").checked, false);
+
   console.log("DOM bridge tests passed");
 })().catch((error) => {
   console.error(error);
